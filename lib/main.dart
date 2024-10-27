@@ -89,7 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Expanded(
               child: ListView(
                 padding: EdgeInsets.zero,
-                children: <Widget>[
+                children: [
                   const SizedBox(
                     height: 120.0,
                     child: DrawerHeader(child: Text(Define.title)),
