@@ -14,10 +14,37 @@ class _SearchFieldState extends State<SearchField> {
   @override
   Widget build(BuildContext context) {
     final textEditingController = TextEditingController();
+/*
+    return Material(
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: textEditingController,
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                hintText: 'Enter a search term',
+                suffixIcon: textEditingController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () => textEditingController.clear(),
+                      )
+                    : null,
+              ),
+              onEditingComplete: () => context
+                  .read<Model>()
+                  .setSearchKeyword(textEditingController.text),
+            ),
+          ),
+          const Text('test'),
+        ],
+      ),
+    );
+*/
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
             Expanded(
               child: TextField(

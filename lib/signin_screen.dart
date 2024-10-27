@@ -42,7 +42,7 @@ class _SigninScreenState extends State<SigninScreen> {
           child: AutofillGroup(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
+              children: [
                 TextFormField(
                   decoration: const InputDecoration(
                     icon: Icon(Icons.language),

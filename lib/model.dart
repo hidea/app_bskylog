@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:animated_tree_view/tree_view/tree_node.dart';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
@@ -95,6 +96,8 @@ class Model extends ChangeNotifier {
   Future syncDataWithProvider() async {
     _packageInfo = await PackageInfo.fromPlatform();
 
+    countDatePosts();
+
     final prefs = await SharedPreferences.getInstance();
     var data = prefs.getString('settings');
     if (data != null) {
@@ -149,19 +152,20 @@ class Model extends ChangeNotifier {
       if (_searchMonth != null) {
         if (_searchDay != null) {
           query.where((tbl) => tbl.indexed.isBetweenValues(
-                DateTime(_searchYear!, _searchMonth!, _searchDay!),
-                DateTime(_searchYear!, _searchMonth!, _searchDay!, 23, 59, 59),
+                DateTime.utc(_searchYear!, _searchMonth!, _searchDay!),
+                DateTime.utc(
+                    _searchYear!, _searchMonth!, _searchDay!, 23, 59, 59),
               ));
         } else {
           query.where((tbl) => tbl.indexed.isBetweenValues(
-                DateTime(_searchYear!, _searchMonth!, 1),
-                DateTime(_searchYear!, _searchMonth! + 1, 0, 23, 59, 59),
+                DateTime.utc(_searchYear!, _searchMonth!, 1),
+                DateTime.utc(_searchYear!, _searchMonth! + 1, 0, 23, 59, 59),
               ));
         }
       } else {
         query.where((tbl) => tbl.indexed.isBetweenValues(
-              DateTime(_searchYear!, 1, 1),
-              DateTime(_searchYear!, 12, 31, 23, 59, 59),
+              DateTime.utc(_searchYear!, 1, 1),
+              DateTime.utc(_searchYear!, 12, 31, 23, 59, 59),
             ));
       }
     }
@@ -170,6 +174,70 @@ class Model extends ChangeNotifier {
     }
 
     return query;
+  }
+
+  final Map<int, int> _countByDate = {};
+  Map<int, int> get countByDate => _countByDate;
+
+  void countDatePosts() async {
+    final count = database.posts.uri.count();
+    final query = database.posts.selectOnly()
+      ..addColumns([database.posts.indexed.date, count])
+      ..groupBy([database.posts.indexed.date]);
+
+    final result = await query.get();
+    for (final row in result) {
+      final date = DateTime.parse(row.rawData.read<String>('c0'));
+      final count = row.rawData.read<int>('c1');
+
+      final day = date.year * 10000 + date.month * 100 + date.day;
+      _countByDate[day] = count;
+      final month = date.year * 10000 + date.month * 100;
+      _countByDate[month] = (_countByDate[month] ?? 0) + count;
+      final year = date.year * 10000;
+      _countByDate[year] = (_countByDate[year] ?? 0) + count;
+    }
+
+    createMenuTree();
+
+    notifyListeners();
+  }
+
+  TreeNode? _rootTree;
+  TreeNode? get roorTree => _rootTree;
+
+  void createMenuTree() {
+    _rootTree = TreeNode();
+
+    final archivesNode = TreeNode(key: 'Archives');
+    _rootTree!.add(archivesNode);
+
+    final yearNodes = <int, TreeNode<dynamic>>{};
+
+    for (final date in _countByDate.keys) {
+      final year = date ~/ 10000;
+      final month = (date % 10000) ~/ 100;
+      final day = date % 100;
+      if (day > 0) {
+        continue;
+      }
+
+      final yearNode = yearNodes.putIfAbsent(year, () {
+        final count = _countByDate[year * 10000];
+        final node = TreeNode(key: '$year ($count)', data: DateTime(year));
+        archivesNode.add(node);
+        return node;
+      });
+
+      if (month > 0) {
+        final count = _countByDate[year * 10000 + month * 100];
+        final node =
+            TreeNode(key: '$month ($count)', data: DateTime(year, month));
+        yearNode.add(node);
+      }
+    }
+
+    notifyListeners();
   }
 
   void setProgress(int value, {String? message}) {
@@ -229,15 +297,19 @@ class Model extends ChangeNotifier {
   }
 
   // blueskyサインアウト処理
-  Future signout(ActorModel actor) async {
+  Future signout() async {
+    if (_currentActor == null) {
+      return;
+    }
+
     try {
       // セッションを削除
       await atproto.deleteSession(
-        service: actor.service,
-        refreshJwt: actor.session!.refreshJwt,
+        service: _currentActor!.service,
+        refreshJwt: _currentActor!.session!.refreshJwt,
       );
       // カレントなら削除
-      if (_currentActor?.session?.did == actor.session!.did) {
+      if (_currentActor?.session?.did == _currentActor!.session!.did) {
         _currentActor = null;
       }
     } catch (e, s) {

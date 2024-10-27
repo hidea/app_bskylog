@@ -55,7 +55,7 @@ class _FeedCardState extends State<FeedCard> {
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.start,
-          children: <Widget>[
+          children: [
             const SizedBox(width: 64),
             Column(
               mainAxisAlignment: MainAxisAlignment.start,
@@ -71,7 +71,7 @@ class _FeedCardState extends State<FeedCard> {
                       (feed.post.embed as bluesky.UEmbedViewExternal).data),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.start,
-                  children: <Widget>[
+                  children: [
                     TextButton(
                       style: TextButton.styleFrom(padding: EdgeInsets.zero),
                       child: Text(DateFormat('H:mm yyyy-MM-dd')
