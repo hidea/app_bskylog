@@ -278,17 +278,20 @@ class _HomeScreenState extends State<HomeScreen> {
               showRootNode: false,
               expansionBehavior: ExpansionBehavior.collapseOthers,
               tree: context.watch<Model>().roorTree!,
+              onTreeReady: (controller) {
+                controller.expandNode(context.read<Model>().archivesNode!);
+              },
               builder: (context, node) {
                 return ListTile(
                   dense: true,
                   visualDensity: const VisualDensity(vertical: -4.0),
                   title: Text(node.key),
                   onTap: () {
-                    if (node.level > 0) {
+                    if (node.level > 1) {
                       if (node.data is DateTime) {
                         final date = node.data as DateTime;
                         context.read<Model>().setSearchYear(date.year);
-                        if (node.level > 1) {
+                        if (node.level > 2) {
                           context.read<Model>().setSearchMonth(date.month);
                         }
                       }

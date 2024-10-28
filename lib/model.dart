@@ -219,12 +219,14 @@ class Model extends ChangeNotifier {
 
   TreeNode? _rootTree;
   TreeNode? get roorTree => _rootTree;
+  TreeNode? _archivesNode;
+  TreeNode? get archivesNode => _archivesNode;
 
   void createMenuTree() {
     _rootTree = TreeNode();
 
-    final archivesNode = TreeNode(key: 'Archives');
-    _rootTree!.add(archivesNode);
+    _archivesNode = TreeNode(key: 'Archives');
+    _rootTree!.add(_archivesNode!);
 
     final yearNodes = <int, TreeNode<dynamic>>{};
 
@@ -239,7 +241,7 @@ class Model extends ChangeNotifier {
       final yearNode = yearNodes.putIfAbsent(year, () {
         final count = _countByDate[year * 10000];
         final node = TreeNode(key: '$year ($count)', data: DateTime(year));
-        archivesNode.add(node);
+        _archivesNode!.add(node);
         return node;
       });
 
