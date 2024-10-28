@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:bluesky/bluesky.dart' as bluesky;
 
-class ExternalEmbedWidget extends StatefulWidget {
-  const ExternalEmbedWidget(this.embed, {super.key});
+class EmbedExternalWidget extends StatefulWidget {
+  const EmbedExternalWidget(this.embed, {super.key});
 
   final bluesky.EmbedViewExternal embed;
 
   @override
-  State<ExternalEmbedWidget> createState() => _ExternalEmbedWidgetState();
+  State<EmbedExternalWidget> createState() => _EmbedExternalWidgetState();
 }
 
-class _ExternalEmbedWidgetState extends State<ExternalEmbedWidget> {
+class _EmbedExternalWidgetState extends State<EmbedExternalWidget> {
   @override
   Widget build(BuildContext context) {
     return Card(
       clipBehavior: Clip.antiAliasWithSaveLayer,
-      child: Container(
+      child: SizedBox(
         width: 400,
         child: Column(
           children: [

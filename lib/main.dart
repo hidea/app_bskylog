@@ -3,7 +3,9 @@ import 'dart:convert';
 import 'package:animated_tree_view/animated_tree_view.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:table_calendar/table_calendar.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:bluesky/bluesky.dart' as bluesky;
 
@@ -13,6 +15,7 @@ import 'feed_card.dart';
 import 'model.dart';
 import 'search_field.dart';
 import 'signin_screen.dart';
+import 'utils.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -151,7 +154,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   _syncFeed();
                   break;
                 case 1:
-                  database.delete(database.posts).go();
+                  showConfirmDialog(
+                    context: context,
+                    ok: const Text('Delete'),
+                    content: const Text('Are you sure trancate all log ?'),
+                    onOk: () {
+                      database.delete(database.posts).go();
+                    },
+                  );
                   break;
                 case 2:
                   context.push('/signin');
@@ -201,69 +211,95 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          if (context.watch<Model>().roorTree != null)
-            SizedBox(
-              width: 200,
-              child: TreeView.simple(
-                showRootNode: false,
-                tree: context.watch<Model>().roorTree!,
-                builder: (context, node) {
-                  return ListTile(
-                    dense: true,
-                    visualDensity: const VisualDensity(vertical: -4.0),
-                    title: Text(node.key),
-                    onTap: () {
-                      if (node.level > 0) {
-                        if (node.data is DateTime) {
-                          final date = node.data as DateTime;
-                          context.read<Model>().setSearchYear(date.year);
-                          if (node.level > 1) {
-                            context.read<Model>().setSearchMonth(date.month);
-                          }
-                        }
-                      }
+          SizedBox(
+            width: 200,
+            child: Column(
+              children: [
+                TableCalendar(
+                  rowHeight: 30,
+                  //headerVisible: false,
+                  calendarFormat: CalendarFormat.month,
+                  availableCalendarFormats: const {
+                    CalendarFormat.month: 'Month'
+                  },
+                  calendarStyle: const CalendarStyle(
+                    cellMargin: EdgeInsets.zero,
+                    cellPadding: EdgeInsets.zero,
+                    weekendTextStyle: TextStyle(color: Colors.blue),
+                    holidayTextStyle: TextStyle(color: Colors.red),
+                    holidayDecoration: BoxDecoration(),
+                  ),
+                  calendarBuilders: CalendarBuilders(
+                    dowBuilder: (context, day) {
+                      final text = DateFormat.E().format(day);
+                      return Center(
+                        child: Text(
+                          text,
+                          style: const TextStyle(fontSize: 9),
+                        ),
+                      );
                     },
-                  );
-                },
-              ),
+                    headerTitleBuilder: (context, day) {
+                      final text = DateFormat('y.M').format(day);
+                      return Center(
+                        child: Text(
+                          text,
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      );
+                    },
+                  ),
+                  focusedDay: context.watch<Model>().lastDay,
+                  firstDay: context.watch<Model>().firstDay,
+                  lastDay: context.watch<Model>().lastDay,
+                  weekendDays: const [DateTime.saturday],
+                  holidayPredicate: (day) => day.weekday == DateTime.sunday,
+                ),
+                _buildTree(),
+              ],
             ),
+          ),
         ],
       ),
     );
   }
-}
 
-final sampleTree = TreeNode.root()
-  ..addAll([
-    TreeNode(key: "Archives")
-      ..addAll([
-        TreeNode(key: "2024", data: DateTime(2024))
-          ..addAll([
-            TreeNode(key: "10", data: DateTime(2024, 10)),
-            TreeNode(key: "09", data: DateTime(2024, 9)),
-            TreeNode(key: "08", data: DateTime(2024, 8)),
-            TreeNode(key: "07", data: DateTime(2024, 7)),
-            TreeNode(key: "06", data: DateTime(2024, 6)),
-            TreeNode(key: "05", data: DateTime(2024, 5)),
-            TreeNode(key: "04", data: DateTime(2024, 4)),
-            TreeNode(key: "03", data: DateTime(2024, 3)),
-            TreeNode(key: "02", data: DateTime(2024, 2)),
-            TreeNode(key: "01", data: DateTime(2024, 1)),
-          ]),
-        TreeNode(key: "2023", data: DateTime(2023))
-          ..addAll([
-            TreeNode(key: "12", data: DateTime(2023, 12)),
-            TreeNode(key: "11", data: DateTime(2023, 11)),
-            TreeNode(key: "10", data: DateTime(2023, 10)),
-            TreeNode(key: "09", data: DateTime(2023, 9)),
-            TreeNode(key: "08", data: DateTime(2023, 8)),
-            TreeNode(key: "07", data: DateTime(2023, 7)),
-            TreeNode(key: "06", data: DateTime(2023, 6)),
-            TreeNode(key: "05", data: DateTime(2023, 5)),
-            TreeNode(key: "04", data: DateTime(2023, 4)),
-            TreeNode(key: "03", data: DateTime(2023, 3)),
-            TreeNode(key: "02", data: DateTime(2023, 2)),
-            TreeNode(key: "01", data: DateTime(2023, 1)),
-          ]),
-      ]),
-  ]);
+  Widget _buildTree() {
+    if (context.watch<Model>().roorTree == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    return Expanded(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SizedBox(
+            height: constraints.maxHeight,
+            width: double.infinity,
+            child: TreeView.simple(
+              showRootNode: false,
+              expansionBehavior: ExpansionBehavior.collapseOthers,
+              tree: context.watch<Model>().roorTree!,
+              builder: (context, node) {
+                return ListTile(
+                  dense: true,
+                  visualDensity: const VisualDensity(vertical: -4.0),
+                  title: Text(node.key),
+                  onTap: () {
+                    if (node.level > 0) {
+                      if (node.data is DateTime) {
+                        final date = node.data as DateTime;
+                        context.read<Model>().setSearchYear(date.year);
+                        if (node.level > 1) {
+                          context.read<Model>().setSearchMonth(date.month);
+                        }
+                      }
+                    }
+                  },
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+}

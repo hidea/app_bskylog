@@ -1,9 +1,10 @@
-import 'package:bskylog/external_embed.dart';
+import 'package:bskylog/embed_external.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:bluesky/bluesky.dart' as bluesky;
 
 import 'define.dart';
+import 'embed_images.dart';
 import 'utils.dart';
 
 class FeedCard extends StatefulWidget {
@@ -63,11 +64,11 @@ class _FeedCardState extends State<FeedCard> {
               children: [
                 if (feed.post.embed != null &&
                     feed.post.embed is bluesky.UEmbedViewImages)
-                  embedImages(
+                  EmbedImagesWidget(
                       (feed.post.embed as bluesky.UEmbedViewImages).data),
                 if (feed.post.embed != null &&
                     feed.post.embed is bluesky.UEmbedViewExternal)
-                  ExternalEmbedWidget(
+                  EmbedExternalWidget(
                       (feed.post.embed as bluesky.UEmbedViewExternal).data),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.start,
@@ -84,24 +85,6 @@ class _FeedCardState extends State<FeedCard> {
             ),
           ],
         ),
-      ],
-    );
-  }
-
-  Widget embedImages(bluesky.EmbedViewImages embed) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        for (final image in embed.images)
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: Image.network(
-              image.fullsize,
-              width: 150,
-              height: 150,
-              fit: BoxFit.cover,
-            ),
-          ),
       ],
     );
   }

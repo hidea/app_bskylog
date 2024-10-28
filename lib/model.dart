@@ -203,6 +203,20 @@ class Model extends ChangeNotifier {
     notifyListeners();
   }
 
+  DateTime get firstDay {
+    final first = _countByDate.keys
+        .where((key) => key % 100 != 0)
+        .reduce((value, element) => value < element ? value : element);
+    return DateTime(first ~/ 10000, (first % 10000) ~/ 100, first % 100);
+  }
+
+  DateTime get lastDay {
+    final last = _countByDate.keys
+        .where((key) => key % 100 != 0)
+        .reduce((value, element) => value > element ? value : element);
+    return DateTime(last ~/ 10000, (last % 10000) ~/ 100, last % 100);
+  }
+
   TreeNode? _rootTree;
   TreeNode? get roorTree => _rootTree;
 

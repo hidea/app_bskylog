@@ -66,3 +66,34 @@ void progressDialog({
         },
       ),
     );
+
+void showConfirmDialog({
+  required BuildContext context,
+  required Widget content,
+  required Function() onOk,
+  Widget title = const Text('Confirm'),
+  Widget ok = const Text('Ok'),
+  Widget cancel = const Text('Cancel'),
+}) =>
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: title,
+          content: content,
+          actions: <Widget>[
+            TextButton(
+              child: cancel,
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: ok,
+              onPressed: () {
+                Navigator.of(context).pop();
+                onOk();
+              },
+            ),
+          ],
+        );
+      },
+    );
