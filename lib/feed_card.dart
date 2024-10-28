@@ -8,9 +8,10 @@ import 'embed_images.dart';
 import 'utils.dart';
 
 class FeedCard extends StatefulWidget {
-  const FeedCard(this.feed, {super.key});
+  const FeedCard(this.feed, this.feedView, {super.key});
 
-  final bluesky.FeedView feed;
+  final dynamic feed;
+  final bluesky.FeedView feedView;
 
   @override
   State<FeedCard> createState() => _FeedCardState();
@@ -20,19 +21,29 @@ class _FeedCardState extends State<FeedCard> {
   @override
   Widget build(BuildContext context) {
     final feed = widget.feed;
-    final author = feed.post.author;
+    final feedView = widget.feedView;
+    final author = feedView.post.author;
     final displayName =
         author.displayName != null && author.displayName!.isNotEmpty
             ? author.displayName!
             : author.handle;
     final avator = author.avatar != null ? NetworkImage(author.avatar!) : null;
     final postUrl =
-        '${Define.bskyUrl}/profile/${author.handle}/post/${feed.post.uri.rkey}';
+        '${Define.bskyUrl}/profile/${author.handle}/post/${feedView.post.uri.rkey}';
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
+        // repost icon + あなたのリポスト
+        if (feed.reasonRepost)
+          const Row(
+            children: [
+              SizedBox(width: 50),
+              Icon(Icons.repeat, size: 16, color: Colors.blueGrey),
+              Text('repost', style: TextStyle(color: Colors.blueGrey)),
+            ],
+          ),
         ListTile(
           titleAlignment: ListTileTitleAlignment.top,
           leading: CircleAvatar(
@@ -51,7 +62,7 @@ class _FeedCardState extends State<FeedCard> {
               ),
             ],
           ),
-          subtitle: SelectableText(widget.feed.post.record.text),
+          subtitle: SelectableText(feedView.post.record.text),
           // TODO: record.facets
         ),
         Row(
@@ -62,21 +73,21 @@ class _FeedCardState extends State<FeedCard> {
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (feed.post.embed != null &&
-                    feed.post.embed is bluesky.UEmbedViewImages)
+                if (feedView.post.embed != null &&
+                    feedView.post.embed is bluesky.UEmbedViewImages)
                   EmbedImagesWidget(
-                      (feed.post.embed as bluesky.UEmbedViewImages).data),
-                if (feed.post.embed != null &&
-                    feed.post.embed is bluesky.UEmbedViewExternal)
+                      (feedView.post.embed as bluesky.UEmbedViewImages).data),
+                if (feedView.post.embed != null &&
+                    feedView.post.embed is bluesky.UEmbedViewExternal)
                   EmbedExternalWidget(
-                      (feed.post.embed as bluesky.UEmbedViewExternal).data),
+                      (feedView.post.embed as bluesky.UEmbedViewExternal).data),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     TextButton(
                       style: TextButton.styleFrom(padding: EdgeInsets.zero),
                       child: Text(DateFormat('H:mm yyyy-MM-dd')
-                          .format(feed.post.indexedAt)),
+                          .format(feedView.post.indexedAt)),
                       onPressed: () => launchUrlPlus(postUrl),
                     ),
                   ],

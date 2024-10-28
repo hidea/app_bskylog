@@ -190,9 +190,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           return SliverList(
                             delegate: SliverChildBuilderDelegate(
                               (BuildContext context, int index) {
-                                final feed = bluesky.FeedView.fromJson(
-                                    jsonDecode(posts[index].post));
-                                return Card(child: FeedCard(feed));
+                                final feed = posts[index];
+                                final feedView = bluesky.FeedView.fromJson(
+                                    jsonDecode(feed.post));
+                                return Card(child: FeedCard(feed, feedView));
                               },
                               childCount: posts.length,
                             ),
