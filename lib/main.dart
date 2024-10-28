@@ -101,8 +101,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final isTablet = MediaQuery.of(context).size.shortestSide > 600;
     final safePadding = MediaQuery.of(context).padding;
 
-    final database = context.read<Model>().database;
-
     return Scaffold(
       body: Row(
         children: [
@@ -135,13 +133,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 disabled: context.watch<Model>().currentActor == null,
               ),
             ],
-            trailing: const Expanded(
+            trailing: Expanded(
               child: Padding(
-                padding: EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.only(bottom: 10),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Text('test'),
+                    Text('${context.read<Model>().packageInfo!.version}'
+                        '+${context.read<Model>().packageInfo!.buildNumber}'),
                   ],
                 ),
               ),
@@ -178,9 +177,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 Expanded(
                   child: CustomScrollView(
                     slivers: [
-                      SliverToBoxAdapter(child: _buildPrevNext()),
                       StreamBuilder(
-                        stream: context.watch<Model>().filter().watch(),
+                        stream: context.watch<Model>().filterSearch().watch(),
                         builder: (context, snapshot) {
                           if (!snapshot.hasData) {
                             return const SliverToBoxAdapter(
@@ -201,7 +199,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           );
                         },
                       ),
-                      SliverToBoxAdapter(child: _buildPrevNext()),
                       SliverToBoxAdapter(
                         child: SizedBox(
                             height: MediaQuery.paddingOf(context).bottom),
@@ -226,25 +223,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildPrevNext() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        TextButton.icon(
-          icon: const Icon(Icons.navigate_before),
-          label: const Text('prev'),
-          onPressed: () => context.read<Model>().prevSearch(),
-        ),
-        TextButton.icon(
-          iconAlignment: IconAlignment.end,
-          icon: const Icon(Icons.navigate_next),
-          label: const Text('next'),
-          onPressed: () => context.read<Model>().nextSearch(),
-        ),
-      ],
     );
   }
 

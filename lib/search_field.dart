@@ -52,16 +52,41 @@ class _SearchFieldState extends State<SearchField> {
           ],
         ),
         Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _dropdownYear(),
-            const SizedBox(width: 8),
-            _dropdownMonth(),
-            const SizedBox(width: 8),
-            _dropdownDay(),
+            _buttonPrev(),
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              _dropdownYear(),
+              const SizedBox(width: 8),
+              _dropdownMonth(),
+              const SizedBox(width: 8),
+              _dropdownDay(),
+            ]),
+            _buttonNext(),
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buttonPrev() {
+    return TextButton.icon(
+      icon: const Icon(Icons.navigate_before),
+      label: const Text('prev'),
+      onPressed: context.watch<Model>().canPrevSearch
+          ? () => context.read<Model>().prevSearch()
+          : null,
+    );
+  }
+
+  Widget _buttonNext() {
+    return TextButton.icon(
+      iconAlignment: IconAlignment.end,
+      icon: const Icon(Icons.navigate_next),
+      label: const Text('next'),
+      onPressed: context.watch<Model>().canNextSearch
+          ? () => context.read<Model>().nextSearch()
+          : null,
     );
   }
 

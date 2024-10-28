@@ -73,6 +73,9 @@ class Model extends ChangeNotifier {
   ActorModel? _currentActor;
   ActorModel? get currentActor => _currentActor;
 
+  DateTime? _lastSync;
+  String? _tailCursor;
+
   int? _searchYear;
   int? get searchYear => _searchYear;
   int? _searchMonth;
@@ -86,6 +89,14 @@ class Model extends ChangeNotifier {
   int get progress => _progress;
   String _progressMessage = '';
   String get progressMessage => _progressMessage;
+
+  final Map<int, int> _countByDate = {};
+  Map<int, int> get countByDate => _countByDate;
+
+  TreeNode? _rootTree;
+  TreeNode? get roorTree => _rootTree;
+  TreeNode? _archivesNode;
+  TreeNode? get archivesNode => _archivesNode;
 
   Future updateSharedPrefrences() async {
     final data = json.encode(toJson());
@@ -119,28 +130,86 @@ class Model extends ChangeNotifier {
         'actor': _currentActor?.toJson(),
       };
 
-  void setSearchYear(int? year) {
+  void setSearchYear(int? year) async {
     _searchYear = year;
     _searchMonth = null;
     _searchDay = null;
 
+    _canNextSearch = await getNextSearch();
+    _canPrevSearch = await getPrevSearch();
+
     notifyListeners();
   }
 
-  void setSearchMonth(int? month) {
+  void setSearchMonth(int? month) async {
     _searchMonth = month;
     _searchDay = null;
 
+    _canNextSearch = await getNextSearch();
+    _canPrevSearch = await getPrevSearch();
+
     notifyListeners();
   }
 
-  void setSearchDay(int? day) {
+  void setSearchDay(int? day) async {
     _searchDay = day;
 
+    _canNextSearch = await getNextSearch();
+    _canPrevSearch = await getPrevSearch();
+
     notifyListeners();
   }
 
-  void nextSearch() {
+  bool _canNextSearch = false;
+  bool get canNextSearch => _canNextSearch;
+  bool _canPrevSearch = false;
+  bool get canPrevSearch => _canPrevSearch;
+
+  Future<bool> getNextSearch() async {
+    if (_searchYear == null) {
+      return false;
+    }
+    final post = await (database.select(database.posts)
+          ..orderBy([
+            (t) => OrderingTerm(expression: t.indexed, mode: OrderingMode.desc)
+          ])
+          ..limit(1))
+        .getSingleOrNull();
+    if (post == null) {
+      return false;
+    }
+    if (_searchDay != null) {
+      return post.indexed
+          .isAfter(DateTime(_searchYear!, _searchMonth!, _searchDay!));
+    } else if (_searchMonth != null) {
+      return post.indexed.isAfter(DateTime(_searchYear!, _searchMonth!, 30));
+    }
+    return post.indexed.isAfter(DateTime(_searchYear!, 12, 31));
+  }
+
+  Future<bool> getPrevSearch() async {
+    if (_searchYear == null) {
+      return false;
+    }
+    final post = await (database.select(database.posts)
+          ..orderBy([
+            (t) => OrderingTerm(expression: t.indexed, mode: OrderingMode.asc)
+          ])
+          ..limit(1))
+        .getSingleOrNull();
+    if (post == null) {
+      return false;
+    }
+    if (_searchDay != null) {
+      return post.indexed
+          .isBefore(DateTime(_searchYear!, _searchMonth!, _searchDay!));
+    } else if (_searchMonth != null) {
+      return post.indexed.isBefore(DateTime(_searchYear!, _searchMonth!, 1));
+    }
+    return post.indexed.isBefore(DateTime(_searchYear!, 1, 1));
+  }
+
+  void nextSearch() async {
     if (_searchDay != null) {
       final next = DateTime(_searchYear!, _searchMonth!, _searchDay!)
           .add(const Duration(days: 1));
@@ -160,10 +229,13 @@ class Model extends ChangeNotifier {
       _searchYear = _searchYear! + 1;
     }
 
+    _canPrevSearch = await getPrevSearch();
+    _canNextSearch = await getNextSearch();
+
     notifyListeners();
   }
 
-  void prevSearch() {
+  void prevSearch() async {
     if (_searchDay != null) {
       final prev = DateTime(_searchYear!, _searchMonth!, _searchDay!)
           .subtract(const Duration(days: 1));
@@ -183,6 +255,9 @@ class Model extends ChangeNotifier {
       _searchYear = _searchYear! - 1;
     }
 
+    _canPrevSearch = await getPrevSearch();
+    _canNextSearch = await getNextSearch();
+
     notifyListeners();
   }
 
@@ -192,7 +267,7 @@ class Model extends ChangeNotifier {
     notifyListeners();
   }
 
-  SimpleSelectStatement filter() {
+  SimpleSelectStatement filterSearch() {
     final query = database.posts.select();
     if (_searchYear != null) {
       if (_searchMonth != null) {
@@ -221,9 +296,6 @@ class Model extends ChangeNotifier {
 
     return query;
   }
-
-  final Map<int, int> _countByDate = {};
-  Map<int, int> get countByDate => _countByDate;
 
   void countDatePosts() async {
     final count = database.posts.uri.count();
@@ -275,11 +347,6 @@ class Model extends ChangeNotifier {
         .reduce((value, element) => value > element ? value : element);
     return DateTime(last ~/ 10000, (last % 10000) ~/ 100, last % 100);
   }
-
-  TreeNode? _rootTree;
-  TreeNode? get roorTree => _rootTree;
-  TreeNode? _archivesNode;
-  TreeNode? get archivesNode => _archivesNode;
 
   void createMenuTree() {
     _rootTree = TreeNode();
@@ -371,19 +438,16 @@ class Model extends ChangeNotifier {
     }
   }
 
-  // blueskyサインアウト処理
   Future signout() async {
     if (_currentActor == null) {
       return;
     }
 
     try {
-      // セッションを削除
       await atproto.deleteSession(
         service: _currentActor!.service,
         refreshJwt: _currentActor!.session!.refreshJwt,
       );
-      // カレントなら削除
       if (_currentActor?.session?.did == _currentActor!.session!.did) {
         _currentActor = null;
       }
@@ -430,15 +494,10 @@ class Model extends ChangeNotifier {
     return bluesky.Bluesky.fromSession(actor.session!, service: actor.service);
   }
 
-  DateTime? _lastSync;
-  String? _tailCursor;
-
   Future syncFeed() async {
-    // _tailCursor 以前を取得
     do {
       _tailCursor = await getFeed(cursor: _tailCursor);
     } while (_tailCursor != null && _tailCursor!.isNotEmpty);
-    // 新しい野から取得
 
     countDatePosts();
 
