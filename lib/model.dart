@@ -203,7 +203,17 @@ class Model extends ChangeNotifier {
     notifyListeners();
   }
 
+  DateTime get focusedDay {
+    if (_searchDay != null) {
+      return DateTime(_searchYear!, _searchMonth!, _searchDay!);
+    }
+    return lastDay;
+  }
+
   DateTime get firstDay {
+    if (_countByDate.isEmpty) {
+      return DateTime.now();
+    }
     final first = _countByDate.keys
         .where((key) => key % 100 != 0)
         .reduce((value, element) => value < element ? value : element);
@@ -211,6 +221,9 @@ class Model extends ChangeNotifier {
   }
 
   DateTime get lastDay {
+    if (_countByDate.isEmpty) {
+      return DateTime.now();
+    }
     final last = _countByDate.keys
         .where((key) => key % 100 != 0)
         .reduce((value, element) => value > element ? value : element);

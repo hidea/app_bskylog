@@ -13,55 +13,33 @@ class SearchField extends StatefulWidget {
 class _SearchFieldState extends State<SearchField> {
   @override
   Widget build(BuildContext context) {
-    final textEditingController = TextEditingController();
-/*
-    return Material(
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: textEditingController,
-              decoration: InputDecoration(
-                border: const OutlineInputBorder(),
-                hintText: 'Enter a search term',
-                suffixIcon: textEditingController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () => textEditingController.clear(),
-                      )
-                    : null,
-              ),
-              onEditingComplete: () => context
-                  .read<Model>()
-                  .setSearchKeyword(textEditingController.text),
-            ),
-          ),
-          const Text('test'),
-        ],
-      ),
-    );
-*/
+    final textEditingController =
+        TextEditingController(text: context.watch<Model>().searchKeyword);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Row(
           children: [
             Expanded(
-              child: TextField(
-                controller: textEditingController,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  hintText: 'Enter a search term',
-                  suffixIcon: textEditingController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () => textEditingController.clear(),
-                        )
-                      : null,
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: TextField(
+                  controller: textEditingController,
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
+                    hintText: 'Enter a search term',
+                    hintStyle: const TextStyle(color: Colors.grey),
+                    suffixIcon: textEditingController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () => textEditingController.clear(),
+                          )
+                        : null,
+                  ),
+                  onSubmitted: (value) =>
+                      context.read<Model>().setSearchKeyword(value),
                 ),
-                onEditingComplete: () => context
-                    .read<Model>()
-                    .setSearchKeyword(textEditingController.text),
               ),
             ),
             IconButton(
@@ -70,6 +48,7 @@ class _SearchFieldState extends State<SearchField> {
                   .read<Model>()
                   .setSearchKeyword(textEditingController.text),
             ),
+            const SizedBox(width: 8),
           ],
         ),
         Row(

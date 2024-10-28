@@ -215,52 +215,62 @@ class _HomeScreenState extends State<HomeScreen> {
             width: 200,
             child: Column(
               children: [
-                TableCalendar(
-                  rowHeight: 30,
-                  //headerVisible: false,
-                  calendarFormat: CalendarFormat.month,
-                  availableCalendarFormats: const {
-                    CalendarFormat.month: 'Month'
-                  },
-                  calendarStyle: const CalendarStyle(
-                    cellMargin: EdgeInsets.zero,
-                    cellPadding: EdgeInsets.zero,
-                    weekendTextStyle: TextStyle(color: Colors.blue),
-                    holidayTextStyle: TextStyle(color: Colors.red),
-                    holidayDecoration: BoxDecoration(),
-                  ),
-                  calendarBuilders: CalendarBuilders(
-                    dowBuilder: (context, day) {
-                      final text = DateFormat.E().format(day);
-                      return Center(
-                        child: Text(
-                          text,
-                          style: const TextStyle(fontSize: 9),
-                        ),
-                      );
-                    },
-                    headerTitleBuilder: (context, day) {
-                      final text = DateFormat('y.M').format(day);
-                      return Center(
-                        child: Text(
-                          text,
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                      );
-                    },
-                  ),
-                  focusedDay: context.watch<Model>().lastDay,
-                  firstDay: context.watch<Model>().firstDay,
-                  lastDay: context.watch<Model>().lastDay,
-                  weekendDays: const [DateTime.saturday],
-                  holidayPredicate: (day) => day.weekday == DateTime.sunday,
-                ),
+                _buildCalendar(),
+                const SizedBox(height: 8),
                 _buildTree(),
+                //_buildHandles(),
+                //_buildHashTags(),
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildCalendar() {
+    return TableCalendar(
+      rowHeight: 30,
+      pageJumpingEnabled: true,
+      weekendDays: const [DateTime.saturday],
+      holidayPredicate: (day) => day.weekday == DateTime.sunday,
+      calendarFormat: CalendarFormat.month,
+      availableCalendarFormats: const {CalendarFormat.month: 'Month'},
+      calendarStyle: const CalendarStyle(
+        cellMargin: EdgeInsets.zero,
+        cellPadding: EdgeInsets.zero,
+        weekendTextStyle: TextStyle(color: Colors.blue),
+        holidayTextStyle: TextStyle(color: Colors.red),
+        holidayDecoration: BoxDecoration(),
+      ),
+      calendarBuilders: CalendarBuilders(
+        dowBuilder: (context, day) {
+          final text = DateFormat.E().format(day);
+          return Center(
+            child: Text(
+              text,
+              style: const TextStyle(fontSize: 9),
+            ),
+          );
+        },
+        headerTitleBuilder: (context, day) {
+          final text = DateFormat('y.M').format(day);
+          return Center(
+            child: Text(
+              text,
+              style: const TextStyle(fontSize: 16),
+            ),
+          );
+        },
+      ),
+      focusedDay: context.watch<Model>().focusedDay,
+      firstDay: context.watch<Model>().firstDay,
+      lastDay: context.watch<Model>().lastDay,
+      onDaySelected: (selectedDay, focusedDay) {
+        context.read<Model>().setSearchYear(selectedDay.year);
+        context.read<Model>().setSearchMonth(selectedDay.month);
+        context.read<Model>().setSearchDay(selectedDay.day);
+      },
     );
   }
 
