@@ -358,6 +358,10 @@ class Model extends ChangeNotifier {
     }
 
     if (!actor.isSessionValid()) {
+      if (kDebugMode) {
+        print('refresh session');
+      }
+
       final newSession = await atproto.refreshSession(
         service: actor.service,
         refreshJwt: actor.session!.refreshJwt,
@@ -389,6 +393,19 @@ class Model extends ChangeNotifier {
       _tailCursor = await getFeed(cursor: _tailCursor);
     } while (_tailCursor != null && _tailCursor!.isNotEmpty);
     // 新しい野から取得
+
+    countDatePosts();
+
+    notifyListeners();
+  }
+
+  Future clearFeed() async {
+    await database.delete(database.posts).go();
+
+    _rootTree!.clear();
+    _rootTree = null;
+
+    notifyListeners();
   }
 
   Future<String?> getFeed({String? cursor}) async {
@@ -400,6 +417,8 @@ class Model extends ChangeNotifier {
     final accessJwt = _currentActor!.session!.accessJwt;
 
     try {
+      await getBluesky(_currentActor!);
+
       final response = await xrpc.query<String>(
         methodId,
         service: service,
@@ -412,10 +431,14 @@ class Model extends ChangeNotifier {
       );
 
       final status = response.status;
+      if (status.code != 200) {
+        throw Exception(status.message);
+      }
 
       if (kDebugMode) {
         print('code:${status.code} message:${status.message}');
         print(response.request.toString());
+        //print(response.data);
       }
 
       final feedData = bluesky.Feed.fromJson(jsonDecode(response.data));
@@ -430,16 +453,18 @@ class Model extends ChangeNotifier {
       }
       for (var feedView in feedData.feed) {
         final post = feedView.post;
+        final repost = feedView.post.viewer.repost;
+
         await database.into(database.posts).insert(
               PostsCompanion.insert(
-                uri: post.uri.toString(),
+                uri: repost != null ? repost.toString() : post.uri.toString(),
                 authorDid: post.author.did,
-                indexed: post.indexedAt,
-                replyDid: '',
-                havEmbedImages: false,
-                havEmbedExternal: false,
-                havEmbedRecord: false,
-                reasonRepost: false,
+                indexed: getFeedIndexed(feedView),
+                replyDid: getFeedReplyDid(feedView),
+                havEmbedImages: post.embed is bluesky.UEmbedViewImages,
+                havEmbedExternal: post.embed is bluesky.UEmbedViewExternal,
+                havEmbedRecord: post.embed is bluesky.UEmbedViewRecord,
+                reasonRepost: repost != null,
                 post: jsonEncode(feedView.toJson()),
               ),
             );
@@ -459,5 +484,21 @@ class Model extends ChangeNotifier {
     }
 
     return cursor;
+  }
+
+  DateTime getFeedIndexed(bluesky.FeedView feedView) {
+    final reason = feedView.reason;
+    if (reason != null && reason is bluesky.ReasonRepost) {
+      return (reason as bluesky.ReasonRepost).indexedAt;
+    }
+    return feedView.post.indexedAt;
+  }
+
+  String getFeedReplyDid(bluesky.FeedView feedView) {
+    final reply = feedView.reply;
+    if (reply != null && reply.parent is bluesky.UReplyPostRecord) {
+      return (reply.parent as bluesky.UReplyPostRecord).data.author.did;
+    }
+    return '';
   }
 }

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:animated_tree_view/animated_tree_view.dart';
 import 'package:flutter/material.dart';
@@ -6,8 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:window_manager/window_manager.dart';
 import 'package:bluesky/bluesky.dart' as bluesky;
+import 'package:window_manager/window_manager.dart';
 
 import 'database.dart';
 import 'define.dart';
@@ -20,18 +21,20 @@ import 'utils.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await windowManager.ensureInitialized();
-  const windowOptions = WindowOptions(
-    minimumSize: Size(800, 600),
-    backgroundColor: Colors.white,
-    skipTaskbar: false,
-    titleBarStyle: TitleBarStyle.normal,
-    title: Define.title,
-  );
-  windowManager.waitUntilReadyToShow(windowOptions, () async {
-    await windowManager.show();
-    await windowManager.focus();
-  });
+  if (Platform.isMacOS || Platform.isLinux || Platform.isWindows) {
+    await windowManager.ensureInitialized();
+    const windowOptions = WindowOptions(
+      minimumSize: Size(800, 600),
+      backgroundColor: Colors.white,
+      skipTaskbar: false,
+      titleBarStyle: TitleBarStyle.normal,
+      title: Define.title,
+    );
+    windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.show();
+      await windowManager.focus();
+    });
+  }
 
   final database = AppDatabase();
 
@@ -89,11 +92,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  @override
-  void initState() {
-    super.initState();
-  }
-
   void _syncFeed() async {
     context.read<Model>().syncFeed();
   }
@@ -159,7 +157,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ok: const Text('Delete'),
                     content: const Text('Are you sure trancate all log ?'),
                     onOk: () {
-                      database.delete(database.posts).go();
+                      context.read<Model>().clearFeed();
                     },
                   );
                   break;
@@ -278,6 +276,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (context.watch<Model>().roorTree == null) {
       return const Center(child: CircularProgressIndicator());
     }
+
     return Expanded(
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -289,7 +288,10 @@ class _HomeScreenState extends State<HomeScreen> {
               expansionBehavior: ExpansionBehavior.collapseOthers,
               tree: context.watch<Model>().roorTree!,
               onTreeReady: (controller) {
-                controller.expandNode(context.read<Model>().archivesNode!);
+                final archivesNode = context.read<Model>().archivesNode;
+                if (archivesNode != null) {
+                  controller.expandNode(archivesNode);
+                }
               },
               builder: (context, node) {
                 return ListTile(
