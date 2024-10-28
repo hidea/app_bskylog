@@ -178,6 +178,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Expanded(
                   child: CustomScrollView(
                     slivers: [
+                      SliverToBoxAdapter(child: _buildPrevNext()),
                       StreamBuilder(
                         stream: context.watch<Model>().filter().watch(),
                         builder: (context, snapshot) {
@@ -200,6 +201,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           );
                         },
                       ),
+                      SliverToBoxAdapter(child: _buildPrevNext()),
                       SliverToBoxAdapter(
                         child: SizedBox(
                             height: MediaQuery.paddingOf(context).bottom),
@@ -224,6 +226,25 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPrevNext() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        TextButton.icon(
+          icon: const Icon(Icons.navigate_before),
+          label: const Text('prev'),
+          onPressed: () => context.read<Model>().prevSearch(),
+        ),
+        TextButton.icon(
+          iconAlignment: IconAlignment.end,
+          icon: const Icon(Icons.navigate_next),
+          label: const Text('next'),
+          onPressed: () => context.read<Model>().nextSearch(),
+        ),
+      ],
     );
   }
 

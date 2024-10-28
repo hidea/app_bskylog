@@ -140,6 +140,52 @@ class Model extends ChangeNotifier {
     notifyListeners();
   }
 
+  void nextSearch() {
+    if (_searchDay != null) {
+      final next = DateTime(_searchYear!, _searchMonth!, _searchDay!)
+          .add(const Duration(days: 1));
+      _searchYear = next.year;
+      _searchMonth = next.month;
+      _searchDay = next.day;
+    } else if (_searchMonth != null) {
+      if (_searchMonth! < 12) {
+        _searchMonth = _searchMonth! + 1;
+      } else {
+        _searchMonth = 1;
+        if (_searchYear != null) {
+          _searchYear = _searchYear! + 1;
+        }
+      }
+    } else if (_searchYear != null) {
+      _searchYear = _searchYear! + 1;
+    }
+
+    notifyListeners();
+  }
+
+  void prevSearch() {
+    if (_searchDay != null) {
+      final prev = DateTime(_searchYear!, _searchMonth!, _searchDay!)
+          .subtract(const Duration(days: 1));
+      _searchYear = prev.year;
+      _searchMonth = prev.month;
+      _searchDay = prev.day;
+    } else if (_searchMonth != null) {
+      if (_searchMonth! > 1) {
+        _searchMonth = _searchMonth! - 1;
+      } else {
+        _searchMonth = 12;
+        if (_searchYear != null) {
+          _searchYear = _searchYear! - 1;
+        }
+      }
+    } else if (_searchYear != null) {
+      _searchYear = _searchYear! - 1;
+    }
+
+    notifyListeners();
+  }
+
   void setSearchKeyword(String keyword) {
     _searchKeyword = keyword;
 
