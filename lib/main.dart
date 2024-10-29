@@ -18,10 +18,12 @@ import 'search_field.dart';
 import 'signin_screen.dart';
 import 'utils.dart';
 
+final isDesktop = (Platform.isMacOS || Platform.isLinux || Platform.isWindows);
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  if (Platform.isMacOS || Platform.isLinux || Platform.isWindows) {
+  if (isDesktop) {
     await windowManager.ensureInitialized();
     const windowOptions = WindowOptions(
       minimumSize: Size(800, 600),
@@ -102,6 +104,12 @@ class _HomeScreenState extends State<HomeScreen> {
     final safePadding = MediaQuery.of(context).padding;
 
     return Scaffold(
+      appBar: isDesktop
+          ? null
+          : AppBar(
+              title: const Text(Define.title),
+              toolbarHeight: 36,
+            ),
       body: Row(
         children: [
           NavigationRail(

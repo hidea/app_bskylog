@@ -13,20 +13,44 @@ class EmbedImagesWidget extends StatefulWidget {
 class _EmbedImagesWidgettState extends State<EmbedImagesWidget> {
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        for (final image in widget.embed.images)
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: Image.network(
-              image.fullsize,
-              width: 100,
-              height: 100,
-              fit: BoxFit.cover,
+    return SizedBox(
+      width: 360,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          for (final image in widget.embed.images)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  child: Image.network(
+                    image.fullsize,
+                    height: 150,
+                    fit: BoxFit.cover,
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => Scaffold(
+                          appBar: AppBar(
+                            title: Text('image'),
+                          ),
+                          body: Center(
+                            child: Image.network(
+                              image.fullsize,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }

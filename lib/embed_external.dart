@@ -16,7 +16,7 @@ class _EmbedExternalWidgetState extends State<EmbedExternalWidget> {
     return Card(
       clipBehavior: Clip.antiAliasWithSaveLayer,
       child: SizedBox(
-        width: 400,
+        width: 360,
         child: Column(
           children: [
             if (widget.embed.external.thumbnail != null)
