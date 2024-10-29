@@ -87,7 +87,7 @@ class _FeedCardState extends State<FeedCard> {
                     TextButton(
                       style: TextButton.styleFrom(padding: EdgeInsets.zero),
                       child: Text(DateFormat('H:mm yyyy-MM-dd')
-                          .format(feedView.post.indexedAt)),
+                          .format(feedView.post.indexedAt.toLocal())),
                       onPressed: () => launchUrlPlus(postUrl),
                     ),
                   ],

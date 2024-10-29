@@ -2,6 +2,8 @@ enum VisibleMode { show, hide, only, disable }
 
 enum VisibleType { reply, repost, linkcard, image, video }
 
+enum SortOrder { asc, desc }
+
 class Define {
   static const title = 'bskylog';
 

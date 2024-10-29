@@ -99,6 +99,9 @@ class Model extends ChangeNotifier {
     VisibleType.video: VisibleMode.show,
   };
 
+  SortOrder _sortOrder = SortOrder.desc;
+  SortOrder get sortOrder => _sortOrder;
+
   int _progress = 0;
   int get progress => _progress;
   String _progressMessage = '';
@@ -131,6 +134,16 @@ class Model extends ChangeNotifier {
   }
 
   void fromJson(Map json) {
+    for (final type in VisibleType.values) {
+      if (json['visible.${type.name}'] != null) {
+        _visible[type] = VisibleMode.values.firstWhere(
+            (element) => element.name == json['visible.${type.name}']);
+      }
+    }
+    if (json['sortOrder'] != null) {
+      _sortOrder = SortOrder.values
+          .firstWhere((element) => element.toString() == json['sortOrder']);
+    }
     if (json['actor'] != null) {
       _currentActor = ActorModel.fromJson(json['actor']);
     }
@@ -138,7 +151,19 @@ class Model extends ChangeNotifier {
     notifyListeners();
   }
 
+  Map visibleToJson() {
+    Map json = {};
+    for (final type in VisibleType.values) {
+      if (_visible[type] != null) {
+        json['visible.${type.name}'] = _visible[type]!.name;
+      }
+    }
+    return json;
+  }
+
   Map toJson() => {
+        ...visibleToJson(),
+        'sortOrder': _sortOrder.toString(),
         'actor': _currentActor?.toJson(),
       };
 
@@ -160,6 +185,14 @@ class Model extends ChangeNotifier {
       }
     }
 
+    updateSharedPrefrences();
+    notifyListeners();
+  }
+
+  void setSortOrder(SortOrder order) {
+    _sortOrder = order;
+
+    updateSharedPrefrences();
     notifyListeners();
   }
 
@@ -302,20 +335,19 @@ class Model extends ChangeNotifier {
       if (_searchMonth != null) {
         if (_searchDay != null) {
           query.where((tbl) => tbl.indexed.isBetweenValues(
-                DateTime.utc(_searchYear!, _searchMonth!, _searchDay!),
-                DateTime.utc(
-                    _searchYear!, _searchMonth!, _searchDay!, 23, 59, 59),
+                DateTime(_searchYear!, _searchMonth!, _searchDay!),
+                DateTime(_searchYear!, _searchMonth!, _searchDay!, 23, 59, 59),
               ));
         } else {
           query.where((tbl) => tbl.indexed.isBetweenValues(
-                DateTime.utc(_searchYear!, _searchMonth!, 1),
-                DateTime.utc(_searchYear!, _searchMonth! + 1, 0, 23, 59, 59),
+                DateTime(_searchYear!, _searchMonth!, 1),
+                DateTime(_searchYear!, _searchMonth! + 1, 0, 23, 59, 59),
               ));
         }
       } else {
         query.where((tbl) => tbl.indexed.isBetweenValues(
-              DateTime.utc(_searchYear!, 1, 1),
-              DateTime.utc(_searchYear!, 12, 31, 23, 59, 59),
+              DateTime(_searchYear!, 1, 1),
+              DateTime(_searchYear!, 12, 31, 23, 59, 59),
             ));
       }
     }
@@ -370,7 +402,14 @@ class Model extends ChangeNotifier {
       }
     }
 
-    return query;
+    return query
+      ..orderBy([
+        (t) => OrderingTerm(
+            expression: t.indexed,
+            mode: _sortOrder == SortOrder.asc
+                ? OrderingMode.asc
+                : OrderingMode.desc)
+      ]);
   }
 
   void countDatePosts() async {

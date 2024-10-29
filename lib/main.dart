@@ -224,6 +224,21 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 8),
+                Text('Sort'),
+                ToggleButtons(
+                  constraints: BoxConstraints.expand(width: 92, height: 30),
+                  borderRadius: BorderRadius.circular(20),
+                  isSelected: [
+                    context.watch<Model>().sortOrder == SortOrder.desc,
+                    context.watch<Model>().sortOrder == SortOrder.asc
+                  ],
+                  onPressed: (int index) {
+                    context.read<Model>().setSortOrder(
+                        index == 0 ? SortOrder.desc : SortOrder.asc);
+                  },
+                  children: const [Text('Latest'), Text('Oldest')],
+                ),
+                const SizedBox(height: 8),
                 Text('Visible'),
                 for (final type in VisibleType.values)
                   Padding(
