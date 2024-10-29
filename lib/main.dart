@@ -220,9 +220,27 @@ class _HomeScreenState extends State<HomeScreen> {
           SizedBox(
             width: 200,
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const SizedBox(height: 8),
+                Text('Visible'),
+                for (final type in VisibleType.values)
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 4),
+                    child: _buildToggleButton(
+                      label: type.name,
+                      mode: context.watch<Model>().visible(type),
+                      onChanged: (mode) {
+                        context.read<Model>().setVisible(type, mode);
+                      },
+                    ),
+                  ),
+                const SizedBox(height: 8),
+                Text('Calendar'),
                 _buildCalendar(),
                 const SizedBox(height: 8),
+                Text('Archives'),
                 _buildTree(),
                 //_buildHandles(),
                 //_buildHashTags(),
@@ -231,6 +249,65 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildToggleButton({
+    required String label,
+    required VisibleMode mode,
+    required Function(VisibleMode) onChanged,
+  }) {
+    final color = mode == VisibleMode.disable ? Colors.grey : null;
+    final selectedColor = mode == VisibleMode.disable
+        ? Colors.grey
+        : mode == VisibleMode.show
+            ? Colors.green
+            : mode == VisibleMode.hide
+                ? Colors.red
+                : Colors.blue;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return ToggleButtons(
+          constraints: BoxConstraints.expand(
+              width: (constraints.maxWidth - 16) / 2, height: 30),
+          borderRadius: BorderRadius.circular(20),
+          isSelected: [
+            mode != VisibleMode.only && mode != VisibleMode.disable,
+            mode == VisibleMode.only
+          ],
+          color: color,
+          borderColor: color?.shade300,
+          selectedColor: selectedColor,
+          selectedBorderColor: selectedColor.shade300,
+          fillColor: selectedColor.shade100,
+          onPressed: (int index) {
+            if (index == 0) {
+              onChanged(mode == VisibleMode.show
+                  ? VisibleMode.hide
+                  : VisibleMode.show);
+            } else {
+              onChanged(VisibleMode.only);
+            }
+          },
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (mode == VisibleMode.show) Icon(Icons.check, size: 14),
+                if (mode == VisibleMode.hide) Icon(Icons.close, size: 14),
+                if (mode == VisibleMode.show || mode == VisibleMode.hide)
+                  SizedBox(width: 4),
+                Text(label),
+              ],
+            ),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+              child: Text('only'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -295,23 +372,17 @@ class _HomeScreenState extends State<HomeScreen> {
               showRootNode: false,
               expansionBehavior: ExpansionBehavior.collapseOthers,
               tree: context.watch<Model>().roorTree!,
-              onTreeReady: (controller) {
-                final archivesNode = context.read<Model>().archivesNode;
-                if (archivesNode != null) {
-                  controller.expandNode(archivesNode);
-                }
-              },
               builder: (context, node) {
                 return ListTile(
                   dense: true,
                   visualDensity: const VisualDensity(vertical: -4.0),
                   title: Text(node.key),
                   onTap: () {
-                    if (node.level > 1) {
+                    if (node.level > 0) {
                       if (node.data is DateTime) {
                         final date = node.data as DateTime;
                         context.read<Model>().setSearchYear(date.year);
-                        if (node.level > 2) {
+                        if (node.level > 1) {
                           context.read<Model>().setSearchMonth(date.month);
                         }
                       }

@@ -1,3 +1,7 @@
+enum VisibleMode { show, hide, only, disable }
+
+enum VisibleType { reply, repost, linkcard, image, video }
+
 class Define {
   static const title = 'bskylog';
 

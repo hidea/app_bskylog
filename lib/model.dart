@@ -12,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xrpc/xrpc.dart' as xrpc;
 
 import 'database.dart';
+import 'define.dart';
 
 class ActorModel {
   final String service;
@@ -85,6 +86,19 @@ class Model extends ChangeNotifier {
   String? _searchKeyword;
   String? get searchKeyword => _searchKeyword;
 
+  bool _canNextSearch = false;
+  bool get canNextSearch => _canNextSearch;
+  bool _canPrevSearch = false;
+  bool get canPrevSearch => _canPrevSearch;
+
+  final Map<VisibleType, VisibleMode> _visible = {
+    VisibleType.reply: VisibleMode.show,
+    VisibleType.repost: VisibleMode.show,
+    VisibleType.linkcard: VisibleMode.show,
+    VisibleType.image: VisibleMode.show,
+    VisibleType.video: VisibleMode.show,
+  };
+
   int _progress = 0;
   int get progress => _progress;
   String _progressMessage = '';
@@ -95,8 +109,6 @@ class Model extends ChangeNotifier {
 
   TreeNode? _rootTree;
   TreeNode? get roorTree => _rootTree;
-  TreeNode? _archivesNode;
-  TreeNode? get archivesNode => _archivesNode;
 
   Future updateSharedPrefrences() async {
     final data = json.encode(toJson());
@@ -130,6 +142,27 @@ class Model extends ChangeNotifier {
         'actor': _currentActor?.toJson(),
       };
 
+  VisibleMode visible(VisibleType type) {
+    if (_visible.values.contains(VisibleMode.only)) {
+      return _visible[type] == VisibleMode.only
+          ? VisibleMode.only
+          : VisibleMode.disable;
+    }
+    return _visible[type] ?? VisibleMode.show;
+  }
+
+  void setVisible(VisibleType type, VisibleMode mode) {
+    _visible[type] = mode;
+
+    for (final key in _visible.keys) {
+      if (key != type && _visible[key] == VisibleMode.only) {
+        _visible[key] = VisibleMode.show;
+      }
+    }
+
+    notifyListeners();
+  }
+
   void setSearchYear(int? year) async {
     _searchYear = year;
     _searchMonth = null;
@@ -159,11 +192,6 @@ class Model extends ChangeNotifier {
 
     notifyListeners();
   }
-
-  bool _canNextSearch = false;
-  bool get canNextSearch => _canNextSearch;
-  bool _canPrevSearch = false;
-  bool get canPrevSearch => _canPrevSearch;
 
   Future<bool> getNextSearch() async {
     if (_searchYear == null) {
@@ -269,6 +297,7 @@ class Model extends ChangeNotifier {
 
   SimpleSelectStatement filterSearch() {
     final query = database.posts.select();
+
     if (_searchYear != null) {
       if (_searchMonth != null) {
         if (_searchDay != null) {
@@ -290,8 +319,55 @@ class Model extends ChangeNotifier {
             ));
       }
     }
+
     if (_searchKeyword != null) {
       query.where((tbl) => tbl.post.like('%$_searchKeyword%'));
+    }
+
+    if (_visible.values.contains(VisibleMode.only)) {
+      for (var MapEntry(key: key, value: value) in _visible.entries) {
+        if (value == VisibleMode.only) {
+          switch (key) {
+            case VisibleType.reply:
+              query.where((tbl) => tbl.replyDid.length.isBiggerThanValue(0));
+              break;
+            case VisibleType.repost:
+              query.where((tbl) => tbl.reasonRepost.equals(true));
+              break;
+            case VisibleType.linkcard:
+              query.where((tbl) => tbl.havEmbedExternal.equals(true));
+              break;
+            case VisibleType.image:
+              query.where((tbl) => tbl.havEmbedImages.equals(true));
+              break;
+            case VisibleType.video:
+              query.where((tbl) => tbl.havEmbedRecord.equals(true));
+              break;
+          }
+        }
+      }
+    } else {
+      for (var MapEntry(key: key, value: value) in _visible.entries) {
+        if (value == VisibleMode.hide) {
+          switch (key) {
+            case VisibleType.reply:
+              query.where((tbl) => tbl.replyDid.equals(''));
+              break;
+            case VisibleType.repost:
+              query.where((tbl) => tbl.reasonRepost.equals(false));
+              break;
+            case VisibleType.linkcard:
+              query.where((tbl) => tbl.havEmbedExternal.equals(false));
+              break;
+            case VisibleType.image:
+              query.where((tbl) => tbl.havEmbedImages.equals(false));
+              break;
+            case VisibleType.video:
+              query.where((tbl) => tbl.havEmbedRecord.equals(false));
+              break;
+          }
+        }
+      }
     }
 
     return query;
@@ -325,6 +401,15 @@ class Model extends ChangeNotifier {
     if (_searchDay != null) {
       return DateTime(_searchYear!, _searchMonth!, _searchDay!);
     }
+    final first = firstDay;
+    if (_searchMonth != null) {
+      final focused = DateTime(_searchYear!, _searchMonth!);
+      return first.isAfter(focused) ? first : focused;
+    }
+    if (_searchYear != null) {
+      final focused = DateTime(_searchYear!);
+      return first.isAfter(focused) ? first : focused;
+    }
     return lastDay;
   }
 
@@ -351,9 +436,6 @@ class Model extends ChangeNotifier {
   void createMenuTree() {
     _rootTree = TreeNode();
 
-    _archivesNode = TreeNode(key: 'Archives');
-    _rootTree!.add(_archivesNode!);
-
     final yearNodes = <int, TreeNode<dynamic>>{};
 
     for (final date in _countByDate.keys) {
@@ -367,7 +449,7 @@ class Model extends ChangeNotifier {
       final yearNode = yearNodes.putIfAbsent(year, () {
         final count = _countByDate[year * 10000];
         final node = TreeNode(key: '$year ($count)', data: DateTime(year));
-        _archivesNode!.add(node);
+        _rootTree!.add(node);
         return node;
       });
 

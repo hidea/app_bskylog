@@ -55,13 +55,7 @@ class _SearchFieldState extends State<SearchField> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _buttonPrev(),
-            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              _dropdownYear(),
-              const SizedBox(width: 8),
-              _dropdownMonth(),
-              const SizedBox(width: 8),
-              _dropdownDay(),
-            ]),
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: []),
             _buttonNext(),
           ],
         ),
