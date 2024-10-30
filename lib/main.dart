@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:animated_tree_view/animated_tree_view.dart';
+import 'package:bskylog/rotation_icon.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -94,8 +97,17 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  void _syncFeed() async {
-    context.read<Model>().syncFeed();
+  bool isSyncing = false;
+
+  void _syncFeed() {
+    setState(() {
+      isSyncing = true;
+    });
+    context.read<Model>().syncFeed().then((_) {
+      setState(() {
+        isSyncing = false;
+      });
+    });
   }
 
   @override
@@ -120,25 +132,32 @@ class _HomeScreenState extends State<HomeScreen> {
                 : NavigationRailLabelType.none,
             destinations: [
               NavigationRailDestination(
-                icon: const Icon(Icons.sync),
+                icon: RotationIcon(
+                  icon: Icons.sync,
+                  syncing: isSyncing,
+                ),
                 label: const Text('Log Sync'),
                 padding: EdgeInsets.only(top: safePadding.top),
-                disabled: context.watch<Model>().currentActor == null,
+                disabled:
+                    isSyncing || context.watch<Model>().currentActor == null,
               ),
               NavigationRailDestination(
                 icon: const Icon(Icons.delete_forever),
                 label: const Text('Log Clear'),
-                disabled: context.watch<Model>().currentActor == null,
+                disabled:
+                    isSyncing || context.watch<Model>().currentActor == null,
               ),
               NavigationRailDestination(
                 icon: const Icon(Icons.login),
                 label: const Text('Sign In'),
-                disabled: context.watch<Model>().currentActor != null,
+                disabled:
+                    isSyncing || context.watch<Model>().currentActor != null,
               ),
               NavigationRailDestination(
                 icon: const Icon(Icons.logout),
                 label: const Text('Sign Out'),
-                disabled: context.watch<Model>().currentActor == null,
+                disabled:
+                    isSyncing || context.watch<Model>().currentActor == null,
               ),
             ],
             trailing: Expanded(
@@ -225,32 +244,10 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 const SizedBox(height: 8),
                 Text('Sort'),
-                ToggleButtons(
-                  constraints: BoxConstraints.expand(width: 92, height: 30),
-                  borderRadius: BorderRadius.circular(20),
-                  isSelected: [
-                    context.watch<Model>().sortOrder == SortOrder.desc,
-                    context.watch<Model>().sortOrder == SortOrder.asc
-                  ],
-                  onPressed: (int index) {
-                    context.read<Model>().setSortOrder(
-                        index == 0 ? SortOrder.desc : SortOrder.asc);
-                  },
-                  children: const [Text('Latest'), Text('Oldest')],
-                ),
+                _buildSort(),
                 const SizedBox(height: 8),
                 Text('Visible'),
-                for (final type in VisibleType.values)
-                  Padding(
-                    padding: EdgeInsets.symmetric(vertical: 4),
-                    child: _buildToggleButton(
-                      label: type.name,
-                      mode: context.watch<Model>().visible(type),
-                      onChanged: (mode) {
-                        context.read<Model>().setVisible(type, mode);
-                      },
-                    ),
-                  ),
+                _buildVisible(),
                 const SizedBox(height: 8),
                 Text('Calendar'),
                 _buildCalendar(),
@@ -264,6 +261,41 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSort() {
+    return ToggleButtons(
+      constraints: BoxConstraints.expand(width: 92, height: 30),
+      borderRadius: BorderRadius.circular(20),
+      isSelected: [
+        context.watch<Model>().sortOrder == SortOrder.desc,
+        context.watch<Model>().sortOrder == SortOrder.asc
+      ],
+      onPressed: (int index) {
+        context
+            .read<Model>()
+            .setSortOrder(index == 0 ? SortOrder.desc : SortOrder.asc);
+      },
+      children: const [Text('Latest'), Text('Oldest')],
+    );
+  }
+
+  Widget _buildVisible() {
+    return Column(
+      children: [
+        for (final type in VisibleType.values)
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 4),
+            child: _buildToggleButton(
+              label: type.name,
+              mode: context.watch<Model>().visible(type),
+              onChanged: (mode) {
+                context.read<Model>().setVisible(type, mode);
+              },
+            ),
+          ),
+      ],
     );
   }
 

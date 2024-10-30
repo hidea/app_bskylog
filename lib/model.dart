@@ -616,9 +616,35 @@ class Model extends ChangeNotifier {
   }
 
   Future syncFeed() async {
+    // sync old posts
+    if (kDebugMode) {
+      print('syncFeed history start');
+    }
+    if (_tailCursor == null) {
+      _lastSync = DateTime.now();
+    }
     do {
       _tailCursor = await getFeed(cursor: _tailCursor);
     } while (_tailCursor != null && _tailCursor!.isNotEmpty);
+
+    // sync new posts
+    if (kDebugMode) {
+      print('syncFeed newpost start');
+    }
+    String? cursor;
+    do {
+      cursor = await getFeed(cursor: cursor);
+
+      if (cursor != null &&
+          cursor.isNotEmpty &&
+          DateTime.parse(cursor).isBefore(_lastSync!)) {
+        break;
+      }
+    } while (cursor != null && cursor.isNotEmpty);
+
+    if (kDebugMode) {
+      print('syncFeed count');
+    }
 
     countDatePosts();
 
@@ -674,9 +700,6 @@ class Model extends ChangeNotifier {
         print('feeds:${feedData.feed.length} cursor:$cursor');
       }
 
-      if (kDebugMode) {
-        print(feedData.feed.length);
-      }
       for (var feedView in feedData.feed) {
         final post = feedView.post;
         final repost = feedView.post.viewer.repost;
@@ -693,6 +716,7 @@ class Model extends ChangeNotifier {
                 reasonRepost: repost != null,
                 post: jsonEncode(feedView.toJson()),
               ),
+              mode: InsertMode.insertOrIgnore,
             );
       }
     } on xrpc.XRPCException catch (e) {

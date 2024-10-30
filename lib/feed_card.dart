@@ -35,7 +35,6 @@ class _FeedCardState extends State<FeedCard> {
       mainAxisAlignment: MainAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // repost icon + あなたのリポスト
         if (feed.reasonRepost)
           const Row(
             children: [

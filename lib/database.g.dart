@@ -8,6 +8,15 @@ class $PostsTable extends Posts with TableInfo<$PostsTable, Post> {
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   $PostsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
   static const VerificationMeta _uriMeta = const VerificationMeta('uri');
   @override
   late final GeneratedColumn<String> uri = GeneratedColumn<String>(
@@ -76,6 +85,7 @@ class $PostsTable extends Posts with TableInfo<$PostsTable, Post> {
       type: DriftSqlType.string, requiredDuringInsert: true);
   @override
   List<GeneratedColumn> get $columns => [
+        id,
         uri,
         authorDid,
         indexed,
@@ -96,6 +106,9 @@ class $PostsTable extends Posts with TableInfo<$PostsTable, Post> {
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
     if (data.containsKey('uri')) {
       context.handle(
           _uriMeta, uri.isAcceptableOrUnknown(data['uri']!, _uriMeta));
@@ -162,11 +175,13 @@ class $PostsTable extends Posts with TableInfo<$PostsTable, Post> {
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => const {};
+  Set<GeneratedColumn> get $primaryKey => {id};
   @override
   Post map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Post(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       uri: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}uri'])!,
       authorDid: attachedDatabase.typeMapping
@@ -195,6 +210,7 @@ class $PostsTable extends Posts with TableInfo<$PostsTable, Post> {
 }
 
 class Post extends DataClass implements Insertable<Post> {
+  final int id;
   final String uri;
   final String authorDid;
   final DateTime indexed;
@@ -205,7 +221,8 @@ class Post extends DataClass implements Insertable<Post> {
   final bool reasonRepost;
   final String post;
   const Post(
-      {required this.uri,
+      {required this.id,
+      required this.uri,
       required this.authorDid,
       required this.indexed,
       required this.replyDid,
@@ -217,6 +234,7 @@ class Post extends DataClass implements Insertable<Post> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
     map['uri'] = Variable<String>(uri);
     map['author_did'] = Variable<String>(authorDid);
     map['indexed'] = Variable<DateTime>(indexed);
@@ -231,6 +249,7 @@ class Post extends DataClass implements Insertable<Post> {
 
   PostsCompanion toCompanion(bool nullToAbsent) {
     return PostsCompanion(
+      id: Value(id),
       uri: Value(uri),
       authorDid: Value(authorDid),
       indexed: Value(indexed),
@@ -247,6 +266,7 @@ class Post extends DataClass implements Insertable<Post> {
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Post(
+      id: serializer.fromJson<int>(json['id']),
       uri: serializer.fromJson<String>(json['uri']),
       authorDid: serializer.fromJson<String>(json['authorDid']),
       indexed: serializer.fromJson<DateTime>(json['indexed']),
@@ -262,6 +282,7 @@ class Post extends DataClass implements Insertable<Post> {
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
       'uri': serializer.toJson<String>(uri),
       'authorDid': serializer.toJson<String>(authorDid),
       'indexed': serializer.toJson<DateTime>(indexed),
@@ -275,7 +296,8 @@ class Post extends DataClass implements Insertable<Post> {
   }
 
   Post copyWith(
-          {String? uri,
+          {int? id,
+          String? uri,
           String? authorDid,
           DateTime? indexed,
           String? replyDid,
@@ -285,6 +307,7 @@ class Post extends DataClass implements Insertable<Post> {
           bool? reasonRepost,
           String? post}) =>
       Post(
+        id: id ?? this.id,
         uri: uri ?? this.uri,
         authorDid: authorDid ?? this.authorDid,
         indexed: indexed ?? this.indexed,
@@ -297,6 +320,7 @@ class Post extends DataClass implements Insertable<Post> {
       );
   Post copyWithCompanion(PostsCompanion data) {
     return Post(
+      id: data.id.present ? data.id.value : this.id,
       uri: data.uri.present ? data.uri.value : this.uri,
       authorDid: data.authorDid.present ? data.authorDid.value : this.authorDid,
       indexed: data.indexed.present ? data.indexed.value : this.indexed,
@@ -320,6 +344,7 @@ class Post extends DataClass implements Insertable<Post> {
   @override
   String toString() {
     return (StringBuffer('Post(')
+          ..write('id: $id, ')
           ..write('uri: $uri, ')
           ..write('authorDid: $authorDid, ')
           ..write('indexed: $indexed, ')
@@ -334,12 +359,13 @@ class Post extends DataClass implements Insertable<Post> {
   }
 
   @override
-  int get hashCode => Object.hash(uri, authorDid, indexed, replyDid,
+  int get hashCode => Object.hash(id, uri, authorDid, indexed, replyDid,
       havEmbedImages, havEmbedExternal, havEmbedRecord, reasonRepost, post);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Post &&
+          other.id == this.id &&
           other.uri == this.uri &&
           other.authorDid == this.authorDid &&
           other.indexed == this.indexed &&
@@ -352,6 +378,7 @@ class Post extends DataClass implements Insertable<Post> {
 }
 
 class PostsCompanion extends UpdateCompanion<Post> {
+  final Value<int> id;
   final Value<String> uri;
   final Value<String> authorDid;
   final Value<DateTime> indexed;
@@ -361,8 +388,8 @@ class PostsCompanion extends UpdateCompanion<Post> {
   final Value<bool> havEmbedRecord;
   final Value<bool> reasonRepost;
   final Value<String> post;
-  final Value<int> rowid;
   const PostsCompanion({
+    this.id = const Value.absent(),
     this.uri = const Value.absent(),
     this.authorDid = const Value.absent(),
     this.indexed = const Value.absent(),
@@ -372,9 +399,9 @@ class PostsCompanion extends UpdateCompanion<Post> {
     this.havEmbedRecord = const Value.absent(),
     this.reasonRepost = const Value.absent(),
     this.post = const Value.absent(),
-    this.rowid = const Value.absent(),
   });
   PostsCompanion.insert({
+    this.id = const Value.absent(),
     required String uri,
     required String authorDid,
     required DateTime indexed,
@@ -384,7 +411,6 @@ class PostsCompanion extends UpdateCompanion<Post> {
     required bool havEmbedRecord,
     required bool reasonRepost,
     required String post,
-    this.rowid = const Value.absent(),
   })  : uri = Value(uri),
         authorDid = Value(authorDid),
         indexed = Value(indexed),
@@ -395,6 +421,7 @@ class PostsCompanion extends UpdateCompanion<Post> {
         reasonRepost = Value(reasonRepost),
         post = Value(post);
   static Insertable<Post> custom({
+    Expression<int>? id,
     Expression<String>? uri,
     Expression<String>? authorDid,
     Expression<DateTime>? indexed,
@@ -404,9 +431,9 @@ class PostsCompanion extends UpdateCompanion<Post> {
     Expression<bool>? havEmbedRecord,
     Expression<bool>? reasonRepost,
     Expression<String>? post,
-    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
+      if (id != null) 'id': id,
       if (uri != null) 'uri': uri,
       if (authorDid != null) 'author_did': authorDid,
       if (indexed != null) 'indexed': indexed,
@@ -416,12 +443,12 @@ class PostsCompanion extends UpdateCompanion<Post> {
       if (havEmbedRecord != null) 'hav_embed_record': havEmbedRecord,
       if (reasonRepost != null) 'reason_repost': reasonRepost,
       if (post != null) 'post': post,
-      if (rowid != null) 'rowid': rowid,
     });
   }
 
   PostsCompanion copyWith(
-      {Value<String>? uri,
+      {Value<int>? id,
+      Value<String>? uri,
       Value<String>? authorDid,
       Value<DateTime>? indexed,
       Value<String>? replyDid,
@@ -429,9 +456,9 @@ class PostsCompanion extends UpdateCompanion<Post> {
       Value<bool>? havEmbedExternal,
       Value<bool>? havEmbedRecord,
       Value<bool>? reasonRepost,
-      Value<String>? post,
-      Value<int>? rowid}) {
+      Value<String>? post}) {
     return PostsCompanion(
+      id: id ?? this.id,
       uri: uri ?? this.uri,
       authorDid: authorDid ?? this.authorDid,
       indexed: indexed ?? this.indexed,
@@ -441,13 +468,15 @@ class PostsCompanion extends UpdateCompanion<Post> {
       havEmbedRecord: havEmbedRecord ?? this.havEmbedRecord,
       reasonRepost: reasonRepost ?? this.reasonRepost,
       post: post ?? this.post,
-      rowid: rowid ?? this.rowid,
     );
   }
 
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
     if (uri.present) {
       map['uri'] = Variable<String>(uri.value);
     }
@@ -475,15 +504,13 @@ class PostsCompanion extends UpdateCompanion<Post> {
     if (post.present) {
       map['post'] = Variable<String>(post.value);
     }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
     return map;
   }
 
   @override
   String toString() {
     return (StringBuffer('PostsCompanion(')
+          ..write('id: $id, ')
           ..write('uri: $uri, ')
           ..write('authorDid: $authorDid, ')
           ..write('indexed: $indexed, ')
@@ -492,8 +519,7 @@ class PostsCompanion extends UpdateCompanion<Post> {
           ..write('havEmbedExternal: $havEmbedExternal, ')
           ..write('havEmbedRecord: $havEmbedRecord, ')
           ..write('reasonRepost: $reasonRepost, ')
-          ..write('post: $post, ')
-          ..write('rowid: $rowid')
+          ..write('post: $post')
           ..write(')'))
         .toString();
   }
@@ -511,6 +537,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
 }
 
 typedef $$PostsTableCreateCompanionBuilder = PostsCompanion Function({
+  Value<int> id,
   required String uri,
   required String authorDid,
   required DateTime indexed,
@@ -520,9 +547,9 @@ typedef $$PostsTableCreateCompanionBuilder = PostsCompanion Function({
   required bool havEmbedRecord,
   required bool reasonRepost,
   required String post,
-  Value<int> rowid,
 });
 typedef $$PostsTableUpdateCompanionBuilder = PostsCompanion Function({
+  Value<int> id,
   Value<String> uri,
   Value<String> authorDid,
   Value<DateTime> indexed,
@@ -532,7 +559,6 @@ typedef $$PostsTableUpdateCompanionBuilder = PostsCompanion Function({
   Value<bool> havEmbedRecord,
   Value<bool> reasonRepost,
   Value<String> post,
-  Value<int> rowid,
 });
 
 class $$PostsTableTableManager extends RootTableManager<
@@ -552,6 +578,7 @@ class $$PostsTableTableManager extends RootTableManager<
           orderingComposer:
               $$PostsTableOrderingComposer(ComposerState(db, table)),
           updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
             Value<String> uri = const Value.absent(),
             Value<String> authorDid = const Value.absent(),
             Value<DateTime> indexed = const Value.absent(),
@@ -561,9 +588,9 @@ class $$PostsTableTableManager extends RootTableManager<
             Value<bool> havEmbedRecord = const Value.absent(),
             Value<bool> reasonRepost = const Value.absent(),
             Value<String> post = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
           }) =>
               PostsCompanion(
+            id: id,
             uri: uri,
             authorDid: authorDid,
             indexed: indexed,
@@ -573,9 +600,9 @@ class $$PostsTableTableManager extends RootTableManager<
             havEmbedRecord: havEmbedRecord,
             reasonRepost: reasonRepost,
             post: post,
-            rowid: rowid,
           ),
           createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
             required String uri,
             required String authorDid,
             required DateTime indexed,
@@ -585,9 +612,9 @@ class $$PostsTableTableManager extends RootTableManager<
             required bool havEmbedRecord,
             required bool reasonRepost,
             required String post,
-            Value<int> rowid = const Value.absent(),
           }) =>
               PostsCompanion.insert(
+            id: id,
             uri: uri,
             authorDid: authorDid,
             indexed: indexed,
@@ -597,7 +624,6 @@ class $$PostsTableTableManager extends RootTableManager<
             havEmbedRecord: havEmbedRecord,
             reasonRepost: reasonRepost,
             post: post,
-            rowid: rowid,
           ),
         ));
 }
@@ -605,6 +631,11 @@ class $$PostsTableTableManager extends RootTableManager<
 class $$PostsTableFilterComposer
     extends FilterComposer<_$AppDatabase, $PostsTable> {
   $$PostsTableFilterComposer(super.$state);
+  ColumnFilters<int> get id => $state.composableBuilder(
+      column: $state.table.id,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
   ColumnFilters<String> get uri => $state.composableBuilder(
       column: $state.table.uri,
       builder: (column, joinBuilders) =>
@@ -654,6 +685,11 @@ class $$PostsTableFilterComposer
 class $$PostsTableOrderingComposer
     extends OrderingComposer<_$AppDatabase, $PostsTable> {
   $$PostsTableOrderingComposer(super.$state);
+  ColumnOrderings<int> get id => $state.composableBuilder(
+      column: $state.table.id,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
   ColumnOrderings<String> get uri => $state.composableBuilder(
       column: $state.table.uri,
       builder: (column, joinBuilders) =>
