@@ -477,7 +477,8 @@ class Model extends ChangeNotifier {
 
     final yearNodes = <int, TreeNode<dynamic>>{};
 
-    for (final date in _countByDate.keys) {
+    final sortedKeys = _countByDate.keys.toList()..sort((a, b) => b - a);
+    for (final date in sortedKeys) {
       final year = date ~/ 10000;
       final month = (date % 10000) ~/ 100;
       final day = date % 100;

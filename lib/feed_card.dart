@@ -43,26 +43,28 @@ class _FeedCardState extends State<FeedCard> {
               Text('repost', style: TextStyle(color: Colors.blueGrey)),
             ],
           ),
-        ListTile(
-          titleAlignment: ListTileTitleAlignment.top,
-          leading: CircleAvatar(
-            radius: 20.0,
-            backgroundImage: avator,
+        SelectionArea(
+          child: ListTile(
+            titleAlignment: ListTileTitleAlignment.top,
+            leading: CircleAvatar(
+              radius: 20.0,
+              backgroundImage: avator,
+            ),
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(displayName),
+                const SizedBox(width: 4),
+                Text(
+                  '@${author.handle}',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+            subtitle: Text(feedView.post.record.text),
+            // TODO: record.facets
           ),
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SelectableText(displayName),
-              const SizedBox(width: 4),
-              SelectableText(
-                '@${author.handle}',
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-            ],
-          ),
-          subtitle: SelectableText(feedView.post.record.text),
-          // TODO: record.facets
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.start,
