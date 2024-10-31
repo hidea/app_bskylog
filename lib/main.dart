@@ -47,6 +47,9 @@ void main() async {
   runApp(ChangeNotifierProvider(create: (_) => model, child: const MyApp()));
 }
 
+final GlobalKey<ScaffoldMessengerState> scaffoldMsgKey =
+    GlobalKey<ScaffoldMessengerState>();
+
 final _router = GoRouter(
   initialLocation: '/',
   routes: <RouteBase>[
@@ -82,6 +85,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlue),
         useMaterial3: true,
       ),
+      scaffoldMessengerKey: scaffoldMsgKey,
       routerConfig: _router,
     );
   }
@@ -103,6 +107,9 @@ class _HomeScreenState extends State<HomeScreen> {
       isSyncing = true;
     });
     context.read<Model>().syncFeed().then((_) {
+      scaffoldMsgKey.currentState!.showSnackBar(SnackBar(
+          content: Text("Sync done"), behavior: SnackBarBehavior.floating));
+
       setState(() {
         isSyncing = false;
       });
@@ -113,6 +120,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final isTablet = MediaQuery.of(context).size.shortestSide > 600;
     final safePadding = MediaQuery.of(context).padding;
+
+    final actor = context.watch<Model>().currentActor;
+    final profile = actor?.profile;
+    final avator = profile != null && profile.avatar != null
+        ? NetworkImage(profile.avatar!)
+        : null;
 
     return Scaffold(
       appBar: isDesktop
@@ -129,6 +142,10 @@ class _HomeScreenState extends State<HomeScreen> {
             labelType: isTablet
                 ? NavigationRailLabelType.all
                 : NavigationRailLabelType.none,
+            leading: SizedBox(
+              height: 50,
+              child: CircleAvatar(radius: 20, backgroundImage: avator),
+            ),
             destinations: [
               NavigationRailDestination(
                 icon: RotationIcon(
@@ -165,6 +182,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
+                    const Icon(Icons.storage),
+                    const SizedBox(height: 8),
                     Text('${context.read<Model>().packageInfo!.version}'
                         '+${context.read<Model>().packageInfo!.buildNumber}'),
                   ],
@@ -182,7 +201,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     ok: const Text('Delete'),
                     content: const Text('Are you sure trancate all log ?'),
                     onOk: () {
-                      context.read<Model>().clearFeed();
+                      context.read<Model>().clearFeed().then((_) {
+                        scaffoldMsgKey.currentState!.showSnackBar(SnackBar(
+                            content: Text("Trancate all log"),
+                            behavior: SnackBarBehavior.floating));
+                      });
                     },
                   );
                   break;
@@ -190,7 +213,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   context.push('/signin');
                   break;
                 case 3:
-                  context.read<Model>().signout();
+                  context.read<Model>().signout().then((_) {
+                    scaffoldMsgKey.currentState!.showSnackBar(SnackBar(
+                        content: Text("Sign out"),
+                        behavior: SnackBarBehavior.floating));
+                  });
                   break;
               }
             },

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'define.dart';
+import 'main.dart';
 import 'model.dart';
 import 'utils.dart';
 
@@ -103,7 +104,7 @@ class _SigninScreenState extends State<SigninScreen> {
                         leading: Icon(Icons.info_outline),
                         title: Text('App Password'),
                         subtitle: Text(
-                          'SkyThrow sign-in only accepts an `App Password` that can be generated in the official Bluesky app settings to keep your account secure.',
+                          'bskylog sign-in only accepts an `App Password` that can be generated in the official Bluesky app settings to keep your account secure.',
                           softWrap: true,
                         ),
                       ),
@@ -151,7 +152,6 @@ class _SigninScreenState extends State<SigninScreen> {
 
     _formKey.currentState!.save();
 
-    // blueskyサインイン処理
     try {
       if (kDebugMode) {
         debugPrint('service: $_service');
@@ -165,12 +165,21 @@ class _SigninScreenState extends State<SigninScreen> {
             _password,
           );
 
+      scaffoldMsgKey.currentState!.showSnackBar(SnackBar(
+          content: Text("Sign in $_identifier"),
+          behavior: SnackBarBehavior.floating));
+
       if (context.mounted) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           context.go('/');
         });
       }
     } catch (e) {
+      scaffoldMsgKey.currentState!.showSnackBar(SnackBar(
+          content: Text("Failed Sign in.\n$e"),
+          showCloseIcon: true,
+          duration: const Duration(days: 365)));
+
       if (context.mounted) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           context.pop();
