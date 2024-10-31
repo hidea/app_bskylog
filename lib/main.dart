@@ -1,10 +1,8 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:animated_tree_view/animated_tree_view.dart';
 import 'package:bskylog/rotation_icon.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -98,6 +96,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool isSyncing = false;
+  final _autoScrollController = AutoScrollController();
 
   void _syncFeed() {
     setState(() {
@@ -238,24 +237,50 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           SizedBox(
             width: 200,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 8),
-                Text('Sort'),
-                _buildSort(),
-                const SizedBox(height: 8),
-                Text('Visible'),
-                _buildVisible(),
-                const SizedBox(height: 8),
-                Text('Calendar'),
-                _buildCalendar(),
-                const SizedBox(height: 8),
-                Text('Archives'),
+            child: CustomScrollView(
+              controller: _autoScrollController,
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 8),
+                      Text('Sort'),
+                      _buildSort(),
+                    ],
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 8),
+                      Text('Visible'),
+                      _buildVisible(),
+                    ],
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 8),
+                      Text('Calendar'),
+                      _buildCalendar(),
+                    ],
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 8),
+                      Text('Archives'),
+                      //_buildHandles(),
+                      //_buildHashTags(),
+                    ],
+                  ),
+                ),
                 _buildTree(),
-                //_buildHandles(),
-                //_buildHashTags(),
+                SliverToBoxAdapter(
+                  child: SizedBox(height: MediaQuery.paddingOf(context).bottom),
+                ),
               ],
             ),
           ),
@@ -386,9 +411,17 @@ class _HomeScreenState extends State<HomeScreen> {
         headerTitleBuilder: (context, day) {
           final text = DateFormat('y.M').format(day);
           return Center(
-            child: Text(
-              text,
-              style: const TextStyle(fontSize: 16),
+            child: TextButton(
+              style: ButtonStyle(
+                  padding: WidgetStateProperty.all(EdgeInsets.zero)),
+              onPressed: () {
+                context.read<Model>().setSearchYear(day.year);
+                context.read<Model>().setSearchMonth(day.month);
+              },
+              child: Text(
+                text,
+                style: const TextStyle(fontSize: 18),
+              ),
             ),
           );
         },
@@ -405,42 +438,40 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildTree() {
-    if (context.watch<Model>().roorTree == null) {
-      return const Center(child: CircularProgressIndicator());
+    if (context.watch<Model>().rootTree == null) {
+      return SliverToBoxAdapter(child: const SizedBox());
     }
 
-    return Expanded(
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return SizedBox(
-            height: constraints.maxHeight,
-            width: double.infinity,
-            child: TreeView.simple(
-              showRootNode: false,
-              expansionBehavior: ExpansionBehavior.collapseOthers,
-              tree: context.watch<Model>().roorTree!,
-              builder: (context, node) {
-                return ListTile(
-                  dense: true,
-                  visualDensity: const VisualDensity(vertical: -4.0),
-                  title: Text(node.key),
-                  onTap: () {
-                    if (node.level > 0) {
-                      if (node.data is DateTime) {
-                        final date = node.data as DateTime;
-                        context.read<Model>().setSearchYear(date.year);
-                        if (node.level > 1) {
-                          context.read<Model>().setSearchMonth(date.month);
-                        }
-                      }
-                    }
-                  },
-                );
-              },
-            ),
-          );
-        },
-      ),
+    return SliverTreeView.simple(
+      scrollController: _autoScrollController,
+      showRootNode: false,
+      expansionBehavior: ExpansionBehavior.collapseOthers,
+      tree: context.watch<Model>().rootTree!,
+      builder: (context, node) {
+        final data = node.data as FeedNode;
+        String title = '';
+        if (node.level > 0) {
+          title = '${data.date.year} (${data.count})';
+          if (node.level > 1) {
+            title = '${data.date.month} (${data.count})';
+          }
+        }
+
+        return ListTile(
+          dense: true,
+          visualDensity: const VisualDensity(vertical: -4.0),
+          title: Text(title),
+          onTap: () {
+            if (node.level > 0) {
+              context.read<Model>().setSearchYear(data.date.year);
+              if (node.level > 1) {
+                context.read<Model>().setSearchMonth(data.date.month);
+              }
+            }
+          },
+        );
+      },
+      //),
     );
   }
 }

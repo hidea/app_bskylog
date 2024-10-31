@@ -110,8 +110,8 @@ class Model extends ChangeNotifier {
   final Map<int, int> _countByDate = {};
   Map<int, int> get countByDate => _countByDate;
 
-  TreeNode? _rootTree;
-  TreeNode? get roorTree => _rootTree;
+  TreeNode _rootTree = TreeNode.root();
+  TreeNode get rootTree => _rootTree;
 
   Future updateSharedPrefrences() async {
     final data = json.encode(toJson());
@@ -147,6 +147,17 @@ class Model extends ChangeNotifier {
     if (json['actor'] != null) {
       _currentActor = ActorModel.fromJson(json['actor']);
     }
+    if (json['lastSync'] != null) {
+      _lastSync = DateTime.parse(json['lastSync']);
+    }
+    if (json['tailCursor'] != null) {
+      _tailCursor = json['tailCursor'];
+    }
+
+    if (kDebugMode) {
+      print(_lastSync);
+      print(_tailCursor);
+    }
 
     notifyListeners();
   }
@@ -165,6 +176,8 @@ class Model extends ChangeNotifier {
         ...visibleToJson(),
         'sortOrder': _sortOrder.toString(),
         'actor': _currentActor?.toJson(),
+        'lastSync': _lastSync.toString(),
+        'tailCursor': _tailCursor,
       };
 
   VisibleMode visible(VisibleType type) {
@@ -412,10 +425,12 @@ class Model extends ChangeNotifier {
       ]);
   }
 
-  void countDatePosts() async {
-    final count = database.posts.uri.count();
+  Future countDatePosts() async {
+    _countByDate.clear();
+
+    final idCount = database.posts.uri.count();
     final query = database.posts.selectOnly()
-      ..addColumns([database.posts.indexed.date, count])
+      ..addColumns([database.posts.indexed.date, idCount])
       ..groupBy([database.posts.indexed.date]);
 
     final result = await query.get();
@@ -430,10 +445,9 @@ class Model extends ChangeNotifier {
       final year = date.year * 10000;
       _countByDate[year] = (_countByDate[year] ?? 0) + count;
     }
+    notifyListeners();
 
     createMenuTree();
-
-    notifyListeners();
   }
 
   DateTime get focusedDay {
@@ -472,8 +486,8 @@ class Model extends ChangeNotifier {
     return DateTime(last ~/ 10000, (last % 10000) ~/ 100, last % 100);
   }
 
-  void createMenuTree() {
-    _rootTree = TreeNode();
+  Future createMenuTree() async {
+    final tree = TreeNode.root();
 
     final yearNodes = <int, TreeNode<dynamic>>{};
 
@@ -487,19 +501,23 @@ class Model extends ChangeNotifier {
       }
 
       final yearNode = yearNodes.putIfAbsent(year, () {
-        final count = _countByDate[year * 10000];
-        final node = TreeNode(key: '$year ($count)', data: DateTime(year));
-        _rootTree!.add(node);
+        final count = _countByDate[year * 10000] ?? 0;
+        final node = TreeNode<FeedNode>(
+            key: '$year', data: FeedNode(count: count, date: DateTime(year)));
+        tree.add(node);
         return node;
       });
 
       if (month > 0) {
-        final count = _countByDate[year * 10000 + month * 100];
-        final node =
-            TreeNode(key: '$month ($count)', data: DateTime(year, month));
+        final count = _countByDate[year * 10000 + month * 100] ?? 0;
+        final node = TreeNode(
+            key: '$year-$month',
+            data: FeedNode(count: count, date: DateTime(year, month)));
         yearNode.add(node);
       }
     }
+
+    _rootTree = tree;
 
     notifyListeners();
   }
@@ -617,46 +635,33 @@ class Model extends ChangeNotifier {
   }
 
   Future syncFeed() async {
+    _lastSync = DateTime.now();
+
     // sync old posts
     if (kDebugMode) {
       print('syncFeed history start');
     }
-    if (_tailCursor == null) {
-      _lastSync = DateTime.now();
-    }
     do {
       _tailCursor = await getFeed(cursor: _tailCursor);
+
+      if (kDebugMode) {
+        print('getFeed $_tailCursor');
+      }
+
+      updateSharedPrefrences();
+      countDatePosts();
+      notifyListeners();
     } while (_tailCursor != null && _tailCursor!.isNotEmpty);
 
-    // sync new posts
     if (kDebugMode) {
-      print('syncFeed newpost start');
+      print('syncFeed done');
     }
-    String? cursor;
-    do {
-      cursor = await getFeed(cursor: cursor);
-
-      if (cursor != null &&
-          cursor.isNotEmpty &&
-          DateTime.parse(cursor).isBefore(_lastSync!)) {
-        break;
-      }
-    } while (cursor != null && cursor.isNotEmpty);
-
-    if (kDebugMode) {
-      print('syncFeed count');
-    }
-
-    countDatePosts();
-
-    notifyListeners();
   }
 
   Future clearFeed() async {
     await database.delete(database.posts).go();
 
-    _rootTree!.clear();
-    _rootTree = null;
+    _rootTree.clear();
 
     notifyListeners();
   }
@@ -666,11 +671,11 @@ class Model extends ChangeNotifier {
       'feed.bsky.app',
       'getAuthorFeed',
     );
-    final service = _currentActor!.service;
-    final accessJwt = _currentActor!.session!.accessJwt;
 
     try {
       await getBluesky(_currentActor!);
+      final service = _currentActor!.service;
+      final accessJwt = _currentActor!.session!.accessJwt;
 
       final response = await xrpc.query<String>(
         methodId,
@@ -701,6 +706,10 @@ class Model extends ChangeNotifier {
         print('feeds:${feedData.feed.length} cursor:$cursor');
       }
 
+      final itemCount = database.posts.uri.count();
+      final query = database.posts.selectOnly()..addColumns([itemCount]);
+      final before = await query.map((row) => row.read(itemCount)).getSingle();
+
       for (var feedView in feedData.feed) {
         final post = feedView.post;
         final repost = feedView.post.viewer.repost;
@@ -719,6 +728,14 @@ class Model extends ChangeNotifier {
               ),
               mode: InsertMode.insertOrIgnore,
             );
+      }
+
+      final after = await query.map((row) => row.read(itemCount)).getSingle();
+      if (before == after) {
+        cursor = null;
+        if (kDebugMode) {
+          print('No new record. before:$before after:$after');
+        }
       }
     } on xrpc.XRPCException catch (e) {
       final status = e.response.status;
