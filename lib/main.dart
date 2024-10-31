@@ -438,15 +438,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildTree() {
-    if (context.watch<Model>().rootTree == null) {
-      return SliverToBoxAdapter(child: const SizedBox());
-    }
-
     return SliverTreeView.simple(
       scrollController: _autoScrollController,
       showRootNode: false,
       expansionBehavior: ExpansionBehavior.collapseOthers,
-      tree: context.watch<Model>().rootTree!,
+      tree: context.watch<Model>().rootTree,
       builder: (context, node) {
         final data = node.data as FeedNode;
         String title = '';

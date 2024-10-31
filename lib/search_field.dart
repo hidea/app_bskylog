@@ -55,7 +55,39 @@ class _SearchFieldState extends State<SearchField> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _buttonPrev(),
-            Row(mainAxisAlignment: MainAxisAlignment.center, children: []),
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              if (context.watch<Model>().searchYear != null)
+                Row(children: [
+                  Text('${context.watch<Model>().searchYear}'),
+                  if (context.watch<Model>().searchMonth != null)
+                    Text('.${context.watch<Model>().searchMonth}'),
+                  if (context.watch<Model>().searchDay != null)
+                    Text('.${context.watch<Model>().searchDay}'),
+                  const SizedBox(width: 8),
+                  const Text('-'),
+                  const SizedBox(width: 8),
+                ]),
+              StreamBuilder<int?>(
+                stream: context.watch<Model>().filterSearchWatchCount(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Text('...');
+                  } else if (snapshot.connectionState ==
+                          ConnectionState.active ||
+                      snapshot.connectionState == ConnectionState.done) {
+                    if (snapshot.hasError) {
+                      return const Text('0 posts');
+                    } else if (snapshot.hasData) {
+                      return Text('${snapshot.data.toString()} posts');
+                    } else {
+                      return const Text('0 posts');
+                    }
+                  } else {
+                    return const Text('...');
+                  }
+                },
+              )
+            ]),
             _buttonNext(),
           ],
         ),

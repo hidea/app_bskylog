@@ -425,6 +425,86 @@ class Model extends ChangeNotifier {
       ]);
   }
 
+  Stream<int?> filterSearchWatchCount() {
+    // SimpleSelectStatement<$PostsTable, Post>
+    // JoinedSelectStatement<$PostsTable, Post>
+    final itemCount = database.posts.id.count();
+    final query = database.posts.selectOnly()..addColumns([itemCount]);
+
+    if (_searchYear != null) {
+      if (_searchMonth != null) {
+        if (_searchDay != null) {
+          query.where(database.posts.indexed.isBetweenValues(
+            DateTime(_searchYear!, _searchMonth!, _searchDay!),
+            DateTime(_searchYear!, _searchMonth!, _searchDay!, 23, 59, 59),
+          ));
+        } else {
+          query.where(database.posts.indexed.isBetweenValues(
+            DateTime(_searchYear!, _searchMonth!, 1),
+            DateTime(_searchYear!, _searchMonth! + 1, 0, 23, 59, 59),
+          ));
+        }
+      } else {
+        query.where(database.posts.indexed.isBetweenValues(
+          DateTime(_searchYear!, 1, 1),
+          DateTime(_searchYear!, 12, 31, 23, 59, 59),
+        ));
+      }
+    }
+
+    if (_searchKeyword != null) {
+      query.where(database.posts.post.like('%$_searchKeyword%'));
+    }
+
+    if (_visible.values.contains(VisibleMode.only)) {
+      for (var MapEntry(key: key, value: value) in _visible.entries) {
+        if (value == VisibleMode.only) {
+          switch (key) {
+            case VisibleType.reply:
+              query.where(database.posts.replyDid.length.isBiggerThanValue(0));
+              break;
+            case VisibleType.repost:
+              query.where(database.posts.reasonRepost.equals(true));
+              break;
+            case VisibleType.linkcard:
+              query.where(database.posts.havEmbedExternal.equals(true));
+              break;
+            case VisibleType.image:
+              query.where(database.posts.havEmbedImages.equals(true));
+              break;
+            case VisibleType.video:
+              query.where(database.posts.havEmbedRecord.equals(true));
+              break;
+          }
+        }
+      }
+    } else {
+      for (var MapEntry(key: key, value: value) in _visible.entries) {
+        if (value == VisibleMode.hide) {
+          switch (key) {
+            case VisibleType.reply:
+              query.where(database.posts.replyDid.equals(''));
+              break;
+            case VisibleType.repost:
+              query.where(database.posts.reasonRepost.equals(false));
+              break;
+            case VisibleType.linkcard:
+              query.where(database.posts.havEmbedExternal.equals(false));
+              break;
+            case VisibleType.image:
+              query.where(database.posts.havEmbedImages.equals(false));
+              break;
+            case VisibleType.video:
+              query.where(database.posts.havEmbedRecord.equals(false));
+              break;
+          }
+        }
+      }
+    }
+
+    return query.map((row) => row.read(itemCount)).watchSingle();
+  }
+
   Future countDatePosts() async {
     _countByDate.clear();
 
@@ -706,7 +786,7 @@ class Model extends ChangeNotifier {
         print('feeds:${feedData.feed.length} cursor:$cursor');
       }
 
-      final itemCount = database.posts.uri.count();
+      final itemCount = database.posts.id.count();
       final query = database.posts.selectOnly()..addColumns([itemCount]);
       final before = await query.map((row) => row.read(itemCount)).getSingle();
 
