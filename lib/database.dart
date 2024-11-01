@@ -31,7 +31,7 @@ class AppDatabase extends _$AppDatabase {
   static LazyDatabase _openConnection() {
     return LazyDatabase(() async {
       final docFolder = await getApplicationDocumentsDirectory();
-      final file = File(path.join(docFolder.path, 'db.sqlite'));
+      final file = File(path.join(docFolder.path, 'bskylog.sqlite'));
       if (kDebugMode) {
         print(file.path);
       }
