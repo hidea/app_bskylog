@@ -54,9 +54,13 @@ class ActorModel {
 
     final accessJwt =
         JWT.decode(session!.accessJwt).payload as Map<String, dynamic>;
-    final accessExp = DateTime.fromMillisecondsSinceEpoch(
-      (accessJwt['exp'] as int) * 1000,
-    );
+    final accessExp =
+        DateTime.fromMillisecondsSinceEpoch((accessJwt['exp'] as int) * 1000);
+
+    if (kDebugMode) {
+      print(accessJwt);
+      print(accessExp.toLocal());
+    }
 
     final now = DateTime.now().toUtc();
     return !now.isAfter(accessExp);
@@ -128,6 +132,10 @@ class Model extends ChangeNotifier {
     var data = prefs.getString('settings');
     if (data != null) {
       fromJson(json.decode(data));
+
+      if (kDebugMode) {
+        print(_currentActor?.session?.toJson());
+      }
 
       notifyListeners();
     }
@@ -209,8 +217,8 @@ class Model extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setSearchYear(int? year) async {
-    _searchYear = year;
+  void clearSearchRange() async {
+    _searchYear = null;
     _searchMonth = null;
     _searchDay = null;
 
@@ -220,9 +228,17 @@ class Model extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setSearchMonth(int? month) async {
-    _searchMonth = month;
+  void setSearchYear(int year) async {
+    _searchYear = year;
+    _searchMonth = null;
     _searchDay = null;
+
+    final first = firstDay;
+    final last = lastDay;
+    final search = DateTime(_searchYear!);
+    final focused =
+        last.isBefore(first.isAfter(search) ? first : search) ? last : search;
+    _searchYear = focused.year;
 
     _canNextSearch = await getNextSearch();
     _canPrevSearch = await getPrevSearch();
@@ -230,8 +246,38 @@ class Model extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setSearchDay(int? day) async {
+  void setSearchMonth(int year, int month) async {
+    _searchYear = year;
+    _searchMonth = month;
+    _searchDay = null;
+
+    final first = firstDay;
+    final last = lastDay;
+    final search = DateTime(_searchYear!, _searchMonth!);
+    final focused =
+        last.isBefore(first.isAfter(search) ? first : search) ? last : search;
+    _searchYear = focused.year;
+    _searchMonth = focused.month;
+
+    _canNextSearch = await getNextSearch();
+    _canPrevSearch = await getPrevSearch();
+
+    notifyListeners();
+  }
+
+  void setSearchDay(int year, int month, int day) async {
+    _searchYear = year;
+    _searchMonth = month;
     _searchDay = day;
+
+    final first = firstDay;
+    final last = lastDay;
+    final search = DateTime(_searchYear!, _searchMonth!, _searchDay!);
+    final focused =
+        last.isBefore(first.isAfter(search) ? first : search) ? last : search;
+    _searchYear = focused.year;
+    _searchMonth = focused.month;
+    _searchDay = focused.day;
 
     _canNextSearch = await getNextSearch();
     _canPrevSearch = await getPrevSearch();
@@ -287,52 +333,36 @@ class Model extends ChangeNotifier {
     if (_searchDay != null) {
       final next = DateTime(_searchYear!, _searchMonth!, _searchDay!)
           .add(const Duration(days: 1));
-      _searchYear = next.year;
-      _searchMonth = next.month;
-      _searchDay = next.day;
+      setSearchDay(next.year, next.month, next.day);
     } else if (_searchMonth != null) {
-      if (_searchMonth! < 12) {
-        _searchMonth = _searchMonth! + 1;
-      } else {
-        _searchMonth = 1;
-        if (_searchYear != null) {
-          _searchYear = _searchYear! + 1;
-        }
+      var nextYear = _searchYear!;
+      var nextMonth = _searchMonth! + 1;
+      if (nextMonth > 12) {
+        nextYear = nextYear + 1;
+        nextMonth = 1;
       }
+      setSearchMonth(nextYear, nextMonth);
     } else if (_searchYear != null) {
-      _searchYear = _searchYear! + 1;
+      setSearchYear(_searchYear! + 1);
     }
-
-    _canPrevSearch = await getPrevSearch();
-    _canNextSearch = await getNextSearch();
-
-    notifyListeners();
   }
 
   void prevSearch() async {
     if (_searchDay != null) {
       final prev = DateTime(_searchYear!, _searchMonth!, _searchDay!)
           .subtract(const Duration(days: 1));
-      _searchYear = prev.year;
-      _searchMonth = prev.month;
-      _searchDay = prev.day;
+      setSearchDay(prev.year, prev.month, prev.day);
     } else if (_searchMonth != null) {
-      if (_searchMonth! > 1) {
-        _searchMonth = _searchMonth! - 1;
-      } else {
-        _searchMonth = 12;
-        if (_searchYear != null) {
-          _searchYear = _searchYear! - 1;
-        }
+      var prevYear = _searchYear!;
+      var prevMonth = _searchMonth! - 1;
+      if (_searchMonth! < 1) {
+        prevYear = prevYear - 1;
+        prevMonth = 12;
       }
+      setSearchMonth(prevYear, prevMonth);
     } else if (_searchYear != null) {
-      _searchYear = _searchYear! - 1;
+      setSearchYear(_searchYear! - 1);
     }
-
-    _canPrevSearch = await getPrevSearch();
-    _canNextSearch = await getNextSearch();
-
-    notifyListeners();
   }
 
   void setSearchKeyword(String keyword) {
@@ -531,17 +561,32 @@ class Model extends ChangeNotifier {
   }
 
   DateTime get focusedDay {
-    if (_searchDay != null) {
-      return DateTime(_searchYear!, _searchMonth!, _searchDay!);
-    }
     final first = firstDay;
+    final last = lastDay;
+
+    if (_searchDay != null) {
+      final focused = DateTime(_searchYear!, _searchMonth!, _searchDay!);
+      return first.isAfter(focused)
+          ? first
+          : last.isBefore(focused)
+              ? last
+              : focused;
+    }
     if (_searchMonth != null) {
       final focused = DateTime(_searchYear!, _searchMonth!);
-      return first.isAfter(focused) ? first : focused;
+      return first.isAfter(focused)
+          ? first
+          : last.isBefore(focused)
+              ? last
+              : focused;
     }
     if (_searchYear != null) {
       final focused = DateTime(_searchYear!);
-      return first.isAfter(focused) ? first : focused;
+      return first.isAfter(focused)
+          ? first
+          : last.isBefore(focused)
+              ? last
+              : focused;
     }
     return lastDay;
   }
@@ -769,6 +814,7 @@ class Model extends ChangeNotifier {
       );
 
       final status = response.status;
+
       if (status.code != 200) {
         throw Exception(status.message);
       }
@@ -825,10 +871,12 @@ class Model extends ChangeNotifier {
         print(e.response.request.toString());
         print(e.response.data.toJson());
       }
+      rethrow;
     } catch (e) {
       if (kDebugMode) {
         print(e.toString());
       }
+      rethrow;
     }
 
     return cursor;

@@ -99,8 +99,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  bool isSyncing = false;
   final _autoScrollController = AutoScrollController();
+  bool isSyncing = false;
+  bool visibleSearch = true;
 
   void _syncFeed() {
     setState(() {
@@ -109,6 +110,14 @@ class _HomeScreenState extends State<HomeScreen> {
     context.read<Model>().syncFeed().then((_) {
       scaffoldMsgKey.currentState!.showSnackBar(SnackBar(
           content: Text("Sync done"), behavior: SnackBarBehavior.floating));
+
+      setState(() {
+        isSyncing = false;
+      });
+    }).catchError((e) {
+      scaffoldMsgKey.currentState!.showSnackBar(SnackBar(
+          content: Text("Sync error: $e"),
+          behavior: SnackBarBehavior.floating));
 
       setState(() {
         isSyncing = false;
@@ -226,7 +235,13 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: Column(
               children: [
-                const SearchField(),
+                SearchField(
+                    visible: visibleSearch,
+                    onVisible: (visible) {
+                      setState(() {
+                        visibleSearch = visible;
+                      });
+                    }),
                 Expanded(
                   child: CustomScrollView(
                     slivers: [
@@ -262,53 +277,61 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          SizedBox(
-            width: 200,
-            child: CustomScrollView(
-              controller: _autoScrollController,
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 8),
-                      Text('Sort'),
-                      _buildSort(),
-                    ],
+          Visibility(
+            visible: visibleSearch,
+            child: SizedBox(
+              width: 200.0,
+              child: CustomScrollView(
+                controller: _autoScrollController,
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 8),
+                        Text('Sort',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        _buildSort(),
+                      ],
+                    ),
                   ),
-                ),
-                SliverToBoxAdapter(
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 8),
-                      Text('Visible'),
-                      _buildVisible(),
-                    ],
+                  SliverToBoxAdapter(
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 8),
+                        Text('Visible',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        _buildVisible(),
+                      ],
+                    ),
                   ),
-                ),
-                SliverToBoxAdapter(
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 8),
-                      Text('Calendar'),
-                      _buildCalendar(),
-                    ],
+                  SliverToBoxAdapter(
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 8),
+                        Text('Calendar',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        _buildCalendar(),
+                      ],
+                    ),
                   ),
-                ),
-                SliverToBoxAdapter(
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 8),
-                      Text('Archives'),
-                      //_buildHandles(),
-                      //_buildHashTags(),
-                    ],
+                  SliverToBoxAdapter(
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 8),
+                        Text('Archives',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        //_buildHandles(),
+                        //_buildHashTags(),
+                      ],
+                    ),
                   ),
-                ),
-                _buildTree(),
-                SliverToBoxAdapter(
-                  child: SizedBox(height: MediaQuery.paddingOf(context).bottom),
-                ),
-              ],
+                  _buildTree(),
+                  SliverToBoxAdapter(
+                    child:
+                        SizedBox(height: MediaQuery.paddingOf(context).bottom),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -418,6 +441,9 @@ class _HomeScreenState extends State<HomeScreen> {
       holidayPredicate: (day) => day.weekday == DateTime.sunday,
       calendarFormat: CalendarFormat.month,
       availableCalendarFormats: const {CalendarFormat.month: 'Month'},
+      headerStyle: const HeaderStyle(
+        headerPadding: EdgeInsets.zero,
+      ),
       calendarStyle: const CalendarStyle(
         cellMargin: EdgeInsets.zero,
         cellPadding: EdgeInsets.zero,
@@ -429,10 +455,7 @@ class _HomeScreenState extends State<HomeScreen> {
         dowBuilder: (context, day) {
           final text = DateFormat.E().format(day);
           return Center(
-            child: Text(
-              text,
-              style: const TextStyle(fontSize: 9),
-            ),
+            child: Text(text, style: const TextStyle(fontSize: 9)),
           );
         },
         headerTitleBuilder: (context, day) {
@@ -442,13 +465,9 @@ class _HomeScreenState extends State<HomeScreen> {
               style: ButtonStyle(
                   padding: WidgetStateProperty.all(EdgeInsets.zero)),
               onPressed: () {
-                context.read<Model>().setSearchYear(day.year);
-                context.read<Model>().setSearchMonth(day.month);
+                context.read<Model>().setSearchMonth(day.year, day.month);
               },
-              child: Text(
-                text,
-                style: const TextStyle(fontSize: 18),
-              ),
+              child: Text(text, style: const TextStyle(fontSize: 18)),
             ),
           );
         },
@@ -457,9 +476,9 @@ class _HomeScreenState extends State<HomeScreen> {
       firstDay: context.watch<Model>().firstDay,
       lastDay: context.watch<Model>().lastDay,
       onDaySelected: (selectedDay, focusedDay) {
-        context.read<Model>().setSearchYear(selectedDay.year);
-        context.read<Model>().setSearchMonth(selectedDay.month);
-        context.read<Model>().setSearchDay(selectedDay.day);
+        context
+            .read<Model>()
+            .setSearchDay(selectedDay.year, selectedDay.month, selectedDay.day);
       },
     );
   }
@@ -473,22 +492,31 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, node) {
         final data = node.data as FeedNode;
         String title = '';
+        String tooltip = '';
         if (node.level > 0) {
           title = '${data.date.year} (${data.count})';
+          tooltip = 'Search this year';
           if (node.level > 1) {
             title = '${data.date.month} (${data.count})';
+            tooltip = 'Search this month';
           }
         }
 
         return ListTile(
           dense: true,
           visualDensity: const VisualDensity(vertical: -4.0),
-          title: Text(title),
+          title: Tooltip(
+              message: tooltip,
+              waitDuration: Duration(milliseconds: 500),
+              child: Text(title)),
           onTap: () {
             if (node.level > 0) {
-              context.read<Model>().setSearchYear(data.date.year);
               if (node.level > 1) {
-                context.read<Model>().setSearchMonth(data.date.month);
+                context
+                    .read<Model>()
+                    .setSearchMonth(data.date.year, data.date.month);
+              } else {
+                context.read<Model>().setSearchYear(data.date.year);
               }
             }
           },

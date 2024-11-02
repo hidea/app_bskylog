@@ -2,9 +2,11 @@ import 'package:bskylog/embed_external.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:bluesky/bluesky.dart' as bluesky;
+import 'package:provider/provider.dart';
 
 import 'define.dart';
 import 'embed_images.dart';
+import 'model.dart';
 import 'utils.dart';
 
 class FeedCard extends StatefulWidget {
@@ -85,11 +87,32 @@ class _FeedCardState extends State<FeedCard> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    TextButton(
-                      style: TextButton.styleFrom(padding: EdgeInsets.zero),
-                      child: Text(DateFormat('H:mm yyyy-MM-dd')
-                          .format(feedView.post.indexedAt.toLocal())),
-                      onPressed: () => launchUrlPlus(postUrl),
+                    Tooltip(
+                      message: 'View on Bluesky',
+                      waitDuration: Duration(milliseconds: 500),
+                      child: TextButton(
+                        style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                        child: Text(DateFormat('H:mm yyyy-MM-dd')
+                            .format(feedView.post.indexedAt.toLocal())),
+                        onPressed: () => launchUrlPlus(postUrl),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: IconButton(
+                        icon: const Icon(Icons.today),
+                        iconSize: 18,
+                        padding: EdgeInsets.zero,
+                        tooltip: 'Search this day',
+                        onPressed: () {
+                          final day = feedView.post.indexedAt.toLocal();
+                          context
+                              .read<Model>()
+                              .setSearchDay(day.year, day.month, day.day);
+                        },
+                      ),
                     ),
                   ],
                 ),

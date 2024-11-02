@@ -4,7 +4,11 @@ import 'package:provider/provider.dart';
 import 'model.dart';
 
 class SearchField extends StatefulWidget {
-  const SearchField({super.key});
+  const SearchField(
+      {super.key, required this.visible, required this.onVisible});
+
+  final bool visible;
+  final Function(bool) onVisible;
 
   @override
   State<SearchField> createState() => _SearchFieldState();
@@ -33,7 +37,10 @@ class _SearchFieldState extends State<SearchField> {
                     suffixIcon: textEditingController.text.isNotEmpty
                         ? IconButton(
                             icon: const Icon(Icons.clear),
-                            onPressed: () => textEditingController.clear(),
+                            onPressed: () {
+                              textEditingController.clear();
+                              context.read<Model>().setSearchKeyword('');
+                            },
                           )
                         : null,
                   ),
@@ -49,6 +56,16 @@ class _SearchFieldState extends State<SearchField> {
                   .setSearchKeyword(textEditingController.text),
             ),
             const SizedBox(width: 8),
+            IconButton(
+              icon: Icon(widget.visible
+                  ? Icons.arrow_circle_right_outlined
+                  : Icons.manage_search),
+              tooltip: widget.visible ? 'Close submenu' : 'Open submenu',
+              style: ButtonStyle(
+                  shape: WidgetStateProperty.all(RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)))),
+              onPressed: () => widget.onVisible(!widget.visible),
+            ),
           ],
         ),
         Row(
@@ -56,6 +73,21 @@ class _SearchFieldState extends State<SearchField> {
           children: [
             _buttonPrev(),
             Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              if (context.watch<Model>().searchYear != null)
+                Padding(
+                  padding: const EdgeInsets.only(right: 4.0),
+                  child: SizedBox(
+                    height: 16.0,
+                    width: 16.0,
+                    child: IconButton.outlined(
+                      icon: Icon(Icons.close),
+                      tooltip: 'Clear range',
+                      iconSize: 12.0,
+                      padding: EdgeInsets.zero,
+                      onPressed: () => context.read<Model>().clearSearchRange(),
+                    ),
+                  ),
+                ),
               if (context.watch<Model>().searchYear != null)
                 Row(children: [
                   Text('${context.watch<Model>().searchYear}'),
@@ -113,74 +145,6 @@ class _SearchFieldState extends State<SearchField> {
       onPressed: context.watch<Model>().canNextSearch
           ? () => context.read<Model>().nextSearch()
           : null,
-    );
-  }
-
-  Widget _dropdownYear() {
-    final years = [null, 2023, 2024];
-    return DropdownButton<int?>(
-      value: context.watch<Model>().searchYear,
-      icon: const Icon(Icons.arrow_downward),
-      elevation: 16,
-      underline: Container(height: 2, color: Colors.black),
-      onChanged: (int? value) => context.read<Model>().setSearchYear(value),
-      items: years.map<DropdownMenuItem<int?>>((int? value) {
-        return DropdownMenuItem<int?>(
-          value: value,
-          child: Text(value == null ? 'year' : '$value'),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _dropdownMonth() {
-    final year = context.watch<Model>().searchYear;
-    if (year == null) {
-      return const SizedBox();
-    }
-
-    final month = [null, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-
-    return DropdownButton<int?>(
-      value: context.watch<Model>().searchMonth,
-      icon: const Icon(Icons.arrow_downward),
-      elevation: 16,
-      underline: Container(height: 2, color: Colors.black),
-      onChanged: (int? value) => context.read<Model>().setSearchMonth(value),
-      items: month.map<DropdownMenuItem<int?>>((int? value) {
-        return DropdownMenuItem<int?>(
-          value: value,
-          child: Text(value == null ? 'month' : '$value'),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _dropdownDay() {
-    final month = context.watch<Model>().searchMonth;
-    if (month == null) {
-      return const SizedBox();
-    }
-
-    final daysInMonth = DateTime(
-      context.watch<Model>().searchYear!,
-      context.watch<Model>().searchMonth! + 1,
-      0,
-    ).day;
-    final List<int?> days = [null, for (int i = 1; i <= daysInMonth; i++) i];
-
-    return DropdownButton<int?>(
-      value: context.watch<Model>().searchDay,
-      icon: const Icon(Icons.arrow_downward),
-      elevation: 16,
-      underline: Container(height: 2, color: Colors.black),
-      onChanged: (int? value) => context.read<Model>().setSearchDay(value),
-      items: days.map<DropdownMenuItem<int?>>((int? value) {
-        return DropdownMenuItem<int?>(
-          value: value,
-          child: Text(value == null ? 'day' : '$value'),
-        );
-      }).toList(),
     );
   }
 }
