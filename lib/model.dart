@@ -737,10 +737,8 @@ class Model extends ChangeNotifier {
         print('refresh session');
       }
 
-      final newSession = await atproto.refreshSession(
-        service: actor.service,
-        refreshJwt: actor.session!.refreshJwt,
-      );
+      final newSession =
+          await atproto.refreshSession(refreshJwt: actor.session!.refreshJwt);
 
       switch (newSession.status.code) {
         case 200:
@@ -756,7 +754,7 @@ class Model extends ChangeNotifier {
       notifyListeners();
     }
 
-    return bluesky.Bluesky.fromSession(actor.session!, service: actor.service);
+    return bluesky.Bluesky.fromSession(actor.session!);
   }
 
   Future syncFeed() async {

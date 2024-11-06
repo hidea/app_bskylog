@@ -30,21 +30,13 @@ class _FeedCardState extends State<FeedCard> {
             ? author.displayName!
             : author.handle;
     final avator = author.avatar != null ? NetworkImage(author.avatar!) : null;
-    final postUrl =
-        '${Define.bskyUrl}/profile/${author.handle}/post/${feedView.post.uri.rkey}';
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (feed.reasonRepost)
-          const Row(
-            children: [
-              SizedBox(width: 50),
-              Icon(Icons.repeat, size: 16, color: Colors.blueGrey),
-              Text('repost', style: TextStyle(color: Colors.blueGrey)),
-            ],
-          ),
+        if (feed.reasonRepost) _buildRepost(),
+        if (feed.replyDid.isNotEmpty) _buildReply(),
         SelectionArea(
           child: ListTile(
             titleAlignment: ListTileTitleAlignment.top,
@@ -84,41 +76,91 @@ class _FeedCardState extends State<FeedCard> {
                     feedView.post.embed is bluesky.UEmbedViewExternal)
                   EmbedExternalWidget(
                       (feedView.post.embed as bluesky.UEmbedViewExternal).data),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Tooltip(
-                      message: 'View on Bluesky',
-                      waitDuration: Duration(milliseconds: 500),
-                      child: TextButton(
-                        style: TextButton.styleFrom(padding: EdgeInsets.zero),
-                        child: Text(DateFormat('H:mm yyyy-MM-dd')
-                            .format(feedView.post.indexedAt.toLocal())),
-                        onPressed: () => launchUrlPlus(postUrl),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: IconButton(
-                        icon: const Icon(Icons.today),
-                        iconSize: 18,
-                        padding: EdgeInsets.zero,
-                        tooltip: 'Search this day',
-                        onPressed: () {
-                          final day = feedView.post.indexedAt.toLocal();
-                          context
-                              .read<Model>()
-                              .setSearchDay(day.year, day.month, day.day);
-                        },
-                      ),
-                    ),
-                  ],
-                ),
+                _buildFooter(),
               ],
             ),
           ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRepost() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: const Row(
+        children: [
+          SizedBox(width: 50),
+          Icon(Icons.repeat, size: 16, color: Colors.blueGrey),
+          SizedBox(width: 8),
+          Text('repost', style: TextStyle(color: Colors.blueGrey)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReply() {
+    final feedView = widget.feedView;
+    final post = (feedView.reply!.parent as bluesky.UReplyPostRecord).data;
+    final author = post.author;
+    final displayName =
+        author.displayName != null && author.displayName!.isNotEmpty
+            ? author.displayName!
+            : author.handle;
+    final postUrl =
+        '${Define.bskyUrl}/profile/${author.handle}/post/${post.uri.rkey}';
+
+    return Row(
+      children: [
+        SizedBox(width: 36),
+        TextButton(
+          onPressed: () => launchUrlPlus(postUrl),
+          child: Row(
+            children: [
+              Icon(Icons.reply, size: 16, color: Colors.blueGrey),
+              SizedBox(width: 4),
+              Text('reply to ', style: TextStyle(color: Colors.blueGrey)),
+              Text(displayName, style: TextStyle(color: Colors.blueGrey)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFooter() {
+    final feedView = widget.feedView;
+    final author = feedView.post.author;
+    final postUrl =
+        '${Define.bskyUrl}/profile/${author.handle}/post/${feedView.post.uri.rkey}';
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        Tooltip(
+          message: 'View on Bluesky',
+          waitDuration: Duration(milliseconds: 500),
+          child: TextButton(
+            style: TextButton.styleFrom(padding: EdgeInsets.zero),
+            child: Text(DateFormat('H:mm yyyy-MM-dd')
+                .format(feedView.post.indexedAt.toLocal())),
+            onPressed: () => launchUrlPlus(postUrl),
+          ),
+        ),
+        const SizedBox(width: 6),
+        SizedBox(
+          width: 18,
+          height: 18,
+          child: IconButton(
+            icon: const Icon(Icons.today),
+            iconSize: 18,
+            padding: EdgeInsets.zero,
+            tooltip: 'Search this day',
+            onPressed: () {
+              final day = feedView.post.indexedAt.toLocal();
+              context.read<Model>().setSearchDay(day.year, day.month, day.day);
+            },
+          ),
         ),
       ],
     );

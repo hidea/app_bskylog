@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:bluesky/bluesky.dart' as bluesky;
 
@@ -23,8 +24,8 @@ class _EmbedImagesWidgettState extends State<EmbedImagesWidget> {
               child: Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: GestureDetector(
-                  child: Image.network(
-                    image.fullsize,
+                  child: CachedNetworkImage(
+                    imageUrl: image.thumbnail,
                     height: 150,
                     fit: BoxFit.cover,
                   ),
@@ -37,8 +38,8 @@ class _EmbedImagesWidgettState extends State<EmbedImagesWidget> {
                             title: Text('image'),
                           ),
                           body: Center(
-                            child: Image.network(
-                              image.fullsize,
+                            child: CachedNetworkImage(
+                              imageUrl: image.fullsize,
                               fit: BoxFit.cover,
                             ),
                           ),
