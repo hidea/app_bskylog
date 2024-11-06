@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -15,11 +16,11 @@ class SearchField extends StatefulWidget {
 }
 
 class _SearchFieldState extends State<SearchField> {
+  final _editController = TextEditingController();
+  TextEditingValue? _lastValue;
+
   @override
   Widget build(BuildContext context) {
-    final textEditingController =
-        TextEditingController(text: context.watch<Model>().searchKeyword);
-
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -29,16 +30,16 @@ class _SearchFieldState extends State<SearchField> {
               child: Padding(
                 padding: const EdgeInsets.all(8),
                 child: TextField(
-                  controller: textEditingController,
+                  controller: _editController,
                   decoration: InputDecoration(
                     border: const OutlineInputBorder(),
                     hintText: 'Enter a search term',
                     hintStyle: const TextStyle(color: Colors.grey),
-                    suffixIcon: textEditingController.text.isNotEmpty
+                    suffixIcon: _editController.text.isNotEmpty
                         ? IconButton(
                             icon: const Icon(Icons.clear),
                             onPressed: () {
-                              textEditingController.clear();
+                              _editController.clear();
                               context.read<Model>().setSearchKeyword('');
                             },
                           )
@@ -46,14 +47,14 @@ class _SearchFieldState extends State<SearchField> {
                   ),
                   onSubmitted: (value) =>
                       context.read<Model>().setSearchKeyword(value),
+                  onChanged: _onChanged,
                 ),
               ),
             ),
             IconButton(
               icon: const Icon(Icons.search),
-              onPressed: () => context
-                  .read<Model>()
-                  .setSearchKeyword(textEditingController.text),
+              onPressed: () =>
+                  context.read<Model>().setSearchKeyword(_editController.text),
             ),
             const SizedBox(width: 8),
             IconButton(
@@ -146,5 +147,21 @@ class _SearchFieldState extends State<SearchField> {
           ? () => context.read<Model>().nextSearch()
           : null,
     );
+  }
+
+  void _onChanged(String value) {
+    // Workaround for problem japanese IME
+    final lastValue = _lastValue;
+    _lastValue = _editController.value;
+    if (lastValue != null) {
+      if (lastValue.text != _editController.value.text &&
+          lastValue.composing.isValid &&
+          !_editController.value.composing.isValid) {
+        final offset = lastValue.composing.end;
+        _editController.text = lastValue.text;
+        _editController.selection =
+            TextSelection(baseOffset: offset, extentOffset: offset);
+      }
+    }
   }
 }
