@@ -69,6 +69,24 @@ class $PostsTable extends Posts with TableInfo<$PostsTable, Post> {
       requiredDuringInsert: true,
       defaultConstraints: GeneratedColumn.constraintIsAlways(
           'CHECK ("hav_embed_record" IN (0, 1))'));
+  static const VerificationMeta _havEmbedRecordWithMediaMeta =
+      const VerificationMeta('havEmbedRecordWithMedia');
+  @override
+  late final GeneratedColumn<bool> havEmbedRecordWithMedia =
+      GeneratedColumn<bool>('hav_embed_record_with_media', aliasedName, false,
+          type: DriftSqlType.bool,
+          requiredDuringInsert: true,
+          defaultConstraints: GeneratedColumn.constraintIsAlways(
+              'CHECK ("hav_embed_record_with_media" IN (0, 1))'));
+  static const VerificationMeta _havEmbedVideoMeta =
+      const VerificationMeta('havEmbedVideo');
+  @override
+  late final GeneratedColumn<bool> havEmbedVideo = GeneratedColumn<bool>(
+      'hav_embed_video', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("hav_embed_video" IN (0, 1))'));
   static const VerificationMeta _reasonRepostMeta =
       const VerificationMeta('reasonRepost');
   @override
@@ -93,6 +111,8 @@ class $PostsTable extends Posts with TableInfo<$PostsTable, Post> {
         havEmbedImages,
         havEmbedExternal,
         havEmbedRecord,
+        havEmbedRecordWithMedia,
+        havEmbedVideo,
         reasonRepost,
         post
       ];
@@ -157,6 +177,23 @@ class $PostsTable extends Posts with TableInfo<$PostsTable, Post> {
     } else if (isInserting) {
       context.missing(_havEmbedRecordMeta);
     }
+    if (data.containsKey('hav_embed_record_with_media')) {
+      context.handle(
+          _havEmbedRecordWithMediaMeta,
+          havEmbedRecordWithMedia.isAcceptableOrUnknown(
+              data['hav_embed_record_with_media']!,
+              _havEmbedRecordWithMediaMeta));
+    } else if (isInserting) {
+      context.missing(_havEmbedRecordWithMediaMeta);
+    }
+    if (data.containsKey('hav_embed_video')) {
+      context.handle(
+          _havEmbedVideoMeta,
+          havEmbedVideo.isAcceptableOrUnknown(
+              data['hav_embed_video']!, _havEmbedVideoMeta));
+    } else if (isInserting) {
+      context.missing(_havEmbedVideoMeta);
+    }
     if (data.containsKey('reason_repost')) {
       context.handle(
           _reasonRepostMeta,
@@ -196,6 +233,11 @@ class $PostsTable extends Posts with TableInfo<$PostsTable, Post> {
           DriftSqlType.bool, data['${effectivePrefix}hav_embed_external'])!,
       havEmbedRecord: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}hav_embed_record'])!,
+      havEmbedRecordWithMedia: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool,
+          data['${effectivePrefix}hav_embed_record_with_media'])!,
+      havEmbedVideo: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}hav_embed_video'])!,
       reasonRepost: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}reason_repost'])!,
       post: attachedDatabase.typeMapping
@@ -218,6 +260,8 @@ class Post extends DataClass implements Insertable<Post> {
   final bool havEmbedImages;
   final bool havEmbedExternal;
   final bool havEmbedRecord;
+  final bool havEmbedRecordWithMedia;
+  final bool havEmbedVideo;
   final bool reasonRepost;
   final String post;
   const Post(
@@ -229,6 +273,8 @@ class Post extends DataClass implements Insertable<Post> {
       required this.havEmbedImages,
       required this.havEmbedExternal,
       required this.havEmbedRecord,
+      required this.havEmbedRecordWithMedia,
+      required this.havEmbedVideo,
       required this.reasonRepost,
       required this.post});
   @override
@@ -242,6 +288,9 @@ class Post extends DataClass implements Insertable<Post> {
     map['hav_embed_images'] = Variable<bool>(havEmbedImages);
     map['hav_embed_external'] = Variable<bool>(havEmbedExternal);
     map['hav_embed_record'] = Variable<bool>(havEmbedRecord);
+    map['hav_embed_record_with_media'] =
+        Variable<bool>(havEmbedRecordWithMedia);
+    map['hav_embed_video'] = Variable<bool>(havEmbedVideo);
     map['reason_repost'] = Variable<bool>(reasonRepost);
     map['post'] = Variable<String>(post);
     return map;
@@ -257,6 +306,8 @@ class Post extends DataClass implements Insertable<Post> {
       havEmbedImages: Value(havEmbedImages),
       havEmbedExternal: Value(havEmbedExternal),
       havEmbedRecord: Value(havEmbedRecord),
+      havEmbedRecordWithMedia: Value(havEmbedRecordWithMedia),
+      havEmbedVideo: Value(havEmbedVideo),
       reasonRepost: Value(reasonRepost),
       post: Value(post),
     );
@@ -274,6 +325,9 @@ class Post extends DataClass implements Insertable<Post> {
       havEmbedImages: serializer.fromJson<bool>(json['havEmbedImages']),
       havEmbedExternal: serializer.fromJson<bool>(json['havEmbedExternal']),
       havEmbedRecord: serializer.fromJson<bool>(json['havEmbedRecord']),
+      havEmbedRecordWithMedia:
+          serializer.fromJson<bool>(json['havEmbedRecordWithMedia']),
+      havEmbedVideo: serializer.fromJson<bool>(json['havEmbedVideo']),
       reasonRepost: serializer.fromJson<bool>(json['reasonRepost']),
       post: serializer.fromJson<String>(json['post']),
     );
@@ -290,6 +344,9 @@ class Post extends DataClass implements Insertable<Post> {
       'havEmbedImages': serializer.toJson<bool>(havEmbedImages),
       'havEmbedExternal': serializer.toJson<bool>(havEmbedExternal),
       'havEmbedRecord': serializer.toJson<bool>(havEmbedRecord),
+      'havEmbedRecordWithMedia':
+          serializer.toJson<bool>(havEmbedRecordWithMedia),
+      'havEmbedVideo': serializer.toJson<bool>(havEmbedVideo),
       'reasonRepost': serializer.toJson<bool>(reasonRepost),
       'post': serializer.toJson<String>(post),
     };
@@ -304,6 +361,8 @@ class Post extends DataClass implements Insertable<Post> {
           bool? havEmbedImages,
           bool? havEmbedExternal,
           bool? havEmbedRecord,
+          bool? havEmbedRecordWithMedia,
+          bool? havEmbedVideo,
           bool? reasonRepost,
           String? post}) =>
       Post(
@@ -315,6 +374,9 @@ class Post extends DataClass implements Insertable<Post> {
         havEmbedImages: havEmbedImages ?? this.havEmbedImages,
         havEmbedExternal: havEmbedExternal ?? this.havEmbedExternal,
         havEmbedRecord: havEmbedRecord ?? this.havEmbedRecord,
+        havEmbedRecordWithMedia:
+            havEmbedRecordWithMedia ?? this.havEmbedRecordWithMedia,
+        havEmbedVideo: havEmbedVideo ?? this.havEmbedVideo,
         reasonRepost: reasonRepost ?? this.reasonRepost,
         post: post ?? this.post,
       );
@@ -334,6 +396,12 @@ class Post extends DataClass implements Insertable<Post> {
       havEmbedRecord: data.havEmbedRecord.present
           ? data.havEmbedRecord.value
           : this.havEmbedRecord,
+      havEmbedRecordWithMedia: data.havEmbedRecordWithMedia.present
+          ? data.havEmbedRecordWithMedia.value
+          : this.havEmbedRecordWithMedia,
+      havEmbedVideo: data.havEmbedVideo.present
+          ? data.havEmbedVideo.value
+          : this.havEmbedVideo,
       reasonRepost: data.reasonRepost.present
           ? data.reasonRepost.value
           : this.reasonRepost,
@@ -352,6 +420,8 @@ class Post extends DataClass implements Insertable<Post> {
           ..write('havEmbedImages: $havEmbedImages, ')
           ..write('havEmbedExternal: $havEmbedExternal, ')
           ..write('havEmbedRecord: $havEmbedRecord, ')
+          ..write('havEmbedRecordWithMedia: $havEmbedRecordWithMedia, ')
+          ..write('havEmbedVideo: $havEmbedVideo, ')
           ..write('reasonRepost: $reasonRepost, ')
           ..write('post: $post')
           ..write(')'))
@@ -359,8 +429,19 @@ class Post extends DataClass implements Insertable<Post> {
   }
 
   @override
-  int get hashCode => Object.hash(id, uri, authorDid, indexed, replyDid,
-      havEmbedImages, havEmbedExternal, havEmbedRecord, reasonRepost, post);
+  int get hashCode => Object.hash(
+      id,
+      uri,
+      authorDid,
+      indexed,
+      replyDid,
+      havEmbedImages,
+      havEmbedExternal,
+      havEmbedRecord,
+      havEmbedRecordWithMedia,
+      havEmbedVideo,
+      reasonRepost,
+      post);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -373,6 +454,8 @@ class Post extends DataClass implements Insertable<Post> {
           other.havEmbedImages == this.havEmbedImages &&
           other.havEmbedExternal == this.havEmbedExternal &&
           other.havEmbedRecord == this.havEmbedRecord &&
+          other.havEmbedRecordWithMedia == this.havEmbedRecordWithMedia &&
+          other.havEmbedVideo == this.havEmbedVideo &&
           other.reasonRepost == this.reasonRepost &&
           other.post == this.post);
 }
@@ -386,6 +469,8 @@ class PostsCompanion extends UpdateCompanion<Post> {
   final Value<bool> havEmbedImages;
   final Value<bool> havEmbedExternal;
   final Value<bool> havEmbedRecord;
+  final Value<bool> havEmbedRecordWithMedia;
+  final Value<bool> havEmbedVideo;
   final Value<bool> reasonRepost;
   final Value<String> post;
   const PostsCompanion({
@@ -397,6 +482,8 @@ class PostsCompanion extends UpdateCompanion<Post> {
     this.havEmbedImages = const Value.absent(),
     this.havEmbedExternal = const Value.absent(),
     this.havEmbedRecord = const Value.absent(),
+    this.havEmbedRecordWithMedia = const Value.absent(),
+    this.havEmbedVideo = const Value.absent(),
     this.reasonRepost = const Value.absent(),
     this.post = const Value.absent(),
   });
@@ -409,6 +496,8 @@ class PostsCompanion extends UpdateCompanion<Post> {
     required bool havEmbedImages,
     required bool havEmbedExternal,
     required bool havEmbedRecord,
+    required bool havEmbedRecordWithMedia,
+    required bool havEmbedVideo,
     required bool reasonRepost,
     required String post,
   })  : uri = Value(uri),
@@ -418,6 +507,8 @@ class PostsCompanion extends UpdateCompanion<Post> {
         havEmbedImages = Value(havEmbedImages),
         havEmbedExternal = Value(havEmbedExternal),
         havEmbedRecord = Value(havEmbedRecord),
+        havEmbedRecordWithMedia = Value(havEmbedRecordWithMedia),
+        havEmbedVideo = Value(havEmbedVideo),
         reasonRepost = Value(reasonRepost),
         post = Value(post);
   static Insertable<Post> custom({
@@ -429,6 +520,8 @@ class PostsCompanion extends UpdateCompanion<Post> {
     Expression<bool>? havEmbedImages,
     Expression<bool>? havEmbedExternal,
     Expression<bool>? havEmbedRecord,
+    Expression<bool>? havEmbedRecordWithMedia,
+    Expression<bool>? havEmbedVideo,
     Expression<bool>? reasonRepost,
     Expression<String>? post,
   }) {
@@ -441,6 +534,9 @@ class PostsCompanion extends UpdateCompanion<Post> {
       if (havEmbedImages != null) 'hav_embed_images': havEmbedImages,
       if (havEmbedExternal != null) 'hav_embed_external': havEmbedExternal,
       if (havEmbedRecord != null) 'hav_embed_record': havEmbedRecord,
+      if (havEmbedRecordWithMedia != null)
+        'hav_embed_record_with_media': havEmbedRecordWithMedia,
+      if (havEmbedVideo != null) 'hav_embed_video': havEmbedVideo,
       if (reasonRepost != null) 'reason_repost': reasonRepost,
       if (post != null) 'post': post,
     });
@@ -455,6 +551,8 @@ class PostsCompanion extends UpdateCompanion<Post> {
       Value<bool>? havEmbedImages,
       Value<bool>? havEmbedExternal,
       Value<bool>? havEmbedRecord,
+      Value<bool>? havEmbedRecordWithMedia,
+      Value<bool>? havEmbedVideo,
       Value<bool>? reasonRepost,
       Value<String>? post}) {
     return PostsCompanion(
@@ -466,6 +564,9 @@ class PostsCompanion extends UpdateCompanion<Post> {
       havEmbedImages: havEmbedImages ?? this.havEmbedImages,
       havEmbedExternal: havEmbedExternal ?? this.havEmbedExternal,
       havEmbedRecord: havEmbedRecord ?? this.havEmbedRecord,
+      havEmbedRecordWithMedia:
+          havEmbedRecordWithMedia ?? this.havEmbedRecordWithMedia,
+      havEmbedVideo: havEmbedVideo ?? this.havEmbedVideo,
       reasonRepost: reasonRepost ?? this.reasonRepost,
       post: post ?? this.post,
     );
@@ -498,6 +599,13 @@ class PostsCompanion extends UpdateCompanion<Post> {
     if (havEmbedRecord.present) {
       map['hav_embed_record'] = Variable<bool>(havEmbedRecord.value);
     }
+    if (havEmbedRecordWithMedia.present) {
+      map['hav_embed_record_with_media'] =
+          Variable<bool>(havEmbedRecordWithMedia.value);
+    }
+    if (havEmbedVideo.present) {
+      map['hav_embed_video'] = Variable<bool>(havEmbedVideo.value);
+    }
     if (reasonRepost.present) {
       map['reason_repost'] = Variable<bool>(reasonRepost.value);
     }
@@ -518,6 +626,8 @@ class PostsCompanion extends UpdateCompanion<Post> {
           ..write('havEmbedImages: $havEmbedImages, ')
           ..write('havEmbedExternal: $havEmbedExternal, ')
           ..write('havEmbedRecord: $havEmbedRecord, ')
+          ..write('havEmbedRecordWithMedia: $havEmbedRecordWithMedia, ')
+          ..write('havEmbedVideo: $havEmbedVideo, ')
           ..write('reasonRepost: $reasonRepost, ')
           ..write('post: $post')
           ..write(')'))
@@ -545,6 +655,8 @@ typedef $$PostsTableCreateCompanionBuilder = PostsCompanion Function({
   required bool havEmbedImages,
   required bool havEmbedExternal,
   required bool havEmbedRecord,
+  required bool havEmbedRecordWithMedia,
+  required bool havEmbedVideo,
   required bool reasonRepost,
   required String post,
 });
@@ -557,6 +669,8 @@ typedef $$PostsTableUpdateCompanionBuilder = PostsCompanion Function({
   Value<bool> havEmbedImages,
   Value<bool> havEmbedExternal,
   Value<bool> havEmbedRecord,
+  Value<bool> havEmbedRecordWithMedia,
+  Value<bool> havEmbedVideo,
   Value<bool> reasonRepost,
   Value<String> post,
 });
@@ -586,6 +700,8 @@ class $$PostsTableTableManager extends RootTableManager<
             Value<bool> havEmbedImages = const Value.absent(),
             Value<bool> havEmbedExternal = const Value.absent(),
             Value<bool> havEmbedRecord = const Value.absent(),
+            Value<bool> havEmbedRecordWithMedia = const Value.absent(),
+            Value<bool> havEmbedVideo = const Value.absent(),
             Value<bool> reasonRepost = const Value.absent(),
             Value<String> post = const Value.absent(),
           }) =>
@@ -598,6 +714,8 @@ class $$PostsTableTableManager extends RootTableManager<
             havEmbedImages: havEmbedImages,
             havEmbedExternal: havEmbedExternal,
             havEmbedRecord: havEmbedRecord,
+            havEmbedRecordWithMedia: havEmbedRecordWithMedia,
+            havEmbedVideo: havEmbedVideo,
             reasonRepost: reasonRepost,
             post: post,
           ),
@@ -610,6 +728,8 @@ class $$PostsTableTableManager extends RootTableManager<
             required bool havEmbedImages,
             required bool havEmbedExternal,
             required bool havEmbedRecord,
+            required bool havEmbedRecordWithMedia,
+            required bool havEmbedVideo,
             required bool reasonRepost,
             required String post,
           }) =>
@@ -622,6 +742,8 @@ class $$PostsTableTableManager extends RootTableManager<
             havEmbedImages: havEmbedImages,
             havEmbedExternal: havEmbedExternal,
             havEmbedRecord: havEmbedRecord,
+            havEmbedRecordWithMedia: havEmbedRecordWithMedia,
+            havEmbedVideo: havEmbedVideo,
             reasonRepost: reasonRepost,
             post: post,
           ),
@@ -668,6 +790,16 @@ class $$PostsTableFilterComposer
 
   ColumnFilters<bool> get havEmbedRecord => $state.composableBuilder(
       column: $state.table.havEmbedRecord,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<bool> get havEmbedRecordWithMedia => $state.composableBuilder(
+      column: $state.table.havEmbedRecordWithMedia,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<bool> get havEmbedVideo => $state.composableBuilder(
+      column: $state.table.havEmbedVideo,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
@@ -722,6 +854,16 @@ class $$PostsTableOrderingComposer
 
   ColumnOrderings<bool> get havEmbedRecord => $state.composableBuilder(
       column: $state.table.havEmbedRecord,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<bool> get havEmbedRecordWithMedia => $state.composableBuilder(
+      column: $state.table.havEmbedRecordWithMedia,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<bool> get havEmbedVideo => $state.composableBuilder(
+      column: $state.table.havEmbedVideo,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 

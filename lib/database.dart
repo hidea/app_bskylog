@@ -17,6 +17,8 @@ class Posts extends Table {
   BoolColumn get havEmbedImages => boolean()(); // images
   BoolColumn get havEmbedExternal => boolean()(); // linkcard
   BoolColumn get havEmbedRecord => boolean()(); // RQ
+  BoolColumn get havEmbedRecordWithMedia => boolean()(); // RQ withMedia
+  BoolColumn get havEmbedVideo => boolean()(); // video
   BoolColumn get reasonRepost => boolean()(); // repost
   TextColumn get post => text()(); // Post
 }

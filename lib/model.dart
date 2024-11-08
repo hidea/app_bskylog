@@ -416,7 +416,7 @@ class Model extends ChangeNotifier {
               query.where((tbl) => tbl.havEmbedImages.equals(true));
               break;
             case VisibleType.video:
-              query.where((tbl) => tbl.havEmbedRecord.equals(true));
+              query.where((tbl) => tbl.havEmbedVideo.equals(true));
               break;
           }
         }
@@ -438,7 +438,7 @@ class Model extends ChangeNotifier {
               query.where((tbl) => tbl.havEmbedImages.equals(false));
               break;
             case VisibleType.video:
-              query.where((tbl) => tbl.havEmbedRecord.equals(false));
+              query.where((tbl) => tbl.havEmbedVideo.equals(false));
               break;
           }
         }
@@ -503,7 +503,7 @@ class Model extends ChangeNotifier {
               query.where(database.posts.havEmbedImages.equals(true));
               break;
             case VisibleType.video:
-              query.where(database.posts.havEmbedRecord.equals(true));
+              query.where(database.posts.havEmbedVideo.equals(true));
               break;
           }
         }
@@ -525,7 +525,7 @@ class Model extends ChangeNotifier {
               query.where(database.posts.havEmbedImages.equals(false));
               break;
             case VisibleType.video:
-              query.where(database.posts.havEmbedRecord.equals(false));
+              query.where(database.posts.havEmbedVideo.equals(false));
               break;
           }
         }
@@ -847,6 +847,9 @@ class Model extends ChangeNotifier {
                 havEmbedImages: post.embed is bluesky.UEmbedViewImages,
                 havEmbedExternal: post.embed is bluesky.UEmbedViewExternal,
                 havEmbedRecord: post.embed is bluesky.UEmbedViewRecord,
+                havEmbedRecordWithMedia:
+                    post.embed is bluesky.UEmbedViewRecordWithMedia,
+                havEmbedVideo: post.embed is bluesky.UEmbedViewVideo,
                 reasonRepost: repost != null,
                 post: jsonEncode(feedView.toJson()),
               ),

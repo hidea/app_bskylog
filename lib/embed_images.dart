@@ -8,10 +8,10 @@ class EmbedImagesWidget extends StatefulWidget {
   final bluesky.EmbedViewImages embed;
 
   @override
-  State<EmbedImagesWidget> createState() => _EmbedImagesWidgettState();
+  State<EmbedImagesWidget> createState() => _EmbedImagesWidgetState();
 }
 
-class _EmbedImagesWidgettState extends State<EmbedImagesWidget> {
+class _EmbedImagesWidgetState extends State<EmbedImagesWidget> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(

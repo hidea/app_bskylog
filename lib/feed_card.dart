@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import 'define.dart';
 import 'embed_images.dart';
+import 'embed_video.dart';
 import 'model.dart';
 import 'utils.dart';
 
@@ -76,6 +77,10 @@ class _FeedCardState extends State<FeedCard> {
                     feedView.post.embed is bluesky.UEmbedViewExternal)
                   EmbedExternalWidget(
                       (feedView.post.embed as bluesky.UEmbedViewExternal).data),
+                if (feedView.post.embed != null &&
+                    feedView.post.embed is bluesky.UEmbedViewVideo)
+                  EmbedVideoWidget(
+                      (feedView.post.embed as bluesky.UEmbedViewVideo).data),
                 _buildFooter(),
               ],
             ),
