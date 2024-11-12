@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:bskylog/embed_external.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:bluesky/bluesky.dart' as bluesky;
@@ -57,8 +60,7 @@ class _FeedCardState extends State<FeedCard> {
                 ),
               ],
             ),
-            subtitle: Text(feedView.post.record.text),
-            // TODO: record.facets
+            subtitle: _buildRecordText(),
           ),
         ),
         Row(
@@ -88,6 +90,75 @@ class _FeedCardState extends State<FeedCard> {
         ),
       ],
     );
+  }
+
+  Widget _buildRecordText() {
+    final feedView = widget.feedView;
+    final record = feedView.post.record;
+    final utf8text = utf8.encode(record.text);
+
+    List<TextSpan> spans = [];
+    int byteCurrent = 0;
+
+    if (record.facets != null && record.facets!.isNotEmpty) {
+      final facets = record.facets!;
+      //facets.sort((a, b) => a.index.byteStart - b.index.byteStart);
+
+      for (final facet in facets) {
+        final intro = utf8text.sublist(byteCurrent, facet.index.byteStart);
+        spans.add(TextSpan(text: utf8.decode(intro)));
+
+        final body =
+            utf8text.sublist(facet.index.byteStart, facet.index.byteEnd);
+        final bodyText = utf8.decode(body);
+
+        for (final feature in facet.features) {
+          if (feature is bluesky.UFacetFeatureMention) {
+            spans.add(TextSpan(
+              text: bodyText,
+              style: TextStyle(color: Colors.blue),
+              recognizer: TapGestureRecognizer()
+                ..onTap = () => _tapMention(feature.data),
+            ));
+          } else if (feature is bluesky.UFacetFeatureLink) {
+            spans.add(TextSpan(
+              text: bodyText,
+              style: TextStyle(color: Colors.blue),
+              recognizer: TapGestureRecognizer()
+                ..onTap = () => _tapLink(feature.data),
+            ));
+          } else if (feature is bluesky.UFacetFeatureTag) {
+            spans.add(TextSpan(
+              text: bodyText,
+              style: TextStyle(color: Colors.blue),
+              recognizer: TapGestureRecognizer()
+                ..onTap = () => _tapTag(feature.data),
+            ));
+          } else {
+            spans.add(TextSpan(text: bodyText));
+          }
+          break;
+        }
+
+        byteCurrent = facet.index.byteEnd;
+      }
+    }
+    final left = utf8text.sublist(byteCurrent);
+    spans.add(TextSpan(text: utf8.decode(left)));
+
+    return Text.rich(TextSpan(children: spans));
+  }
+
+  void _tapMention(bluesky.FacetMention feature) {
+    context.read<Model>().setSearchKeyword(feature.did);
+  }
+
+  void _tapLink(bluesky.FacetLink feature) {
+    launchUrlPlus(feature.uri);
+  }
+
+  void _tapTag(bluesky.FacetTag feature) {
+    context.read<Model>().setSearchKeyword('#${feature.tag}');
   }
 
   Widget _buildRepost() {

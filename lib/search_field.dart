@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -18,6 +17,18 @@ class SearchField extends StatefulWidget {
 class _SearchFieldState extends State<SearchField> {
   final _editController = TextEditingController();
   TextEditingValue? _lastValue;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final model = context.read<Model>();
+    model.addListener(() {
+      if (_editController.text != model.searchKeyword) {
+        _editController.text = model.searchKeyword!;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
