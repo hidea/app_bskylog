@@ -106,6 +106,9 @@ class Model extends ChangeNotifier {
   SortOrder _sortOrder = SortOrder.desc;
   SortOrder get sortOrder => _sortOrder;
 
+  double _volume = 0.0;
+  double get volume => _volume;
+
   int _progress = 0;
   int get progress => _progress;
   String _progressMessage = '';
@@ -161,6 +164,9 @@ class Model extends ChangeNotifier {
     if (json['tailCursor'] != null) {
       _tailCursor = json['tailCursor'];
     }
+    if (json['volume'] != null) {
+      _volume = json['volume'];
+    }
 
     if (kDebugMode) {
       print(_lastSync);
@@ -186,6 +192,7 @@ class Model extends ChangeNotifier {
         'actor': _currentActor?.toJson(),
         'lastSync': _lastSync.toString(),
         'tailCursor': _tailCursor,
+        'volume': _volume,
       };
 
   VisibleMode visible(VisibleType type) {
@@ -215,6 +222,12 @@ class Model extends ChangeNotifier {
 
     updateSharedPrefrences();
     notifyListeners();
+  }
+
+  double toggleVolume() {
+    _volume = _volume == 0 ? 1 : 0;
+    notifyListeners();
+    return _volume;
   }
 
   void clearSearchRange() async {

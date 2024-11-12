@@ -1,8 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:bluesky/app_bsky_embed_video.dart';
+import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
+
+import 'model.dart';
 
 class EmbedVideoWidget extends StatefulWidget {
   const EmbedVideoWidget(this.embed, {super.key});
@@ -22,7 +24,9 @@ class _EmbedVideoWidgetState extends State<EmbedVideoWidget> {
     _controller =
         VideoPlayerController.networkUrl(Uri.parse(widget.embed.playlist))
           ..initialize().then((_) {
-            setState(() {});
+            setState(() {
+              _controller.setVolume(context.read<Model>().volume);
+            });
           });
   }
 
@@ -34,9 +38,6 @@ class _EmbedVideoWidgetState extends State<EmbedVideoWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (kDebugMode) {
-      print('EmbedVideoWidget: ${widget.embed}');
-    }
     return _controller.value.isInitialized
         ? SizedBox(
             width: 360,
@@ -111,6 +112,17 @@ class _ControlsOverlayState extends State<_ControlsOverlay> {
               widget.controller.value.isPlaying
                   ? widget.controller.pause()
                   : widget.controller.play();
+            });
+          },
+        ),
+        IconButton(
+          icon: widget.controller.value.volume == 0
+              ? const Icon(Icons.volume_off, color: Colors.white)
+              : const Icon(Icons.volume_up, color: Colors.white),
+          onPressed: () {
+            setState(() {
+              widget.controller
+                  .setVolume(widget.controller.value.volume == 0 ? 1 : 0);
             });
           },
         ),

@@ -216,7 +216,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    const Icon(Icons.storage),
+                    IconButton(
+                      onPressed: () => context.read<Model>().toggleVolume(),
+                      icon: context.watch<Model>().volume == 0
+                          ? const Icon(Icons.volume_off)
+                          : const Icon(Icons.volume_up),
+                    ),
                     const SizedBox(height: 8),
                     Text('${context.read<Model>().packageInfo!.version}'
                         '+${context.read<Model>().packageInfo!.buildNumber}'),

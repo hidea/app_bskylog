@@ -25,7 +25,7 @@ class _SearchFieldState extends State<SearchField> {
     final model = context.read<Model>();
     model.addListener(() {
       if (_editController.text != model.searchKeyword) {
-        _editController.text = model.searchKeyword!;
+        _editController.text = model.searchKeyword ?? '';
       }
     });
   }
