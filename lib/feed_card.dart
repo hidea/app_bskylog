@@ -97,7 +97,7 @@ class _FeedCardState extends State<FeedCard> {
     final record = feedView.post.record;
     final utf8text = utf8.encode(record.text);
 
-    List<TextSpan> spans = [];
+    List<InlineSpan> spans = [];
     int byteCurrent = 0;
 
     if (record.facets != null && record.facets!.isNotEmpty) {
@@ -114,26 +114,26 @@ class _FeedCardState extends State<FeedCard> {
 
         for (final feature in facet.features) {
           if (feature is bluesky.UFacetFeatureMention) {
-            spans.add(TextSpan(
-              text: bodyText,
-              style: TextStyle(color: Colors.blue),
-              recognizer: TapGestureRecognizer()
-                ..onTap = () => _tapMention(feature.data),
-            ));
+            spans.add(_TooltipSpan(
+                child: InkWell(
+                  child: Text(bodyText, style: TextStyle(color: Colors.blue)),
+                  onTap: () => _tapMention(feature.data),
+                ),
+                tooltip: 'Search mention'));
           } else if (feature is bluesky.UFacetFeatureLink) {
-            spans.add(TextSpan(
-              text: bodyText,
-              style: TextStyle(color: Colors.blue),
-              recognizer: TapGestureRecognizer()
-                ..onTap = () => _tapLink(feature.data),
-            ));
+            spans.add(_TooltipSpan(
+                child: InkWell(
+                  child: Text(bodyText, style: TextStyle(color: Colors.blue)),
+                  onTap: () => _tapLink(feature.data),
+                ),
+                tooltip: 'View link'));
           } else if (feature is bluesky.UFacetFeatureTag) {
-            spans.add(TextSpan(
-              text: bodyText,
-              style: TextStyle(color: Colors.blue),
-              recognizer: TapGestureRecognizer()
-                ..onTap = () => _tapTag(feature.data),
-            ));
+            spans.add(_TooltipSpan(
+                child: InkWell(
+                  child: Text(bodyText, style: TextStyle(color: Colors.blue)),
+                  onTap: () => _tapTag(feature.data),
+                ),
+                tooltip: 'Search hashtag'));
           } else {
             spans.add(TextSpan(text: bodyText));
           }
@@ -241,4 +241,9 @@ class _FeedCardState extends State<FeedCard> {
       ],
     );
   }
+}
+
+class _TooltipSpan extends WidgetSpan {
+  _TooltipSpan({required String tooltip, required Widget child})
+      : super(child: Tooltip(message: tooltip, child: child));
 }
