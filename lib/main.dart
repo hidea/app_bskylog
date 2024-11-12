@@ -99,9 +99,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final _feedController = ScrollController();
   final _autoScrollController = AutoScrollController();
   bool isSyncing = false;
   bool visibleSearch = true;
+  bool visibleTopButton = false;
 
   void _syncFeed() {
     setState(() {
@@ -122,6 +124,29 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         isSyncing = false;
       });
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    _feedController.addListener(() {
+      if (_feedController.hasClients) {
+        if (_feedController.offset > 0) {
+          if (!visibleTopButton) {
+            setState(() {
+              visibleTopButton = true;
+            });
+          }
+        } else {
+          if (visibleTopButton) {
+            setState(() {
+              visibleTopButton = false;
+            });
+          }
+        }
+      }
     });
   }
 
@@ -243,34 +268,53 @@ class _HomeScreenState extends State<HomeScreen> {
                       });
                     }),
                 Expanded(
-                  child: CustomScrollView(
-                    slivers: [
-                      StreamBuilder(
-                        stream: context.watch<Model>().filterSearch().watch(),
-                        builder: (context, snapshot) {
-                          if (!snapshot.hasData) {
-                            return const SliverToBoxAdapter(
-                                child:
-                                    Center(child: CircularProgressIndicator()));
-                          }
-                          final posts = snapshot.data!;
-                          return SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (BuildContext context, int index) {
-                                final feed = posts[index];
-                                final feedView = bluesky.FeedView.fromJson(
-                                    jsonDecode(feed.post));
-                                return Card(child: FeedCard(feed, feedView));
-                              },
-                              childCount: posts.length,
-                            ),
-                          );
-                        },
+                  child: Stack(
+                    children: [
+                      CustomScrollView(
+                        controller: _feedController,
+                        slivers: [
+                          StreamBuilder(
+                            stream:
+                                context.watch<Model>().filterSearch().watch(),
+                            builder: (context, snapshot) {
+                              if (!snapshot.hasData) {
+                                return const SliverToBoxAdapter(
+                                    child: Center(
+                                        child: CircularProgressIndicator()));
+                              }
+                              final posts = snapshot.data!;
+                              return SliverList(
+                                delegate: SliverChildBuilderDelegate(
+                                  (BuildContext context, int index) {
+                                    final feed = posts[index];
+                                    final feedView = bluesky.FeedView.fromJson(
+                                        jsonDecode(feed.post));
+                                    return Card(
+                                        child: FeedCard(feed, feedView));
+                                  },
+                                  childCount: posts.length,
+                                ),
+                              );
+                            },
+                          ),
+                          SliverToBoxAdapter(
+                            child: SizedBox(
+                                height: MediaQuery.paddingOf(context).bottom),
+                          ),
+                        ],
                       ),
-                      SliverToBoxAdapter(
-                        child: SizedBox(
-                            height: MediaQuery.paddingOf(context).bottom),
-                      ),
+                      if (visibleTopButton)
+                        Align(
+                          alignment: Alignment.bottomRight,
+                          child: Padding(
+                              padding: EdgeInsets.all(16),
+                              child: IconButton.outlined(
+                                  onPressed: () => _feedController.jumpTo(
+                                      _feedController.position.minScrollExtent),
+                                  icon: Icon(
+                                      Icons.keyboard_arrow_up)) // なにかしらのWidget
+                              ),
+                        ),
                     ],
                   ),
                 ),
