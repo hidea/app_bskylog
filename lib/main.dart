@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:animated_tree_view/animated_tree_view.dart';
 import 'package:bskylog/rotation_icon.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -20,6 +22,18 @@ import 'signin_screen.dart';
 import 'utils.dart';
 
 final isDesktop = (Platform.isMacOS || Platform.isLinux || Platform.isWindows);
+
+class _Destination {
+  final Widget icon;
+  final Widget label;
+  final bool disabled;
+
+  _Destination({
+    required this.icon,
+    required this.label,
+    required this.disabled,
+  });
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -99,6 +113,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _feedController = ScrollController();
   final _autoScrollController = AutoScrollController();
   bool isSyncing = false;
@@ -152,257 +167,315 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isTablet = MediaQuery.of(context).size.shortestSide > 600;
-    final safePadding = MediaQuery.of(context).padding;
+    return isDesktop ? _scaffoldDesktop() : _scaffoldMobile();
+  }
 
-    final actor = context.watch<Model>().currentActor;
-    final profile = actor?.profile;
-    final avator = profile != null && profile.avatar != null
-        ? NetworkImage(profile.avatar!)
-        : null;
-
+  Widget _scaffoldDesktop() {
     return Scaffold(
-      appBar: isDesktop
-          ? null
-          : AppBar(
-              title: const Text(Define.title),
-              toolbarHeight: 36,
-            ),
+      key: _scaffoldKey,
       body: Row(
         children: [
-          NavigationRail(
-            minWidth: 52,
-            selectedIndex: null,
-            labelType: isTablet
-                ? NavigationRailLabelType.all
-                : NavigationRailLabelType.none,
-            leading: SizedBox(
-              height: 50,
-              child: CircleAvatar(radius: 20, backgroundImage: avator),
-            ),
-            destinations: [
-              NavigationRailDestination(
-                icon: RotationIcon(
-                  icon: Icons.sync,
-                  syncing: isSyncing,
-                ),
-                label: const Text('Log Sync'),
-                padding: EdgeInsets.only(top: safePadding.top),
-                disabled:
-                    isSyncing || context.watch<Model>().currentActor == null,
-              ),
-              NavigationRailDestination(
-                icon: const Icon(Icons.delete_forever),
-                label: const Text('Log Clear'),
-                disabled:
-                    isSyncing || context.watch<Model>().currentActor == null,
-              ),
-              NavigationRailDestination(
-                icon: const Icon(Icons.login),
-                label: const Text('Sign In'),
-                disabled:
-                    isSyncing || context.watch<Model>().currentActor != null,
-              ),
-              NavigationRailDestination(
-                icon: const Icon(Icons.logout),
-                label: const Text('Sign Out'),
-                disabled:
-                    isSyncing || context.watch<Model>().currentActor == null,
-              ),
-            ],
-            trailing: Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    IconButton(
-                      onPressed: () => context.read<Model>().toggleVolume(),
-                      icon: context.watch<Model>().volume == 0
-                          ? const Icon(Icons.volume_off)
-                          : const Icon(Icons.volume_up),
-                    ),
-                    const SizedBox(height: 8),
-                    Text('${context.read<Model>().packageInfo!.version}'
-                        '+${context.read<Model>().packageInfo!.buildNumber}'),
-                  ],
-                ),
-              ),
-            ),
-            onDestinationSelected: (index) {
-              switch (index) {
-                case 0:
-                  _syncFeed();
-                  break;
-                case 1:
-                  showConfirmDialog(
-                    context: context,
-                    ok: const Text('Delete'),
-                    content: const Text('Are you sure trancate all log ?'),
-                    onOk: () {
-                      context.read<Model>().clearFeed().then((_) {
-                        scaffoldMsgKey.currentState!.showSnackBar(SnackBar(
-                            content: Text("Trancate all log"),
-                            behavior: SnackBarBehavior.floating));
-                      });
-                    },
-                  );
-                  break;
-                case 2:
-                  context.push('/signin');
-                  break;
-                case 3:
-                  context.read<Model>().signout().then((_) {
-                    scaffoldMsgKey.currentState!.showSnackBar(SnackBar(
-                        content: Text("Sign out"),
-                        behavior: SnackBarBehavior.floating));
-                  });
-                  break;
-              }
-            },
-          ),
+          _buildNavigatonRail(),
           const VerticalDivider(thickness: 1, width: 1),
           Expanded(
-            child: Column(
-              children: [
-                SearchField(
-                    visible: visibleSearch,
-                    onVisible: (visible) {
-                      setState(() {
-                        visibleSearch = visible;
-                      });
-                    }),
-                Expanded(
-                  child: Stack(
-                    children: [
-                      CustomScrollView(
-                        controller: _feedController,
-                        slivers: [
-                          StreamBuilder(
-                            stream:
-                                context.watch<Model>().filterSearch().watch(),
-                            builder: (context, snapshot) {
-                              if (!snapshot.hasData) {
-                                return const SliverToBoxAdapter(
-                                    child: Center(
-                                        child: CircularProgressIndicator()));
-                              }
-                              final posts = snapshot.data!;
-                              return SliverList(
-                                delegate: SliverChildBuilderDelegate(
-                                  (BuildContext context, int index) {
-                                    final feed = posts[index];
-                                    final feedView = bluesky.FeedView.fromJson(
-                                        jsonDecode(feed.post));
-                                    return Card(
-                                        child: FeedCard(feed, feedView));
-                                  },
-                                  childCount: posts.length,
-                                ),
-                              );
-                            },
-                          ),
-                          SliverToBoxAdapter(
-                            child: SizedBox(
-                                height: MediaQuery.paddingOf(context).bottom),
-                          ),
-                        ],
-                      ),
-                      if (visibleTopButton)
-                        Align(
-                          alignment: Alignment.bottomRight,
-                          child: Padding(
-                              padding: EdgeInsets.all(16),
-                              child: IconButton.outlined(
-                                  onPressed: () => _feedController.jumpTo(
-                                      _feedController.position.minScrollExtent),
-                                  icon: Icon(
-                                      Icons.keyboard_arrow_up)) // なにかしらのWidget
-                              ),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+            child: _buildFeed(),
           ),
           Visibility(
             visible: visibleSearch,
-            child: SizedBox(
-              width: 200.0,
-              child: CustomScrollView(
-                controller: _autoScrollController,
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 8),
-                        Text('Sort',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                        _buildSort(),
-                      ],
-                    ),
-                  ),
-                  SliverToBoxAdapter(
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 8),
-                        Text('Visible',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                        _buildVisible(),
-                      ],
-                    ),
-                  ),
-                  SliverToBoxAdapter(
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 8),
-                        Text('Calendar',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                        _buildCalendar(),
-                      ],
-                    ),
-                  ),
-                  SliverToBoxAdapter(
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 8),
-                        Text('Archives',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                        //_buildHandles(),
-                        //_buildHashTags(),
-                      ],
-                    ),
-                  ),
-                  _buildTree(),
-                  SliverToBoxAdapter(
-                    child:
-                        SizedBox(height: MediaQuery.paddingOf(context).bottom),
-                  ),
-                ],
-              ),
-            ),
+            child: _buildSearchPanel(),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSort() {
-    return ToggleButtons(
-      constraints: BoxConstraints.expand(width: 92, height: 30),
-      borderRadius: BorderRadius.circular(20),
-      isSelected: [
-        context.watch<Model>().sortOrder == SortOrder.desc,
-        context.watch<Model>().sortOrder == SortOrder.asc
-      ],
-      onPressed: (int index) {
-        context
-            .read<Model>()
-            .setSortOrder(index == 0 ? SortOrder.desc : SortOrder.asc);
-      },
-      children: const [Text('Latest'), Text('Oldest')],
+  Widget _scaffoldMobile() {
+    final actor = context.watch<Model>().currentActor;
+    final profile = actor?.profile;
+    final avator = profile != null && profile.avatar != null
+        ? CachedNetworkImageProvider(profile.avatar!)
+        : null;
+
+    return Scaffold(
+      key: _scaffoldKey,
+      appBar: AppBar(
+        leading: IconButton(
+          icon: CircleAvatar(radius: 16, backgroundImage: avator),
+          onPressed: () => _scaffoldKey.currentState!.openDrawer(),
+        ),
+        title: const Text(Define.title),
+        //toolbarHeight: 36,
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.manage_search),
+            onPressed: () => _scaffoldKey.currentState!.openEndDrawer(),
+          ),
+        ],
+      ),
+      drawer: _buildDrawer(),
+      endDrawer: _buildEndDrawer(),
+      body: _buildFeed(),
     );
+  }
+
+  List<_Destination> get destinations => [
+        _Destination(
+          icon: RotationIcon(icon: Icons.sync, syncing: isSyncing),
+          label: const Text('Log Sync'),
+          disabled: isSyncing || context.watch<Model>().currentActor == null,
+        ),
+        _Destination(
+          icon: const Icon(Icons.delete_forever),
+          label: const Text('Log Clear'),
+          disabled: isSyncing || context.watch<Model>().currentActor == null,
+        ),
+        _Destination(
+          icon: const Icon(Icons.login),
+          label: const Text('Sign In'),
+          disabled: isSyncing || context.watch<Model>().currentActor != null,
+        ),
+        _Destination(
+          icon: const Icon(Icons.logout),
+          label: const Text('Sign Out'),
+          disabled: isSyncing || context.watch<Model>().currentActor == null,
+        ),
+      ];
+
+  Widget _buildDrawer() {
+    return NavigationDrawer(
+      selectedIndex: -1,
+      onDestinationSelected: _handleDrawerSelected,
+      children: [
+        ...destinations.map(
+          (_Destination destination) {
+            return NavigationDrawerDestination(
+              label: destination.label,
+              icon: destination.icon,
+              enabled: !destination.disabled,
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNavigatonRail() {
+    final isTablet = MediaQuery.of(context).size.shortestSide > 600;
+
+    final actor = context.watch<Model>().currentActor;
+    final profile = actor?.profile;
+    final avator = profile != null && profile.avatar != null
+        ? CachedNetworkImageProvider(profile.avatar!)
+        : null;
+
+    return NavigationRail(
+      minWidth: 52,
+      selectedIndex: null,
+      labelType:
+          isTablet ? NavigationRailLabelType.all : NavigationRailLabelType.none,
+      leading: CircleAvatar(radius: 20, backgroundImage: avator),
+      destinations: [
+        ...destinations.map(
+          (_Destination destination) {
+            return NavigationRailDestination(
+              label: destination.label,
+              icon: destination.icon,
+              disabled: destination.disabled,
+            );
+          },
+        ),
+      ],
+      trailing: Expanded(
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              IconButton(
+                onPressed: () => context.read<Model>().toggleVolume(),
+                icon: context.watch<Model>().volume == 0
+                    ? const Icon(Icons.volume_off)
+                    : const Icon(Icons.volume_up),
+              ),
+              const SizedBox(height: 8),
+              Text('${context.read<Model>().packageInfo!.version}'
+                  '+${context.read<Model>().packageInfo!.buildNumber}'),
+            ],
+          ),
+        ),
+      ),
+      onDestinationSelected: _handleDrawerSelected,
+    );
+  }
+
+  void _handleDrawerSelected(int index) {
+    switch (index) {
+      case 0:
+        _syncFeed();
+        break;
+      case 1:
+        showConfirmDialog(
+          context: context,
+          ok: const Text('Delete'),
+          content: const Text('Are you sure trancate all log ?'),
+          onOk: () {
+            context.read<Model>().clearFeed().then((_) {
+              scaffoldMsgKey.currentState!.showSnackBar(SnackBar(
+                  content: Text("Trancate all log"),
+                  behavior: SnackBarBehavior.floating));
+            });
+          },
+        );
+        break;
+      case 2:
+        context.push('/signin');
+        break;
+      case 3:
+        context.read<Model>().signout().then((_) {
+          scaffoldMsgKey.currentState!.showSnackBar(SnackBar(
+              content: Text("Sign out"), behavior: SnackBarBehavior.floating));
+        });
+        break;
+    }
+  }
+
+  Widget _buildFeed() {
+    return Column(
+      children: [
+        SearchField(
+            visible: visibleSearch,
+            onVisible: (visible) {
+              setState(() {
+                visibleSearch = visible;
+              });
+            }),
+        Expanded(
+          child: Stack(
+            children: [
+              CustomScrollView(
+                controller: _feedController,
+                slivers: [
+                  StreamBuilder(
+                    stream: context.watch<Model>().filterSearch().watch(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return const SliverToBoxAdapter(
+                            child: Center(child: CircularProgressIndicator()));
+                      }
+                      final posts = snapshot.data!;
+                      return SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (BuildContext context, int index) {
+                            final feed = posts[index];
+                            final feedView = bluesky.FeedView.fromJson(
+                                jsonDecode(feed.post));
+                            return Card(child: FeedCard(feed, feedView));
+                          },
+                          childCount: posts.length,
+                        ),
+                      );
+                    },
+                  ),
+                  SliverToBoxAdapter(
+                    child:
+                        SizedBox(height: MediaQuery.paddingOf(context).bottom),
+                  ),
+                ],
+              ),
+              if (visibleTopButton)
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: Padding(
+                      padding: EdgeInsets.all(16),
+                      child: IconButton.outlined(
+                          onPressed: () => _feedController
+                              .jumpTo(_feedController.position.minScrollExtent),
+                          icon: Icon(Icons.keyboard_arrow_up))),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSearchPanel() {
+    return SizedBox(
+      width: 200.0,
+      height: MediaQuery.of(context).size.height,
+      child: CustomScrollView(
+        controller: _autoScrollController,
+        slivers: [
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                const SizedBox(height: 8),
+                Text('Sort', style: TextStyle(fontWeight: FontWeight.bold)),
+                _buildSort(),
+              ],
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                const SizedBox(height: 8),
+                Text('Visible', style: TextStyle(fontWeight: FontWeight.bold)),
+                _buildVisible(),
+              ],
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                const SizedBox(height: 8),
+                Text('Calendar', style: TextStyle(fontWeight: FontWeight.bold)),
+                _buildCalendar(),
+              ],
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                const SizedBox(height: 8),
+                Text('Archives', style: TextStyle(fontWeight: FontWeight.bold)),
+                //_buildHandles(),
+                //_buildHashTags(),
+              ],
+            ),
+          ),
+          _buildTree(),
+          SliverToBoxAdapter(
+            child: SizedBox(height: MediaQuery.paddingOf(context).bottom),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEndDrawer() {
+    return NavigationDrawer(
+      children: [_buildSearchPanel()],
+    );
+  }
+
+  Widget _buildSort() {
+    return LayoutBuilder(builder: (context, constraints) {
+      return ToggleButtons(
+        constraints: BoxConstraints.expand(
+            width: (constraints.maxWidth - 16) / 2, height: 30),
+        borderRadius: BorderRadius.circular(20),
+        isSelected: [
+          context.watch<Model>().sortOrder == SortOrder.desc,
+          context.watch<Model>().sortOrder == SortOrder.asc
+        ],
+        onPressed: (int index) {
+          context
+              .read<Model>()
+              .setSortOrder(index == 0 ? SortOrder.desc : SortOrder.asc);
+        },
+        children: const [Text('Latest'), Text('Oldest')],
+      );
+    });
   }
 
   Widget _buildVisible() {
@@ -440,6 +513,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         return ToggleButtons(
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           constraints: BoxConstraints.expand(
               width: (constraints.maxWidth - 16) / 2, height: 30),
           borderRadius: BorderRadius.circular(20),

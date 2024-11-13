@@ -4,9 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:bluesky/bluesky.dart' as bluesky;
 
 class EmbedExternalWidget extends StatefulWidget {
-  const EmbedExternalWidget(this.embed, {super.key});
+  const EmbedExternalWidget(this.embed, {required this.width, super.key});
 
   final bluesky.EmbedViewExternal embed;
+  final double width;
 
   @override
   State<EmbedExternalWidget> createState() => _EmbedExternalWidgetState();
@@ -23,7 +24,7 @@ class _EmbedExternalWidgetState extends State<EmbedExternalWidget> {
             launchUrlPlus(widget.embed.external.uri);
           },
           child: SizedBox(
-            width: 360,
+            width: widget.width,
             child: Column(
               children: [
                 if (widget.embed.external.thumbnail != null)

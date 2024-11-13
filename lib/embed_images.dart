@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:bluesky/bluesky.dart' as bluesky;
 
 class EmbedImagesWidget extends StatefulWidget {
-  const EmbedImagesWidget(this.embed, {super.key});
+  const EmbedImagesWidget(this.embed, {super.key, required this.width});
 
   final bluesky.EmbedViewImages embed;
+  final double width;
 
   @override
   State<EmbedImagesWidget> createState() => _EmbedImagesWidgetState();
@@ -15,7 +16,7 @@ class _EmbedImagesWidgetState extends State<EmbedImagesWidget> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 360,
+      width: widget.width,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [

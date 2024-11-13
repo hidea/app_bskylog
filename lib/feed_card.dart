@@ -1,7 +1,7 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:bskylog/embed_external.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:bluesky/bluesky.dart' as bluesky;
@@ -12,6 +12,8 @@ import 'embed_images.dart';
 import 'embed_video.dart';
 import 'model.dart';
 import 'utils.dart';
+
+final isDesktop = (Platform.isMacOS || Platform.isLinux || Platform.isWindows);
 
 class FeedCard extends StatefulWidget {
   const FeedCard(this.feed, this.feedView, {super.key});
@@ -35,6 +37,9 @@ class _FeedCardState extends State<FeedCard> {
             : author.handle;
     final avator = author.avatar != null ? NetworkImage(author.avatar!) : null;
 
+    final embedWidth =
+        isDesktop ? 360.0 : MediaQuery.of(context).size.width - 96.0;
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -48,17 +53,18 @@ class _FeedCardState extends State<FeedCard> {
               radius: 20.0,
               backgroundImage: avator,
             ),
-            title: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(displayName),
-                const SizedBox(width: 4),
-                Text(
-                  '@${author.handle}',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-              ],
+            title: RichText(
+              text: TextSpan(
+                  text: displayName,
+                  style: const TextStyle(fontSize: 16, color: Colors.black),
+                  children: [
+                    WidgetSpan(child: SizedBox(width: 4)),
+                    TextSpan(
+                      text: '@${author.handle}',
+                      style:
+                          const TextStyle(fontSize: 12, color: Colors.black54),
+                    ),
+                  ]),
             ),
             subtitle: _buildRecordText(),
           ),
@@ -74,15 +80,21 @@ class _FeedCardState extends State<FeedCard> {
                 if (feedView.post.embed != null &&
                     feedView.post.embed is bluesky.UEmbedViewImages)
                   EmbedImagesWidget(
-                      (feedView.post.embed as bluesky.UEmbedViewImages).data),
+                    (feedView.post.embed as bluesky.UEmbedViewImages).data,
+                    width: embedWidth,
+                  ),
                 if (feedView.post.embed != null &&
                     feedView.post.embed is bluesky.UEmbedViewExternal)
                   EmbedExternalWidget(
-                      (feedView.post.embed as bluesky.UEmbedViewExternal).data),
+                    (feedView.post.embed as bluesky.UEmbedViewExternal).data,
+                    width: embedWidth,
+                  ),
                 if (feedView.post.embed != null &&
                     feedView.post.embed is bluesky.UEmbedViewVideo)
                   EmbedVideoWidget(
-                      (feedView.post.embed as bluesky.UEmbedViewVideo).data),
+                    (feedView.post.embed as bluesky.UEmbedViewVideo).data,
+                    width: embedWidth,
+                  ),
                 _buildFooter(),
               ],
             ),
@@ -106,7 +118,8 @@ class _FeedCardState extends State<FeedCard> {
 
       for (final facet in facets) {
         final intro = utf8text.sublist(byteCurrent, facet.index.byteStart);
-        spans.add(TextSpan(text: utf8.decode(intro)));
+        spans.add(TextSpan(
+            text: utf8.decode(intro), style: TextStyle(color: Colors.black)));
 
         final body =
             utf8text.sublist(facet.index.byteStart, facet.index.byteEnd);
@@ -135,7 +148,8 @@ class _FeedCardState extends State<FeedCard> {
                 ),
                 tooltip: 'Search hashtag'));
           } else {
-            spans.add(TextSpan(text: bodyText));
+            spans.add(TextSpan(
+                text: bodyText, style: TextStyle(color: Colors.black)));
           }
           break;
         }
@@ -144,7 +158,8 @@ class _FeedCardState extends State<FeedCard> {
       }
     }
     final left = utf8text.sublist(byteCurrent);
-    spans.add(TextSpan(text: utf8.decode(left)));
+    spans.add(TextSpan(
+        text: utf8.decode(left), style: TextStyle(color: Colors.black)));
 
     return Text.rich(TextSpan(children: spans));
   }

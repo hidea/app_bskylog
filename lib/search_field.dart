@@ -1,7 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'model.dart';
+
+final isDesktop = (Platform.isMacOS || Platform.isLinux || Platform.isWindows);
 
 class SearchField extends StatefulWidget {
   const SearchField(
@@ -67,17 +71,18 @@ class _SearchFieldState extends State<SearchField> {
               onPressed: () =>
                   context.read<Model>().setSearchKeyword(_editController.text),
             ),
-            const SizedBox(width: 8),
-            IconButton(
-              icon: Icon(widget.visible
-                  ? Icons.arrow_circle_right_outlined
-                  : Icons.manage_search),
-              tooltip: widget.visible ? 'Close submenu' : 'Open submenu',
-              style: ButtonStyle(
-                  shape: WidgetStateProperty.all(RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)))),
-              onPressed: () => widget.onVisible(!widget.visible),
-            ),
+            if (isDesktop) const SizedBox(width: 8),
+            if (isDesktop)
+              IconButton(
+                icon: Icon(widget.visible
+                    ? Icons.arrow_circle_right_outlined
+                    : Icons.manage_search),
+                tooltip: widget.visible ? 'Close submenu' : 'Open submenu',
+                style: ButtonStyle(
+                    shape: WidgetStateProperty.all(RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)))),
+                onPressed: () => widget.onVisible(!widget.visible),
+              ),
           ],
         ),
         Row(
