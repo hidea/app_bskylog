@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:bluesky/bluesky.dart' as bluesky;
 
 class EmbedExternalWidget extends StatefulWidget {
-  const EmbedExternalWidget(this.embed, {required this.width, super.key});
+  const EmbedExternalWidget(this.embed,
+      {super.key, required this.width, required this.height});
 
   final bluesky.EmbedViewExternal embed;
   final double width;
+  final double height;
 
   @override
   State<EmbedExternalWidget> createState() => _EmbedExternalWidgetState();
@@ -30,7 +32,7 @@ class _EmbedExternalWidgetState extends State<EmbedExternalWidget> {
                 if (widget.embed.external.thumbnail != null)
                   SizedBox(
                     width: double.infinity,
-                    height: 100,
+                    height: widget.height / 3,
                     child: CachedNetworkImage(
                       imageUrl: widget.embed.external.thumbnail!,
                       fit: BoxFit.cover,

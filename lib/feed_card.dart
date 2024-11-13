@@ -82,18 +82,21 @@ class _FeedCardState extends State<FeedCard> {
                   EmbedImagesWidget(
                     (feedView.post.embed as bluesky.UEmbedViewImages).data,
                     width: embedWidth,
+                    height: embedWidth / 2,
                   ),
                 if (feedView.post.embed != null &&
                     feedView.post.embed is bluesky.UEmbedViewExternal)
                   EmbedExternalWidget(
                     (feedView.post.embed as bluesky.UEmbedViewExternal).data,
                     width: embedWidth,
+                    height: embedWidth,
                   ),
                 if (feedView.post.embed != null &&
                     feedView.post.embed is bluesky.UEmbedViewVideo)
                   EmbedVideoWidget(
                     (feedView.post.embed as bluesky.UEmbedViewVideo).data,
                     width: embedWidth,
+                    height: embedWidth,
                   ),
                 _buildFooter(),
               ],

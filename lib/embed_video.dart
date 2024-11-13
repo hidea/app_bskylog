@@ -7,10 +7,12 @@ import 'package:video_player/video_player.dart';
 import 'model.dart';
 
 class EmbedVideoWidget extends StatefulWidget {
-  const EmbedVideoWidget(this.embed, {super.key, required this.width});
+  const EmbedVideoWidget(this.embed,
+      {super.key, required this.width, required this.height});
 
   final EmbedVideoView embed;
   final double width;
+  final double height;
 
   @override
   State<EmbedVideoWidget> createState() => _EmbedVideoWidgetState();
@@ -40,8 +42,11 @@ class _EmbedVideoWidgetState extends State<EmbedVideoWidget> {
   @override
   Widget build(BuildContext context) {
     return _controller.value.isInitialized
-        ? SizedBox(
-            width: widget.width,
+        ? Container(
+            constraints: BoxConstraints(
+              maxWidth: widget.width,
+              maxHeight: widget.height,
+            ),
             child: AspectRatio(
               aspectRatio: _controller.value.aspectRatio,
               child: Stack(
