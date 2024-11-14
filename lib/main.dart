@@ -175,7 +175,7 @@ class _HomeScreenState extends State<HomeScreen> {
       key: _scaffoldKey,
       body: Row(
         children: [
-          _buildNavigatonRail(),
+          _buildNavigationRail(),
           const VerticalDivider(thickness: 1, width: 1),
           Expanded(
             child: _buildFeed(),
@@ -259,7 +259,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildNavigatonRail() {
+  Widget _buildNavigationRail() {
     final isTablet = MediaQuery.of(context).size.shortestSide > 600;
 
     final actor = context.watch<Model>().currentActor;

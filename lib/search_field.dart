@@ -167,6 +167,7 @@ class _SearchFieldState extends State<SearchField> {
 
   void _onChanged(String value) {
     // Workaround for problem japanese IME
+    /*
     final lastValue = _lastValue;
     _lastValue = _editController.value;
     if (lastValue != null) {
@@ -179,5 +180,6 @@ class _SearchFieldState extends State<SearchField> {
             TextSelection(baseOffset: offset, extentOffset: offset);
       }
     }
+    */
   }
 }
