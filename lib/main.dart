@@ -4,13 +4,16 @@ import 'dart:io';
 import 'package:animated_tree_view/animated_tree_view.dart';
 import 'package:bskylog/rotation_icon.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/foundation.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:bluesky/bluesky.dart' as bluesky;
+import 'package:url_launcher/url_launcher_string.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'database.dart';
@@ -20,8 +23,6 @@ import 'model.dart';
 import 'search_field.dart';
 import 'signin_screen.dart';
 import 'utils.dart';
-
-final isDesktop = (Platform.isMacOS || Platform.isLinux || Platform.isWindows);
 
 class _Destination {
   final Widget icon;
@@ -34,6 +35,11 @@ class _Destination {
     required this.disabled,
   });
 }
+
+final isDesktop = (Platform.isMacOS || Platform.isLinux || Platform.isWindows);
+
+final GlobalKey<ScaffoldMessengerState> scaffoldMsgKey =
+    GlobalKey<ScaffoldMessengerState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -61,8 +67,157 @@ void main() async {
   runApp(ChangeNotifierProvider(create: (_) => model, child: const MyApp()));
 }
 
-final GlobalKey<ScaffoldMessengerState> scaffoldMsgKey =
-    GlobalKey<ScaffoldMessengerState>();
+_menuRevealInFolder(BuildContext context) async {
+  final docFolder = await getApplicationDocumentsDirectory();
+  launchUrlString('file://${docFolder.path}');
+}
+
+_menuExportToJson(BuildContext context) async {
+  try {
+    final outputFile = await FilePicker.platform.saveFile(
+      dialogTitle: 'Please select an feed.bsky.app.getAuthorFeed json file:',
+      fileName: 'auther-feed.json',
+    );
+    if (outputFile == null) {
+      return null;
+    }
+    final file = File(outputFile);
+    await context.read<Model>().exportFeed(file);
+
+    scaffoldMsgKey.currentState!.showSnackBar(SnackBar(
+        content: Text("Export done."),
+        behavior: SnackBarBehavior.floating,
+        action: SnackBarAction(
+          label: 'open folder',
+          onPressed: () => launchUrlString('file://${file.parent.path}'),
+        ),
+        showCloseIcon: true,
+        duration: const Duration(days: 365)));
+  } catch (e) {
+    scaffoldMsgKey.currentState!.showSnackBar(SnackBar(
+        content: Text("Export failed.\n$e"),
+        showCloseIcon: true,
+        duration: const Duration(days: 365)));
+  }
+}
+
+List<PlatformMenuItem> _menu(BuildContext context) {
+  return <PlatformMenu>[
+    PlatformMenu(
+      label: 'bskylog MenuBar',
+      menus: [
+        PlatformMenuItemGroup(
+          members: [
+            if (PlatformProvidedMenuItem.hasMenu(
+                PlatformProvidedMenuItemType.about))
+              const PlatformProvidedMenuItem(
+                  type: PlatformProvidedMenuItemType.about),
+          ],
+        ),
+        PlatformMenuItemGroup(
+          members: [
+            PlatformMenuItem(
+                label: 'Settings…',
+                shortcut:
+                    const SingleActivator(LogicalKeyboardKey.comma, meta: true),
+                onSelected: null),
+          ],
+        ),
+        PlatformMenuItemGroup(
+          members: [
+            if (PlatformProvidedMenuItem.hasMenu(
+                PlatformProvidedMenuItemType.servicesSubmenu))
+              const PlatformProvidedMenuItem(
+                  type: PlatformProvidedMenuItemType.servicesSubmenu),
+          ],
+        ),
+        PlatformMenuItemGroup(
+          members: [
+            if (PlatformProvidedMenuItem.hasMenu(
+                PlatformProvidedMenuItemType.hide))
+              const PlatformProvidedMenuItem(
+                  type: PlatformProvidedMenuItemType.hide),
+            if (PlatformProvidedMenuItem.hasMenu(
+                PlatformProvidedMenuItemType.hideOtherApplications))
+              const PlatformProvidedMenuItem(
+                  type: PlatformProvidedMenuItemType.hideOtherApplications),
+            if (PlatformProvidedMenuItem.hasMenu(
+                PlatformProvidedMenuItemType.showAllApplications))
+              const PlatformProvidedMenuItem(
+                  type: PlatformProvidedMenuItemType.showAllApplications),
+          ],
+        ),
+        PlatformMenuItemGroup(members: [
+          if (PlatformProvidedMenuItem.hasMenu(
+              PlatformProvidedMenuItemType.quit))
+            const PlatformProvidedMenuItem(
+                type: PlatformProvidedMenuItemType.quit),
+        ]),
+      ],
+    ),
+    PlatformMenu(
+      label: 'Log',
+      menus: [
+        PlatformMenuItemGroup(
+          members: [
+            PlatformMenuItem(
+                label: 'Reveal in Folder',
+                onSelected: () => _menuRevealInFolder(context)),
+            PlatformMenuItem(
+                label: 'Export to json...',
+                onSelected: () => _menuExportToJson(context)),
+          ],
+        ),
+      ],
+    ),
+    PlatformMenu(
+      label: 'View',
+      menus: [
+        PlatformMenuItemGroup(
+          members: [
+            PlatformMenuItem(
+                label: 'Toggled Filter Menu',
+                onSelected: () =>
+                    context.read<Model>().toggleVisibleFilterMenu()),
+          ],
+        ),
+        PlatformMenuItemGroup(
+          members: [
+            if (PlatformProvidedMenuItem.hasMenu(
+                PlatformProvidedMenuItemType.toggleFullScreen))
+              const PlatformProvidedMenuItem(
+                  type: PlatformProvidedMenuItemType.toggleFullScreen),
+          ],
+        ),
+      ],
+    ),
+    PlatformMenu(
+      label: 'Window',
+      menus: [
+        PlatformMenuItemGroup(
+          members: [
+            if (PlatformProvidedMenuItem.hasMenu(
+                PlatformProvidedMenuItemType.minimizeWindow))
+              const PlatformProvidedMenuItem(
+                  type: PlatformProvidedMenuItemType.minimizeWindow),
+            if (PlatformProvidedMenuItem.hasMenu(
+                PlatformProvidedMenuItemType.zoomWindow))
+              const PlatformProvidedMenuItem(
+                  type: PlatformProvidedMenuItemType.zoomWindow),
+          ],
+        ),
+        PlatformMenuItemGroup(
+          members: [
+            if (PlatformProvidedMenuItem.hasMenu(
+                PlatformProvidedMenuItemType.arrangeWindowsInFront))
+              const PlatformProvidedMenuItem(
+                  type: PlatformProvidedMenuItemType.arrangeWindowsInFront),
+          ],
+        ),
+      ],
+    ),
+  ];
+}
 
 final _router = GoRouter(
   initialLocation: '/',
@@ -94,7 +249,7 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
+    final router = MaterialApp.router(
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlue),
         useMaterial3: true,
@@ -102,6 +257,15 @@ class MyApp extends StatelessWidget {
       scaffoldMessengerKey: scaffoldMsgKey,
       routerConfig: _router,
     );
+
+    if (Platform.isMacOS) {
+      return PlatformMenuBar(
+        menus: _menu(context),
+        child: router,
+      );
+    }
+
+    return router;
   }
 }
 
@@ -117,7 +281,6 @@ class _HomeScreenState extends State<HomeScreen> {
   final _feedController = ScrollController();
   final _autoScrollController = AutoScrollController();
   bool isSyncing = false;
-  bool visibleSearch = true;
   bool visibleTopButton = false;
 
   void _syncFeed() {
@@ -181,7 +344,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: _buildFeed(),
           ),
           Visibility(
-            visible: visibleSearch,
+            visible: context.watch<Model>().visibleFilterMenu,
             child: _buildSearchPanel(),
           ),
         ],
@@ -242,10 +405,23 @@ class _HomeScreenState extends State<HomeScreen> {
       ];
 
   Widget _buildDrawer() {
+    final actor = context.watch<Model>().currentActor;
+    final profile = actor?.profile;
+    final avator = profile != null && profile.avatar != null
+        ? CachedNetworkImageProvider(profile.avatar!)
+        : null;
+
     return NavigationDrawer(
       selectedIndex: -1,
       onDestinationSelected: _handleDrawerSelected,
       children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(28, 16, 16, 10),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: CircleAvatar(radius: 20, backgroundImage: avator),
+          ),
+        ),
         ...destinations.map(
           (_Destination destination) {
             return NavigationDrawerDestination(
@@ -254,6 +430,28 @@ class _HomeScreenState extends State<HomeScreen> {
               enabled: !destination.disabled,
             );
           },
+        ),
+        const Padding(
+          padding: EdgeInsets.fromLTRB(28, 0, 28, 0),
+          child: Divider(),
+        ),
+        NavigationDrawerDestination(
+          label: const Text('Sound'),
+          icon: context.watch<Model>().volume == 0
+              ? const Icon(Icons.volume_off)
+              : const Icon(Icons.volume_up),
+        ),
+        const Padding(
+          padding: EdgeInsets.fromLTRB(28, 0, 28, 0),
+          child: Divider(),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(28, 0, 16, 10),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text('${context.read<Model>().packageInfo!.version}'
+                '+${context.read<Model>().packageInfo!.buildNumber}'),
+          ),
         ),
       ],
     );
@@ -291,13 +489,54 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              IconButton(
-                onPressed: () => context.read<Model>().toggleVolume(),
-                icon: context.watch<Model>().volume == 0
-                    ? const Icon(Icons.volume_off)
-                    : const Icon(Icons.volume_up),
+              Column(
+                children: [
+                  IconButton(
+                    onPressed: () => context.read<Model>().toggleVolume(),
+                    icon: context.watch<Model>().volume == 0
+                        ? const Icon(Icons.volume_off)
+                        : const Icon(Icons.volume_up),
+                  ),
+                  Text('Sound',
+                      style: Theme.of(context)
+                          .navigationRailTheme
+                          .selectedLabelTextStyle),
+                ],
               ),
-              const SizedBox(height: 8),
+              Column(
+                children: [
+                  PopupMenuButton<int>(
+                    tooltip: '',
+                    popUpAnimationStyle: AnimationStyle.noAnimation,
+                    icon: const Icon(Icons.storage),
+                    onSelected: (int item) async {
+                      switch (item) {
+                        case 0:
+                          _menuRevealInFolder(context);
+                          break;
+                        case 1:
+                          _menuExportToJson(context);
+                          break;
+                      }
+                    },
+                    itemBuilder: (BuildContext context) => [
+                      const PopupMenuItem<int>(
+                        value: 0,
+                        child: Text('Reveal in Folder'),
+                      ),
+                      const PopupMenuItem<int>(
+                        value: 1,
+                        child: Text('Export to json...'),
+                      ),
+                    ],
+                  ),
+                  Text('Log',
+                      style: Theme.of(context)
+                          .navigationRailTheme
+                          .selectedLabelTextStyle),
+                ],
+              ),
+              const SizedBox(height: 16),
               Text('${context.read<Model>().packageInfo!.version}'
                   '+${context.read<Model>().packageInfo!.buildNumber}'),
             ],
@@ -343,12 +582,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       children: [
         SearchField(
-            visible: visibleSearch,
-            onVisible: (visible) {
-              setState(() {
-                visibleSearch = visible;
-              });
-            }),
+          visible: context.watch<Model>().visibleFilterMenu,
+          onVisible: (_) => context.read<Model>().toggleVisibleFilterMenu(),
+        ),
         Expanded(
           child: Stack(
             children: [
@@ -645,7 +881,6 @@ class _HomeScreenState extends State<HomeScreen> {
           },
         );
       },
-      //),
     );
   }
 }

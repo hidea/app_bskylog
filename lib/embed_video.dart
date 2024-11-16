@@ -125,6 +125,7 @@ class _ControlsOverlayState extends State<_ControlsOverlay> {
           icon: widget.controller.value.volume == 0
               ? const Icon(Icons.volume_off, color: Colors.white)
               : const Icon(Icons.volume_up, color: Colors.white),
+          tooltip: 'Sound',
           onPressed: () {
             setState(() {
               widget.controller

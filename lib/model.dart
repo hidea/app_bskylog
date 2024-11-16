@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:animated_tree_view/tree_view/tree_node.dart';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
@@ -80,6 +81,9 @@ class Model extends ChangeNotifier {
 
   DateTime? _lastSync;
   String? _tailCursor;
+
+  bool _visibleFilterMenu = true;
+  bool get visibleFilterMenu => _visibleFilterMenu;
 
   int? _searchYear;
   int? get searchYear => _searchYear;
@@ -228,6 +232,12 @@ class Model extends ChangeNotifier {
     _volume = _volume == 0 ? 1 : 0;
     notifyListeners();
     return _volume;
+  }
+
+  void toggleVisibleFilterMenu() {
+    _visibleFilterMenu = !_visibleFilterMenu;
+
+    notifyListeners();
   }
 
   void clearSearchRange() async {
@@ -910,5 +920,20 @@ class Model extends ChangeNotifier {
       return (reply.parent as bluesky.UReplyPostRecord).data.author.did;
     }
     return '';
+  }
+
+  // { "feed": [ feed.posts ] }
+  exportFeed(File file) async {
+    try {
+      final posts = await database.select(database.posts).get();
+      final data = posts.map((row) => jsonDecode(row.post)).toList();
+      final json = jsonEncode({'feed': data});
+      await file.writeAsString(json);
+    } catch (e) {
+      if (kDebugMode) {
+        print(e.toString());
+      }
+      rethrow;
+    }
   }
 }

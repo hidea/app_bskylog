@@ -77,7 +77,8 @@ class _SearchFieldState extends State<SearchField> {
                 icon: Icon(widget.visible
                     ? Icons.arrow_circle_right_outlined
                     : Icons.manage_search),
-                tooltip: widget.visible ? 'Close submenu' : 'Open submenu',
+                tooltip:
+                    widget.visible ? 'Close Filter Menu' : 'Open Filter Menu',
                 style: ButtonStyle(
                     shape: WidgetStateProperty.all(RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8)))),
