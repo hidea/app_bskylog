@@ -41,7 +41,7 @@ class _FeedCardState extends State<FeedCard> {
     final avator = author.avatar != null ? NetworkImage(author.avatar!) : null;
 
     final embedWidth =
-        isDesktop ? 420.0 : MediaQuery.of(context).size.width - 96.0;
+        isDesktop ? 400.0 : MediaQuery.of(context).size.width - 96.0;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
@@ -140,31 +140,36 @@ class _FeedCardState extends State<FeedCard> {
         final bodyText = utf8.decode(body);
 
         for (final feature in facet.features) {
-          if (feature is bluesky.UFacetFeatureMention) {
-            spans.add(TooltipSpan(
-                child: InkWell(
-                  child: Text(bodyText, style: TextStyle(color: Colors.blue)),
-                  onTap: () => _tapMention(feature.data),
-                ),
-                tooltip: 'Search mention'));
-          } else if (feature is bluesky.UFacetFeatureLink) {
-            spans.add(TooltipSpan(
-                child: InkWell(
-                  child: Text(bodyText, style: TextStyle(color: Colors.blue)),
-                  onTap: () => _tapLink(feature.data),
-                ),
-                tooltip: 'View link'));
-          } else if (feature is bluesky.UFacetFeatureTag) {
-            spans.add(TooltipSpan(
-                child: InkWell(
-                  child: Text(bodyText, style: TextStyle(color: Colors.blue)),
-                  onTap: () => _tapTag(feature.data),
-                ),
-                tooltip: 'Search hashtag'));
-          } else {
-            spans.add(TextSpan(
-                text: bodyText, style: TextStyle(color: Colors.black)));
-          }
+          feature.when(
+            mention: (mention) {
+              spans.add(TooltipSpan(
+                  child: InkWell(
+                    child: Text(bodyText, style: TextStyle(color: Colors.blue)),
+                    onTap: () => _tapMention(mention),
+                  ),
+                  tooltip: 'Search mention'));
+            },
+            link: (link) {
+              spans.add(TooltipSpan(
+                  child: InkWell(
+                    child: Text(bodyText, style: TextStyle(color: Colors.blue)),
+                    onTap: () => _tapLink(link),
+                  ),
+                  tooltip: 'View link'));
+            },
+            tag: (tag) {
+              spans.add(TooltipSpan(
+                  child: InkWell(
+                    child: Text(bodyText, style: TextStyle(color: Colors.blue)),
+                    onTap: () => _tapTag(tag),
+                  ),
+                  tooltip: 'Search hashtag'));
+            },
+            unknown: (unknown) {
+              spans.add(TextSpan(
+                  text: bodyText, style: TextStyle(color: Colors.black)));
+            },
+          );
           break;
         }
 
