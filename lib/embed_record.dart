@@ -1,38 +1,75 @@
 import 'dart:convert';
-import 'dart:io';
 
-import 'package:bskylog/embed_external.dart';
+import 'package:bluesky/core.dart';
+import 'package:bskylog/utils.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:bluesky/bluesky.dart' as bluesky;
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import 'define.dart';
-import 'embed_record.dart';
-import 'embed_images.dart';
-import 'embed_record_with_media.dart';
-import 'embed_video.dart';
 import 'model.dart';
 import 'tooltip_span.dart';
-import 'utils.dart';
 
-final isDesktop = (Platform.isMacOS || Platform.isLinux || Platform.isWindows);
+class EmbedRecordWidget extends StatefulWidget {
+  const EmbedRecordWidget(this.embed,
+      {super.key, required this.width, required this.height});
 
-class FeedCard extends StatefulWidget {
-  const FeedCard(this.feed, this.feedView, {super.key});
-
-  final dynamic feed;
-  final bluesky.FeedView feedView;
+  final bluesky.EmbedViewRecord embed;
+  final double width;
+  final double height;
 
   @override
-  State<FeedCard> createState() => _FeedCardState();
+  State<EmbedRecordWidget> createState() => _EmbedRecordWidgetState();
 }
 
-class _FeedCardState extends State<FeedCard> {
+class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
+  Widget _buildLink(String text, AtUri uri) {
+    return Text('$text ${uri.toString()}');
+  }
+
+  Widget _buildRecord(bluesky.UEmbedViewRecordViewRecord record) {
+    return Text('record');
+  }
+
+  Widget _buildGeneratorView(bluesky.UEmbedViewRecordViewGeneratorView view) {
+    return Text('generator view');
+  }
+
+  Widget _buildListView(bluesky.UEmbedViewRecordViewListView view) {
+    return Text('list view');
+  }
+
+  Widget _buildLabelerView(bluesky.UEmbedViewRecordViewLabelerView view) {
+    return Text('labeler view');
+  }
+
   @override
   Widget build(BuildContext context) {
-    final feed = widget.feed;
-    final post = widget.feedView.post;
+    // author_icon name handle time
+    // text + facets
+    // embed.images
+    return switch (widget.embed.record) {
+      (bluesky.UEmbedViewRecordViewRecord record) => _buildRecord(record),
+      (bluesky.UEmbedViewRecordViewNotFound notFound) =>
+        _buildLink('record not found', notFound.data.uri),
+      (bluesky.UEmbedViewRecordViewBlocked notFound) =>
+        _buildLink('record blocked', notFound.data.uri),
+      (bluesky.UEmbedViewRecordViewViewDetached viewDetached) =>
+        _buildLink('record detached', viewDetached.data.uri),
+      (bluesky.UEmbedViewRecordViewGeneratorView generatorView) =>
+        _buildGeneratorView(generatorView),
+      (bluesky.UEmbedViewRecordViewListView listView) =>
+        _buildListView(listView),
+      (bluesky.UEmbedViewRecordViewLabelerView labelerView) =>
+        _buildLabelerView(labelerView),
+      bluesky.EmbedViewRecordView() => const Text('unsupport embed record'),
+    };
+
+/*
+
+
+    final post = (widget.embed as bluesky.EmbedViewRecordView).data.;
     final author = post.author;
     final displayName =
         author.displayName != null && author.displayName!.isNotEmpty
@@ -40,20 +77,17 @@ class _FeedCardState extends State<FeedCard> {
             : author.handle;
     final avator = author.avatar != null ? NetworkImage(author.avatar!) : null;
 
-    final embedWidth =
-        isDesktop ? 420.0 : MediaQuery.of(context).size.width - 96.0;
+    final embedWidth = widget.width - 60;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (feed.reasonRepost) _buildRepost(),
-        if (feed.replyDid.isNotEmpty) _buildReply(widget.feedView),
         SelectionArea(
           child: ListTile(
             titleAlignment: ListTileTitleAlignment.top,
             leading: CircleAvatar(
-              radius: 20.0,
+              radius: 10.0,
               backgroundImage: avator,
             ),
             title: RichText(
@@ -69,7 +103,7 @@ class _FeedCardState extends State<FeedCard> {
                     ),
                   ]),
             ),
-            subtitle: _buildRecordText(widget.feedView.post.record),
+            subtitle: _buildRecordText(),
           ),
         ),
         Row(
@@ -84,12 +118,6 @@ class _FeedCardState extends State<FeedCard> {
                   switch (post.embed!) {
                     (bluesky.UEmbedViewRecord record) => EmbedRecordWidget(
                         record.data,
-                        width: embedWidth,
-                        height: embedWidth,
-                      ),
-                    (bluesky.UEmbedViewRecordWithMedia recordWithMedia) =>
-                      EmbedRecordWithMediaWidget(
-                        recordWithMedia.data,
                         width: embedWidth,
                         height: embedWidth,
                       ),
@@ -111,13 +139,14 @@ class _FeedCardState extends State<FeedCard> {
                       ),
                     bluesky.EmbedView() => const Text('unsupported embed'),
                   },
-                _buildFooter(widget.feedView.post),
+                _buildFooter(),
               ],
             ),
           ],
         ),
       ],
     );
+    */
   }
 
   Widget _buildRecordText(bluesky.PostRecord record) {
@@ -188,48 +217,6 @@ class _FeedCardState extends State<FeedCard> {
 
   void _tapTag(bluesky.FacetTag feature) {
     context.read<Model>().setSearchKeyword('#${feature.tag}');
-  }
-
-  Widget _buildRepost() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 4),
-      child: const Row(
-        children: [
-          SizedBox(width: 50),
-          Icon(Icons.repeat, size: 16, color: Colors.blueGrey),
-          SizedBox(width: 8),
-          Text('repost', style: TextStyle(color: Colors.blueGrey)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReply(bluesky.FeedView feedView) {
-    final post = (feedView.reply!.parent as bluesky.UReplyPostRecord).data;
-    final author = post.author;
-    final displayName =
-        author.displayName != null && author.displayName!.isNotEmpty
-            ? author.displayName!
-            : author.handle;
-    final postUrl =
-        '${Define.bskyUrl}/profile/${author.handle}/post/${post.uri.rkey}';
-
-    return Row(
-      children: [
-        SizedBox(width: 36),
-        TextButton(
-          onPressed: () => launchUrlPlus(postUrl),
-          child: Row(
-            children: [
-              Icon(Icons.reply, size: 16, color: Colors.blueGrey),
-              SizedBox(width: 4),
-              Text('reply to ', style: TextStyle(color: Colors.blueGrey)),
-              Text(displayName, style: TextStyle(color: Colors.blueGrey)),
-            ],
-          ),
-        ),
-      ],
-    );
   }
 
   Widget _buildFooter(bluesky.Post post) {

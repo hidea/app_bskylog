@@ -432,6 +432,11 @@ class Model extends ChangeNotifier {
             case VisibleType.repost:
               query.where((tbl) => tbl.reasonRepost.equals(true));
               break;
+            case VisibleType.quote:
+              query.where((tbl) =>
+                  tbl.havEmbedRecord.equals(true) |
+                  tbl.havEmbedRecordWithMedia.equals(true));
+              break;
             case VisibleType.linkcard:
               query.where((tbl) => tbl.havEmbedExternal.equals(true));
               break;
@@ -453,6 +458,11 @@ class Model extends ChangeNotifier {
               break;
             case VisibleType.repost:
               query.where((tbl) => tbl.reasonRepost.equals(false));
+              break;
+            case VisibleType.quote:
+              query.where((tbl) =>
+                  tbl.havEmbedRecord.equals(false) &
+                  tbl.havEmbedRecordWithMedia.equals(false));
               break;
             case VisibleType.linkcard:
               query.where((tbl) => tbl.havEmbedExternal.equals(false));
@@ -519,6 +529,10 @@ class Model extends ChangeNotifier {
             case VisibleType.repost:
               query.where(database.posts.reasonRepost.equals(true));
               break;
+            case VisibleType.quote:
+              query.where(database.posts.havEmbedRecord.equals(true) |
+                  database.posts.havEmbedRecordWithMedia.equals(true));
+              break;
             case VisibleType.linkcard:
               query.where(database.posts.havEmbedExternal.equals(true));
               break;
@@ -540,6 +554,10 @@ class Model extends ChangeNotifier {
               break;
             case VisibleType.repost:
               query.where(database.posts.reasonRepost.equals(false));
+              break;
+            case VisibleType.quote:
+              query.where(database.posts.havEmbedRecord.equals(false) &
+                  database.posts.havEmbedRecordWithMedia.equals(false));
               break;
             case VisibleType.linkcard:
               query.where(database.posts.havEmbedExternal.equals(false));
