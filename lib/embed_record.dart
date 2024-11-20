@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:bluesky/bluesky.dart' as bluesky;
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'avatar_icon.dart';
 import 'define.dart';
 import 'embed_external.dart';
 import 'embed_images.dart';
@@ -35,7 +36,6 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
         author.displayName != null && author.displayName!.isNotEmpty
             ? author.displayName!
             : author.handle;
-    final avator = author.avatar != null ? NetworkImage(author.avatar!) : null;
 
     final embedWidth = widget.width - 80.0;
 
@@ -50,10 +50,7 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
             SelectionArea(
               child: ListTile(
                 titleAlignment: ListTileTitleAlignment.top,
-                leading: CircleAvatar(
-                  radius: 12.0,
-                  backgroundImage: avator,
-                ),
+                leading: AvatarIcon(avatar: author.avatar, size: 12),
                 title: RichText(
                   text: TextSpan(
                       text: displayName,

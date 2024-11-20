@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:bluesky/bluesky.dart' as bluesky;
 import 'package:provider/provider.dart';
 
+import 'avatar_icon.dart';
 import 'define.dart';
 import 'embed_record.dart';
 import 'embed_images.dart';
@@ -38,7 +39,6 @@ class _FeedCardState extends State<FeedCard> {
         author.displayName != null && author.displayName!.isNotEmpty
             ? author.displayName!
             : author.handle;
-    final avator = author.avatar != null ? NetworkImage(author.avatar!) : null;
 
     final embedWidth =
         isDesktop ? 430.0 : MediaQuery.of(context).size.width - 96.0;
@@ -53,10 +53,7 @@ class _FeedCardState extends State<FeedCard> {
           SelectionArea(
             child: ListTile(
               titleAlignment: ListTileTitleAlignment.top,
-              leading: CircleAvatar(
-                radius: 20.0,
-                backgroundImage: avator,
-              ),
+              leading: AvatarIcon(avatar: author.avatar, size: 20),
               title: RichText(
                 text: TextSpan(
                     text: displayName,

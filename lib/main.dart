@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:animated_tree_view/animated_tree_view.dart';
 import 'package:bskylog/rotation_icon.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -16,6 +15,7 @@ import 'package:bluesky/bluesky.dart' as bluesky;
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'avatar_icon.dart';
 import 'database.dart';
 import 'define.dart';
 import 'feed_card.dart';
@@ -355,15 +355,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _scaffoldMobile() {
     final actor = context.watch<Model>().currentActor;
     final profile = actor?.profile;
-    final avator = profile != null && profile.avatar != null
-        ? CachedNetworkImageProvider(profile.avatar!)
-        : null;
 
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
         leading: IconButton(
-          icon: CircleAvatar(radius: 16, backgroundImage: avator),
+          icon: AvatarIcon(avatar: profile?.avatar, size: 16),
           onPressed: () => _scaffoldKey.currentState!.openDrawer(),
         ),
         title: const Text(Define.title),
@@ -407,9 +404,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildDrawer() {
     final actor = context.watch<Model>().currentActor;
     final profile = actor?.profile;
-    final avator = profile != null && profile.avatar != null
-        ? CachedNetworkImageProvider(profile.avatar!)
-        : null;
 
     return NavigationDrawer(
       selectedIndex: -1,
@@ -419,7 +413,7 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.fromLTRB(28, 16, 16, 10),
           child: Align(
             alignment: Alignment.centerLeft,
-            child: CircleAvatar(radius: 20, backgroundImage: avator),
+            child: AvatarIcon(avatar: profile?.avatar, size: 20),
           ),
         ),
         ...destinations.map(
@@ -462,16 +456,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final actor = context.watch<Model>().currentActor;
     final profile = actor?.profile;
-    final avator = profile != null && profile.avatar != null
-        ? CachedNetworkImageProvider(profile.avatar!)
-        : null;
 
     return NavigationRail(
       minWidth: 52,
       selectedIndex: null,
       labelType:
           isTablet ? NavigationRailLabelType.all : NavigationRailLabelType.none,
-      leading: CircleAvatar(radius: 20, backgroundImage: avator),
+      leading: AvatarIcon(avatar: profile?.avatar, size: 20),
       destinations: [
         ...destinations.map(
           (_Destination destination) {
