@@ -605,7 +605,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             final feed = posts[index];
                             final feedView = bluesky.FeedView.fromJson(
                                 jsonDecode(feed.post));
-                            return Card(child: FeedCard(feed, feedView));
+                            return FeedCard(feed, feedView);
                           },
                           childCount: posts.length,
                         ),

@@ -6,8 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:bluesky/bluesky.dart' as bluesky;
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-
 import 'define.dart';
+import 'embed_external.dart';
+import 'embed_images.dart';
+import 'embed_record_with_media.dart';
+import 'embed_video.dart';
 import 'model.dart';
 import 'tooltip_span.dart';
 
@@ -24,12 +27,101 @@ class EmbedRecordWidget extends StatefulWidget {
 }
 
 class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
-  Widget _buildLink(String text, AtUri uri) {
-    return Text('$text ${uri.toString()}');
-  }
-
   Widget _buildRecord(bluesky.UEmbedViewRecordViewRecord record) {
-    return Text('record');
+    final post = record.data.value;
+    final author = record.data.author;
+    final embeds = record.data.embeds;
+    final displayName =
+        author.displayName != null && author.displayName!.isNotEmpty
+            ? author.displayName!
+            : author.handle;
+    final avator = author.avatar != null ? NetworkImage(author.avatar!) : null;
+
+    final embedWidth = widget.width - 80.0;
+
+    return SizedBox(
+      width: widget.width,
+      //height: widget.height,
+      child: Card.outlined(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SelectionArea(
+              child: ListTile(
+                titleAlignment: ListTileTitleAlignment.top,
+                leading: CircleAvatar(
+                  radius: 12.0,
+                  backgroundImage: avator,
+                ),
+                title: RichText(
+                  text: TextSpan(
+                      text: displayName,
+                      style: const TextStyle(fontSize: 16, color: Colors.black),
+                      children: [
+                        WidgetSpan(child: SizedBox(width: 4)),
+                        TextSpan(
+                          text: '@${author.handle}',
+                          style: const TextStyle(
+                              fontSize: 12, color: Colors.black54),
+                        ),
+                      ]),
+                ),
+                subtitle: _buildRecordText(post),
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                const SizedBox(width: 50),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (embeds != null)
+                      for (final embed in embeds)
+                        switch (embed) {
+                          (bluesky.UEmbedViewRecord record) =>
+                            EmbedRecordWidget(
+                              record.data,
+                              width: embedWidth,
+                              height: embedWidth,
+                            ),
+                          (bluesky.UEmbedViewRecordWithMedia recordWithMedia) =>
+                            EmbedRecordWithMediaWidget(
+                              recordWithMedia.data,
+                              width: embedWidth,
+                              height: embedWidth,
+                            ),
+                          (bluesky.UEmbedViewImages images) =>
+                            EmbedImagesWidget(
+                              images.data,
+                              width: embedWidth,
+                              height: embedWidth / 2,
+                            ),
+                          (bluesky.UEmbedViewExternal external) =>
+                            EmbedExternalWidget(
+                              external.data,
+                              width: embedWidth,
+                              height: embedWidth / 2,
+                            ),
+                          (bluesky.UEmbedViewVideo video) => EmbedVideoWidget(
+                              video.data,
+                              width: embedWidth,
+                              height: embedWidth / 2,
+                            ),
+                          bluesky.EmbedView() =>
+                            const Text('unsupported embed'),
+                        },
+                    _buildFooter(record),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildGeneratorView(bluesky.UEmbedViewRecordViewGeneratorView view) {
@@ -44,19 +136,20 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
     return Text('labeler view');
   }
 
+  Widget _buildRecordBreak(String text, AtUri uri) {
+    return Text('$text ${uri.toString()}');
+  }
+
   @override
   Widget build(BuildContext context) {
-    // author_icon name handle time
-    // text + facets
-    // embed.images
     return switch (widget.embed.record) {
       (bluesky.UEmbedViewRecordViewRecord record) => _buildRecord(record),
       (bluesky.UEmbedViewRecordViewNotFound notFound) =>
-        _buildLink('record not found', notFound.data.uri),
+        _buildRecordBreak('record not found', notFound.data.uri),
       (bluesky.UEmbedViewRecordViewBlocked blocked) =>
-        _buildLink('record blocked', blocked.data.uri),
+        _buildRecordBreak('record blocked', blocked.data.uri),
       (bluesky.UEmbedViewRecordViewViewDetached viewDetached) =>
-        _buildLink('record detached', viewDetached.data.uri),
+        _buildRecordBreak('record detached', viewDetached.data.uri),
       (bluesky.UEmbedViewRecordViewGeneratorView generatorView) =>
         _buildGeneratorView(generatorView),
       (bluesky.UEmbedViewRecordViewListView listView) =>
@@ -65,88 +158,6 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
         _buildLabelerView(labelerView),
       bluesky.EmbedViewRecordView() => const Text('unsupport embed record'),
     };
-
-/*
-
-
-    final post = (widget.embed as bluesky.EmbedViewRecordView).data.;
-    final author = post.author;
-    final displayName =
-        author.displayName != null && author.displayName!.isNotEmpty
-            ? author.displayName!
-            : author.handle;
-    final avator = author.avatar != null ? NetworkImage(author.avatar!) : null;
-
-    final embedWidth = widget.width - 60;
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SelectionArea(
-          child: ListTile(
-            titleAlignment: ListTileTitleAlignment.top,
-            leading: CircleAvatar(
-              radius: 10.0,
-              backgroundImage: avator,
-            ),
-            title: RichText(
-              text: TextSpan(
-                  text: displayName,
-                  style: const TextStyle(fontSize: 16, color: Colors.black),
-                  children: [
-                    WidgetSpan(child: SizedBox(width: 4)),
-                    TextSpan(
-                      text: '@${author.handle}',
-                      style:
-                          const TextStyle(fontSize: 12, color: Colors.black54),
-                    ),
-                  ]),
-            ),
-            subtitle: _buildRecordText(),
-          ),
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            const SizedBox(width: 64),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (post.embed != null)
-                  switch (post.embed!) {
-                    (bluesky.UEmbedViewRecord record) => EmbedRecordWidget(
-                        record.data,
-                        width: embedWidth,
-                        height: embedWidth,
-                      ),
-                    (bluesky.UEmbedViewImages images) => EmbedImagesWidget(
-                        images.data,
-                        width: embedWidth,
-                        height: embedWidth / 2,
-                      ),
-                    (bluesky.UEmbedViewExternal external) =>
-                      EmbedExternalWidget(
-                        external.data,
-                        width: embedWidth,
-                        height: embedWidth / 2,
-                      ),
-                    (bluesky.UEmbedViewVideo video) => EmbedVideoWidget(
-                        video.data,
-                        width: embedWidth,
-                        height: embedWidth / 2,
-                      ),
-                    bluesky.EmbedView() => const Text('unsupported embed'),
-                  },
-                _buildFooter(),
-              ],
-            ),
-          ],
-        ),
-      ],
-    );
-    */
   }
 
   Widget _buildRecordText(bluesky.PostRecord record) {
@@ -225,8 +236,9 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
     context.read<Model>().setSearchKeyword('#${feature.tag}');
   }
 
-  Widget _buildFooter(bluesky.Post post) {
-    final author = post.author;
+  Widget _buildFooter(bluesky.UEmbedViewRecordViewRecord record) {
+    final post = record.data;
+    final author = record.data.author;
     final postUrl =
         '${Define.bskyUrl}/profile/${author.handle}/post/${post.uri.rkey}';
 

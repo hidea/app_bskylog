@@ -38,6 +38,7 @@ class _EmbedRecordWithMediaWidgetState
           bluesky.EmbedViewMedia() =>
             const Text('unsupport embed record media'),
         },
+        const SizedBox(height: 10),
         EmbedRecordWidget(widget.embed.record,
             width: widget.width, height: widget.height),
       ],

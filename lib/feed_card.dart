@@ -41,82 +41,84 @@ class _FeedCardState extends State<FeedCard> {
     final avator = author.avatar != null ? NetworkImage(author.avatar!) : null;
 
     final embedWidth =
-        isDesktop ? 400.0 : MediaQuery.of(context).size.width - 96.0;
+        isDesktop ? 430.0 : MediaQuery.of(context).size.width - 96.0;
 
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (feed.reasonRepost) _buildRepost(),
-        if (feed.replyDid.isNotEmpty) _buildReply(widget.feedView),
-        SelectionArea(
-          child: ListTile(
-            titleAlignment: ListTileTitleAlignment.top,
-            leading: CircleAvatar(
-              radius: 20.0,
-              backgroundImage: avator,
+    return Card(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (feed.reasonRepost) _buildRepost(),
+          if (feed.replyDid.isNotEmpty) _buildReply(widget.feedView),
+          SelectionArea(
+            child: ListTile(
+              titleAlignment: ListTileTitleAlignment.top,
+              leading: CircleAvatar(
+                radius: 20.0,
+                backgroundImage: avator,
+              ),
+              title: RichText(
+                text: TextSpan(
+                    text: displayName,
+                    style: const TextStyle(fontSize: 16, color: Colors.black),
+                    children: [
+                      WidgetSpan(child: SizedBox(width: 4)),
+                      TextSpan(
+                        text: '@${author.handle}',
+                        style: const TextStyle(
+                            fontSize: 12, color: Colors.black54),
+                      ),
+                    ]),
+              ),
+              subtitle: _buildRecordText(post.record),
             ),
-            title: RichText(
-              text: TextSpan(
-                  text: displayName,
-                  style: const TextStyle(fontSize: 16, color: Colors.black),
-                  children: [
-                    WidgetSpan(child: SizedBox(width: 4)),
-                    TextSpan(
-                      text: '@${author.handle}',
-                      style:
-                          const TextStyle(fontSize: 12, color: Colors.black54),
-                    ),
-                  ]),
-            ),
-            subtitle: _buildRecordText(widget.feedView.post.record),
           ),
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            const SizedBox(width: 64),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (post.embed != null)
-                  switch (post.embed!) {
-                    (bluesky.UEmbedViewRecord record) => EmbedRecordWidget(
-                        record.data,
-                        width: embedWidth,
-                        height: embedWidth,
-                      ),
-                    (bluesky.UEmbedViewRecordWithMedia recordWithMedia) =>
-                      EmbedRecordWithMediaWidget(
-                        recordWithMedia.data,
-                        width: embedWidth,
-                        height: embedWidth,
-                      ),
-                    (bluesky.UEmbedViewImages images) => EmbedImagesWidget(
-                        images.data,
-                        width: embedWidth,
-                        height: embedWidth / 2,
-                      ),
-                    (bluesky.UEmbedViewExternal external) =>
-                      EmbedExternalWidget(
-                        external.data,
-                        width: embedWidth,
-                        height: embedWidth / 2,
-                      ),
-                    (bluesky.UEmbedViewVideo video) => EmbedVideoWidget(
-                        video.data,
-                        width: embedWidth,
-                        height: embedWidth / 2,
-                      ),
-                    bluesky.EmbedView() => const Text('unsupported embed'),
-                  },
-                _buildFooter(widget.feedView.post),
-              ],
-            ),
-          ],
-        ),
-      ],
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              const SizedBox(width: 64),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (post.embed != null)
+                    switch (post.embed!) {
+                      (bluesky.UEmbedViewRecord record) => EmbedRecordWidget(
+                          record.data,
+                          width: embedWidth,
+                          height: embedWidth,
+                        ),
+                      (bluesky.UEmbedViewRecordWithMedia recordWithMedia) =>
+                        EmbedRecordWithMediaWidget(
+                          recordWithMedia.data,
+                          width: embedWidth,
+                          height: embedWidth,
+                        ),
+                      (bluesky.UEmbedViewImages images) => EmbedImagesWidget(
+                          images.data,
+                          width: embedWidth,
+                          height: embedWidth / 2,
+                        ),
+                      (bluesky.UEmbedViewExternal external) =>
+                        EmbedExternalWidget(
+                          external.data,
+                          width: embedWidth,
+                          height: embedWidth / 2,
+                        ),
+                      (bluesky.UEmbedViewVideo video) => EmbedVideoWidget(
+                          video.data,
+                          width: embedWidth,
+                          height: embedWidth / 2,
+                        ),
+                      bluesky.EmbedView() => const Text('unsupported embed'),
+                    },
+                  _buildFooter(post),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
