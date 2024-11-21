@@ -54,13 +54,20 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
                 title: RichText(
                   text: TextSpan(
                       text: displayName,
-                      style: const TextStyle(fontSize: 16, color: Colors.black),
+                      style: TextStyle(
+                          fontSize:
+                              Theme.of(context).textTheme.titleMedium!.fontSize,
+                          color: Colors.black),
                       children: [
                         WidgetSpan(child: SizedBox(width: 4)),
                         TextSpan(
                           text: '@${author.handle}',
-                          style: const TextStyle(
-                              fontSize: 12, color: Colors.black54),
+                          style: TextStyle(
+                              fontSize: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall!
+                                  .fontSize,
+                              color: Colors.black54),
                         ),
                       ]),
                 ),
@@ -131,15 +138,19 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
             leading: AvatarIcon(avatar: view.data.avatar, size: 24),
             title: Text(
               view.data.displayName,
-              style: const TextStyle(fontSize: 16, color: Colors.black),
+              style: TextStyle(
+                  fontSize: Theme.of(context).textTheme.titleMedium!.fontSize,
+                  color: Colors.black),
             ),
             subtitle: Text(
               'feed by @${view.data.createdBy.handle}',
-              style: const TextStyle(fontSize: 12, color: Colors.black54),
+              style: TextStyle(
+                  fontSize: Theme.of(context).textTheme.titleSmall!.fontSize,
+                  color: Colors.black54),
             ),
             onTap: () {
               launchUrlPlus(
-                  '${Define.bskyUrl}/profile/${view.data.createdBy.did}/feed/${view.data.uri.rkey}');
+                  '${Define.bskyUrl}/profile/${view.data.createdBy.handle}/feed/${view.data.uri.rkey}');
             },
           ),
         ),
@@ -157,15 +168,19 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
             leading: AvatarIcon(avatar: view.data.avatar, size: 24),
             title: Text(
               view.data.name,
-              style: const TextStyle(fontSize: 16, color: Colors.black),
+              style: TextStyle(
+                  fontSize: Theme.of(context).textTheme.titleMedium!.fontSize,
+                  color: Colors.black),
             ),
             subtitle: Text(
               'list by @${view.data.createdBy.handle}',
-              style: const TextStyle(fontSize: 12, color: Colors.black54),
+              style: TextStyle(
+                  fontSize: Theme.of(context).textTheme.titleSmall!.fontSize,
+                  color: Colors.black54),
             ),
             onTap: () {
               launchUrlPlus(
-                  '${Define.bskyUrl}/profile/${view.data.createdBy.did}/lists/${view.data.uri.rkey}');
+                  '${Define.bskyUrl}/profile/${view.data.createdBy.handle}/lists/${view.data.uri.rkey}');
             },
           ),
         ),
@@ -285,7 +300,9 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
           message: 'View on Bluesky',
           waitDuration: Duration(milliseconds: 500),
           child: TextButton(
-            style: TextButton.styleFrom(padding: EdgeInsets.zero),
+            style: TextButton.styleFrom(
+                padding: EdgeInsets.all(4),
+                visualDensity: VisualDensity(horizontal: -4, vertical: -4)),
             child: Text(
                 DateFormat('H:mm yyyy-MM-dd').format(post.indexedAt.toLocal())),
             onPressed: () => launchUrlPlus(postUrl),

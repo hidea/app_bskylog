@@ -57,13 +57,20 @@ class _FeedCardState extends State<FeedCard> {
               title: RichText(
                 text: TextSpan(
                     text: displayName,
-                    style: const TextStyle(fontSize: 16, color: Colors.black),
+                    style: TextStyle(
+                        fontSize:
+                            Theme.of(context).textTheme.titleMedium!.fontSize,
+                        color: Colors.black),
                     children: [
                       WidgetSpan(child: SizedBox(width: 4)),
                       TextSpan(
                         text: '@${author.handle}',
-                        style: const TextStyle(
-                            fontSize: 12, color: Colors.black54),
+                        style: TextStyle(
+                            fontSize: Theme.of(context)
+                                .textTheme
+                                .titleSmall!
+                                .fontSize,
+                            color: Colors.black54),
                       ),
                     ]),
               ),
@@ -248,7 +255,9 @@ class _FeedCardState extends State<FeedCard> {
           message: 'View on Bluesky',
           waitDuration: Duration(milliseconds: 500),
           child: TextButton(
-            style: TextButton.styleFrom(padding: EdgeInsets.zero),
+            style: TextButton.styleFrom(
+                padding: EdgeInsets.all(4),
+                visualDensity: VisualDensity(horizontal: -4, vertical: -4)),
             child: Text(
                 DateFormat('H:mm yyyy-MM-dd').format(post.indexedAt.toLocal())),
             onPressed: () => launchUrlPlus(postUrl),

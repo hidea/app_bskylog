@@ -116,9 +116,9 @@ class _SigninScreenState extends State<SigninScreen> {
                               style: TextButton.styleFrom(
                                   padding: const EdgeInsets.only(
                                       right: 16, bottom: 8)),
-                              child: const Text(
+                              child: Text(
                                 'Create App Password',
-                                style: TextStyle(fontSize: 12),
+                                style: Theme.of(context).textTheme.titleMedium,
                               ),
                               onPressed: () {
                                 launchUrlPlus(Define.appPasswordUrl);

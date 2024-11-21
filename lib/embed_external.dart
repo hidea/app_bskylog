@@ -42,33 +42,42 @@ class _EmbedExternalWidgetState extends State<EmbedExternalWidget> {
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(
-                    Uri.parse(widget.embed.external.uri).host,
-                    style: TextStyle(color: Colors.grey.shade700),
+                  child: Row(
+                    children: [
+                      Icon(Icons.public, size: 16, color: Colors.grey.shade700),
+                      const SizedBox(width: 2),
+                      Text(
+                        Uri.parse(widget.embed.external.uri).host,
+                        style: TextStyle(
+                            fontSize: Theme.of(context)
+                                .textTheme
+                                .labelMedium!
+                                .fontSize,
+                            color: Colors.grey.shade700),
+                      ),
+                    ],
                   ),
                 ),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: Text(
-                    widget.embed.external.title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
+                    widget.embed.external.title.isNotEmpty
+                        ? widget.embed.external.title
+                        : widget.embed.external.uri,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(
-                    widget.embed.external.description,
-                    maxLines: 2,
-                    style: const TextStyle(
-                      fontSize: 16,
+                if (widget.embed.external.description.isNotEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text(
+                      widget.embed.external.description,
+                      maxLines: 2,
+                      style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ),
-                ),
                 const SizedBox(height: 8),
               ],
             ),
