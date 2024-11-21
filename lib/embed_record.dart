@@ -37,11 +37,10 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
             ? author.displayName!
             : author.handle;
 
-    final embedWidth = widget.width - 80.0;
+    final embedWidth = widget.width - 40.0;
 
     return SizedBox(
       width: widget.width,
-      //height: widget.height,
       child: Card.outlined(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
@@ -70,7 +69,7 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                const SizedBox(width: 50),
+                const SizedBox(width: 16),
                 Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.start,

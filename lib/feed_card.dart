@@ -254,13 +254,13 @@ class _FeedCardState extends State<FeedCard> {
             onPressed: () => launchUrlPlus(postUrl),
           ),
         ),
-        const SizedBox(width: 6),
+        const SizedBox(width: 4),
         SizedBox(
-          width: 18,
-          height: 18,
+          width: 16,
+          height: 16,
           child: IconButton(
             icon: const Icon(Icons.today),
-            iconSize: 18,
+            iconSize: 16,
             padding: EdgeInsets.zero,
             tooltip: 'Search this day',
             onPressed: () {

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 
 import 'model.dart';
@@ -20,7 +21,7 @@ class SearchField extends StatefulWidget {
 
 class _SearchFieldState extends State<SearchField> {
   final _editController = TextEditingController();
-  TextEditingValue? _lastValue;
+  //TextEditingValue? _lastValue;
 
   @override
   void initState() {
@@ -50,13 +51,13 @@ class _SearchFieldState extends State<SearchField> {
                     border: const OutlineInputBorder(),
                     hintText: 'Enter a search term',
                     hintStyle: const TextStyle(color: Colors.grey),
+                    prefixIcon: const Icon(Icons.search),
                     suffixIcon: _editController.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              _editController.clear();
-                              context.read<Model>().setSearchKeyword('');
-                            },
+                            icon: const Icon(Icons.close),
+                            tooltip: 'Clear',
+                            iconSize: 16.0,
+                            onPressed: () => _editController.clear(),
                           )
                         : null,
                   ),
@@ -66,12 +67,12 @@ class _SearchFieldState extends State<SearchField> {
                 ),
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.search),
-              onPressed: () =>
-                  context.read<Model>().setSearchKeyword(_editController.text),
+            IconButton.filled(
+              icon: Icon(Symbols.regular_expression),
+              tooltip: 'Regex search',
+              isSelected: context.watch<Model>().regExpSearch,
+              onPressed: () => context.read<Model>().toggleRegExpSearch(),
             ),
-            if (isDesktop) const SizedBox(width: 8),
             if (isDesktop)
               IconButton(
                 icon: Icon(widget.visible
@@ -98,7 +99,7 @@ class _SearchFieldState extends State<SearchField> {
                     height: 16.0,
                     width: 16.0,
                     child: IconButton.outlined(
-                      icon: Icon(Icons.close),
+                      icon: const Icon(Icons.close),
                       tooltip: 'Clear range',
                       iconSize: 12.0,
                       padding: EdgeInsets.zero,

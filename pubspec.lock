@@ -130,10 +130,10 @@ packages:
     dependency: "direct main"
     description:
       name: bluesky_text
-      sha256: "1e53118a27c8e9058e4b646d1ddc11cac6d5a22a27444124fb1534f5e9e0db16"
+      sha256: ef3e99d3a59d2e8c0a7ba43bbc01d11f2311a0f8e0f13dc73c8636d311ecbceb
       url: "https://pub.dev"
     source: hosted
-    version: "0.7.0"
+    version: "0.7.1"
   boolean_selector:
     dependency: transitive
     description:
@@ -677,6 +677,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.11.1"
+  material_symbols_icons:
+    dependency: "direct main"
+    description:
+      name: material_symbols_icons
+      sha256: "1dea2aef1c83434f832f14341a5ffa1254e76b68e4d90333f95f8a2643bf1024"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.2799.0"
   meta:
     dependency: transitive
     description:

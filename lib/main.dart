@@ -617,7 +617,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: IconButton.outlined(
                           onPressed: () => _feedController
                               .jumpTo(_feedController.position.minScrollExtent),
-                          icon: Icon(Icons.keyboard_arrow_up))),
+                          icon: const Icon(Icons.keyboard_arrow_up))),
                 ),
             ],
           ),

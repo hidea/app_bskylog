@@ -91,6 +91,8 @@ class Model extends ChangeNotifier {
   int? get searchMonth => _searchMonth;
   int? _searchDay;
   int? get searchDay => _searchDay;
+  bool _regExpSearch = false;
+  bool get regExpSearch => _regExpSearch;
   String? _searchKeyword;
   String? get searchKeyword => _searchKeyword;
 
@@ -155,6 +157,9 @@ class Model extends ChangeNotifier {
             (element) => element.name == json['visible.${type.name}']);
       }
     }
+    if (json['regExpSearch'] != null) {
+      _regExpSearch = json['regExpSearch'];
+    }
     if (json['sortOrder'] != null) {
       _sortOrder = SortOrder.values
           .firstWhere((element) => element.toString() == json['sortOrder']);
@@ -192,6 +197,7 @@ class Model extends ChangeNotifier {
 
   Map toJson() => {
         ...visibleToJson(),
+        'regExpSearch': _regExpSearch,
         'sortOrder': _sortOrder.toString(),
         'actor': _currentActor?.toJson(),
         'lastSync': _lastSync.toString(),
@@ -388,6 +394,13 @@ class Model extends ChangeNotifier {
     }
   }
 
+  void toggleRegExpSearch() {
+    _regExpSearch = !_regExpSearch;
+
+    updateSharedPrefrences();
+    notifyListeners();
+  }
+
   void setSearchKeyword(String keyword) {
     _searchKeyword = keyword;
 
@@ -419,7 +432,11 @@ class Model extends ChangeNotifier {
     }
 
     if (_searchKeyword != null) {
-      query.where((tbl) => tbl.post.like('%$_searchKeyword%'));
+      if (_regExpSearch) {
+        query.where((tbl) => tbl.post.regexp('$_searchKeyword', unicode: true));
+      } else {
+        query.where((tbl) => tbl.post.like('%$_searchKeyword%'));
+      }
     }
 
     if (_visible.values.contains(VisibleMode.only)) {
@@ -516,7 +533,12 @@ class Model extends ChangeNotifier {
     }
 
     if (_searchKeyword != null) {
-      query.where(database.posts.post.like('%$_searchKeyword%'));
+      if (_regExpSearch) {
+        query.where(
+            database.posts.post.regexp('$_searchKeyword', unicode: true));
+      } else {
+        query.where(database.posts.post.like('%$_searchKeyword%'));
+      }
     }
 
     if (_visible.values.contains(VisibleMode.only)) {

@@ -98,7 +98,7 @@ class _ImageViewPageState extends State<_ImageViewPage> {
               child: Padding(
                 padding: const EdgeInsets.only(left: 8),
                 child: IconButton.filled(
-                  icon: Icon(Icons.keyboard_arrow_left),
+                  icon: const Icon(Icons.keyboard_arrow_left),
                   onPressed: () {
                     _updateImageIndex(_currentIndex - 1);
                   },
@@ -111,7 +111,7 @@ class _ImageViewPageState extends State<_ImageViewPage> {
               child: Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: IconButton.filled(
-                  icon: Icon(Icons.keyboard_arrow_right),
+                  icon: const Icon(Icons.keyboard_arrow_right),
                   onPressed: () {
                     _updateImageIndex(_currentIndex + 1);
                   },
