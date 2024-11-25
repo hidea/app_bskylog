@@ -57,7 +57,8 @@ class _SearchFieldState extends State<SearchField> {
                             icon: const Icon(Icons.close),
                             tooltip: 'Clear',
                             iconSize: 16.0,
-                            onPressed: () => _editController.clear(),
+                            onPressed: () =>
+                                context.read<Model>().setSearchKeyword(''),
                           )
                         : null,
                   ),
@@ -114,8 +115,6 @@ class _SearchFieldState extends State<SearchField> {
                     Text('.${context.watch<Model>().searchMonth}'),
                   if (context.watch<Model>().searchDay != null)
                     Text('.${context.watch<Model>().searchDay}'),
-                  const SizedBox(width: 8),
-                  const Text('-'),
                   const SizedBox(width: 8),
                 ]),
               StreamBuilder<int?>(

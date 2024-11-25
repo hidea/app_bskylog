@@ -38,7 +38,7 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
             ? author.displayName!
             : author.handle;
 
-    final embedWidth = widget.width - 40.0;
+    final embedWidth = widget.width - 36.0;
 
     return SizedBox(
       width: widget.width,
@@ -49,6 +49,7 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
           children: [
             SelectionArea(
               child: ListTile(
+                contentPadding: const EdgeInsets.only(left: 16.0, right: 12.0),
                 titleAlignment: ListTileTitleAlignment.top,
                 leading: AvatarIcon(avatar: author.avatar, size: 12),
                 title: RichText(
@@ -101,18 +102,17 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
                             EmbedImagesWidget(
                               images.data,
                               width: embedWidth,
-                              height: embedWidth / 2,
                             ),
                           (bluesky.UEmbedViewExternal external) =>
                             EmbedExternalWidget(
                               external.data,
                               width: embedWidth,
-                              height: embedWidth / 2,
+                              height: embedWidth * 9 / 16,
                             ),
                           (bluesky.UEmbedViewVideo video) => EmbedVideoWidget(
                               video.data,
                               width: embedWidth,
-                              height: embedWidth / 2,
+                              height: embedWidth * 9 / 16,
                             ),
                           bluesky.EmbedView() =>
                             const Text('unsupported embed'),
@@ -134,6 +134,7 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
       child: Card.outlined(
         child: SelectionArea(
           child: ListTile(
+            contentPadding: const EdgeInsets.only(left: 16.0, right: 12.0),
             titleAlignment: ListTileTitleAlignment.top,
             leading: AvatarIcon(avatar: view.data.avatar, size: 24),
             title: Text(
@@ -164,6 +165,7 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
       child: Card.outlined(
         child: SelectionArea(
           child: ListTile(
+            contentPadding: const EdgeInsets.only(left: 16.0, right: 12.0),
             titleAlignment: ListTileTitleAlignment.top,
             leading: AvatarIcon(avatar: view.data.avatar, size: 24),
             title: Text(

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class RotationIcon extends StatefulWidget {
   const RotationIcon({super.key, required this.icon, this.syncing = false});
 
-  final IconData icon;
+  final Widget icon;
   final bool syncing;
 
   @override
@@ -40,8 +40,8 @@ class _RotationIconState extends State<RotationIcon>
                 child: child,
               );
             },
-            child: Icon(widget.icon),
+            child: widget.icon,
           )
-        : Icon(widget.icon);
+        : widget.icon;
   }
 }

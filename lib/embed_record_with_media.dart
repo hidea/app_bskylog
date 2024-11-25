@@ -25,10 +25,8 @@ class _EmbedRecordWithMediaWidgetState
     return Column(
       children: [
         switch (widget.embed.media) {
-          (bluesky.UEmbedViewMediaImages images) => EmbedImagesWidget(
-              images.data,
-              width: widget.width,
-              height: widget.height),
+          (bluesky.UEmbedViewMediaImages images) =>
+            EmbedImagesWidget(images.data, width: widget.width),
           (bluesky.UEmbedViewMediaExternal external) => EmbedExternalWidget(
               external.data,
               width: widget.width,

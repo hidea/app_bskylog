@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:animated_tree_view/animated_tree_view.dart';
+import 'package:bskylog/about_screen.dart';
 import 'package:bskylog/rotation_icon.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -47,7 +48,7 @@ void main() async {
   if (isDesktop) {
     await windowManager.ensureInitialized();
     const windowOptions = WindowOptions(
-      minimumSize: Size(800, 600),
+      minimumSize: Size(840, 600),
       backgroundColor: Colors.white,
       skipTaskbar: false,
       titleBarStyle: TitleBarStyle.normal,
@@ -240,6 +241,11 @@ final _router = GoRouter(
         );
       },
     ),
+    GoRoute(
+      path: '/about',
+      name: 'about',
+      builder: (context, state) => AboutScreen(),
+    ),
   ],
 );
 
@@ -280,27 +286,23 @@ class _HomeScreenState extends State<HomeScreen> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _feedController = ScrollController();
   final _autoScrollController = AutoScrollController();
-  bool isSyncing = false;
+  int isSyncing = 0;
   bool visibleTopButton = false;
 
   void _syncFeed() {
     setState(() {
-      isSyncing = true;
+      isSyncing = (DateTime.now().day % 10) + 1;
     });
     context.read<Model>().syncFeed().then((_) {
       scaffoldMsgKey.currentState!.showSnackBar(SnackBar(
           content: Text("Sync done"), behavior: SnackBarBehavior.floating));
-
-      setState(() {
-        isSyncing = false;
-      });
     }).catchError((e) {
       scaffoldMsgKey.currentState!.showSnackBar(SnackBar(
           content: Text("Sync error: $e"),
           behavior: SnackBarBehavior.floating));
-
+    }).whenComplete(() {
       setState(() {
-        isSyncing = false;
+        isSyncing = 0;
       });
     });
   }
@@ -360,7 +362,9 @@ class _HomeScreenState extends State<HomeScreen> {
       key: _scaffoldKey,
       appBar: AppBar(
         leading: IconButton(
-          icon: AvatarIcon(avatar: profile?.avatar, size: 16),
+          icon: RotationIcon(
+              icon: AvatarIcon(avatar: profile?.avatar, size: 16),
+              syncing: isSyncing != 0),
           onPressed: () => _scaffoldKey.currentState!.openDrawer(),
         ),
         title: const Text(Define.title),
@@ -380,24 +384,28 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<_Destination> get destinations => [
         _Destination(
-          icon: RotationIcon(icon: Icons.sync, syncing: isSyncing),
+          icon: RotationIcon(icon: Icon(Icons.sync), syncing: isSyncing > 1),
           label: const Text('Log Sync'),
-          disabled: isSyncing || context.watch<Model>().currentActor == null,
+          disabled:
+              isSyncing != 0 || context.watch<Model>().currentActor == null,
         ),
         _Destination(
           icon: const Icon(Icons.delete_forever),
           label: const Text('Log Clear'),
-          disabled: isSyncing || context.watch<Model>().currentActor == null,
+          disabled:
+              isSyncing != 0 || context.watch<Model>().currentActor == null,
         ),
         _Destination(
           icon: const Icon(Icons.login),
           label: const Text('Sign In'),
-          disabled: isSyncing || context.watch<Model>().currentActor != null,
+          disabled:
+              isSyncing != 0 || context.watch<Model>().currentActor != null,
         ),
         _Destination(
           icon: const Icon(Icons.logout),
           label: const Text('Sign Out'),
-          disabled: isSyncing || context.watch<Model>().currentActor == null,
+          disabled:
+              isSyncing != 0 || context.watch<Model>().currentActor == null,
         ),
       ];
 
@@ -435,6 +443,10 @@ class _HomeScreenState extends State<HomeScreen> {
               ? const Icon(Icons.volume_off)
               : const Icon(Icons.volume_up),
         ),
+        NavigationDrawerDestination(
+          label: const Text('Info'),
+          icon: const Icon(Icons.info),
+        ),
         const Padding(
           padding: EdgeInsets.fromLTRB(28, 0, 28, 0),
           child: Divider(),
@@ -462,7 +474,9 @@ class _HomeScreenState extends State<HomeScreen> {
       selectedIndex: null,
       labelType:
           isTablet ? NavigationRailLabelType.all : NavigationRailLabelType.none,
-      leading: AvatarIcon(avatar: profile?.avatar, size: 20),
+      leading: RotationIcon(
+          icon: AvatarIcon(avatar: profile?.avatar, size: 20),
+          syncing: isSyncing == 1),
       destinations: [
         ...destinations.map(
           (_Destination destination) {
@@ -527,6 +541,18 @@ class _HomeScreenState extends State<HomeScreen> {
                           .selectedLabelTextStyle),
                 ],
               ),
+              Column(
+                children: [
+                  IconButton(
+                    onPressed: () => context.push('/about'),
+                    icon: const Icon(Icons.info),
+                  ),
+                  Text('Info',
+                      style: Theme.of(context)
+                          .navigationRailTheme
+                          .selectedLabelTextStyle),
+                ],
+              ),
               const SizedBox(height: 16),
               Text('${context.read<Model>().packageInfo!.version}'
                   '+${context.read<Model>().packageInfo!.buildNumber}'),
@@ -565,6 +591,12 @@ class _HomeScreenState extends State<HomeScreen> {
           scaffoldMsgKey.currentState!.showSnackBar(SnackBar(
               content: Text("Sign out"), behavior: SnackBarBehavior.floating));
         });
+        break;
+      case 4: // Sount
+        context.read<Model>().toggleVolume();
+        break;
+      case 5: // Info
+        context.push('/about');
         break;
     }
   }
@@ -627,54 +659,61 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildSearchPanel() {
-    return SizedBox(
-      width: 200.0,
-      height: MediaQuery.of(context).size.height,
-      child: CustomScrollView(
-        controller: _autoScrollController,
-        slivers: [
-          SliverToBoxAdapter(
-            child: Column(
-              children: [
-                const SizedBox(height: 8),
-                Text('Sort', style: TextStyle(fontWeight: FontWeight.bold)),
-                _buildSort(),
-              ],
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 8.0),
+      child: SizedBox(
+        width: 200.0,
+        height: MediaQuery.of(context).size.height -
+            MediaQuery.paddingOf(context).bottom,
+        child: CustomScrollView(
+          controller: _autoScrollController,
+          slivers: [
+            SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  const SizedBox(height: 8),
+                  Text('Sort', style: TextStyle(fontWeight: FontWeight.bold)),
+                  _buildSort(),
+                ],
+              ),
             ),
-          ),
-          SliverToBoxAdapter(
-            child: Column(
-              children: [
-                const SizedBox(height: 8),
-                Text('Visible', style: TextStyle(fontWeight: FontWeight.bold)),
-                _buildVisible(),
-              ],
+            SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  const SizedBox(height: 8),
+                  Text('Visible',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  _buildVisible(),
+                ],
+              ),
             ),
-          ),
-          SliverToBoxAdapter(
-            child: Column(
-              children: [
-                const SizedBox(height: 8),
-                Text('Calendar', style: TextStyle(fontWeight: FontWeight.bold)),
-                _buildCalendar(),
-              ],
+            SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  const SizedBox(height: 8),
+                  Text('Calendar',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  _buildCalendar(),
+                ],
+              ),
             ),
-          ),
-          SliverToBoxAdapter(
-            child: Column(
-              children: [
-                const SizedBox(height: 8),
-                Text('Archives', style: TextStyle(fontWeight: FontWeight.bold)),
-                //_buildHandles(),
-                //_buildHashTags(),
-              ],
+            SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  const SizedBox(height: 8),
+                  Text('Archives',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  //_buildHandles(),
+                  //_buildHashTags(),
+                ],
+              ),
             ),
-          ),
-          _buildTree(),
-          SliverToBoxAdapter(
-            child: SizedBox(height: MediaQuery.paddingOf(context).bottom),
-          ),
-        ],
+            _buildTree(),
+            SliverToBoxAdapter(
+              child: SizedBox(height: MediaQuery.paddingOf(context).bottom),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -805,7 +844,7 @@ class _HomeScreenState extends State<HomeScreen> {
         dowBuilder: (context, day) {
           final text = DateFormat.E().format(day);
           return Center(
-            child: Text(text, style: const TextStyle(fontSize: 9)),
+            child: Text(text, style: Theme.of(context).textTheme.bodySmall),
           );
         },
         headerTitleBuilder: (context, day) {
@@ -817,7 +856,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: () {
                 context.read<Model>().setSearchMonth(day.year, day.month);
               },
-              child: Text(text, style: const TextStyle(fontSize: 18)),
+              child: Text(text, style: Theme.of(context).textTheme.titleMedium),
             ),
           );
         },

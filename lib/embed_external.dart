@@ -18,21 +18,21 @@ class EmbedExternalWidget extends StatefulWidget {
 class _EmbedExternalWidgetState extends State<EmbedExternalWidget> {
   @override
   Widget build(BuildContext context) {
-    return Card(
-      clipBehavior: Clip.antiAliasWithSaveLayer,
-      child: SelectionArea(
-        child: InkWell(
-          onTap: () {
-            launchUrlPlus(widget.embed.external.uri);
-          },
-          child: SizedBox(
-            width: widget.width,
+    return SizedBox(
+      width: widget.width,
+      child: Card(
+        clipBehavior: Clip.antiAliasWithSaveLayer,
+        child: SelectionArea(
+          child: InkWell(
+            onTap: () {
+              launchUrlPlus(widget.embed.external.uri);
+            },
             child: Column(
               children: [
                 if (widget.embed.external.thumbnail != null)
                   SizedBox(
                     width: double.infinity,
-                    height: widget.height / 3,
+                    height: widget.height,
                     child: CachedNetworkImage(
                       imageUrl: widget.embed.external.thumbnail!,
                       fit: BoxFit.cover,

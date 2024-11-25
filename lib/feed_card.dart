@@ -41,7 +41,7 @@ class _FeedCardState extends State<FeedCard> {
             : author.handle;
 
     final embedWidth =
-        isDesktop ? 430.0 : MediaQuery.of(context).size.width - 96.0;
+        isDesktop ? 464.0 : MediaQuery.of(context).size.width - 80.0;
 
     return Card(
       child: Column(
@@ -52,6 +52,7 @@ class _FeedCardState extends State<FeedCard> {
           if (feed.replyDid.isNotEmpty) _buildReply(widget.feedView),
           SelectionArea(
             child: ListTile(
+              contentPadding: const EdgeInsets.only(left: 16.0, right: 12.0),
               titleAlignment: ListTileTitleAlignment.top,
               leading: AvatarIcon(avatar: author.avatar, size: 20),
               title: RichText(
@@ -101,18 +102,17 @@ class _FeedCardState extends State<FeedCard> {
                       (bluesky.UEmbedViewImages images) => EmbedImagesWidget(
                           images.data,
                           width: embedWidth,
-                          height: embedWidth / 2,
                         ),
                       (bluesky.UEmbedViewExternal external) =>
                         EmbedExternalWidget(
                           external.data,
                           width: embedWidth,
-                          height: embedWidth / 2,
+                          height: embedWidth * 9 / 16,
                         ),
                       (bluesky.UEmbedViewVideo video) => EmbedVideoWidget(
                           video.data,
                           width: embedWidth,
-                          height: embedWidth / 2,
+                          height: embedWidth * 9 / 16,
                         ),
                       bluesky.EmbedView() => const Text('unsupported embed'),
                     },
@@ -206,7 +206,7 @@ class _FeedCardState extends State<FeedCard> {
       padding: const EdgeInsets.only(top: 4),
       child: const Row(
         children: [
-          SizedBox(width: 50),
+          SizedBox(width: 40),
           Icon(Icons.repeat, size: 16, color: Colors.blueGrey),
           SizedBox(width: 8),
           Text('repost', style: TextStyle(color: Colors.blueGrey)),
@@ -230,6 +230,9 @@ class _FeedCardState extends State<FeedCard> {
         SizedBox(width: 36),
         TextButton(
           onPressed: () => launchUrlPlus(postUrl),
+          style: TextButton.styleFrom(
+              padding: EdgeInsets.all(4),
+              visualDensity: VisualDensity(horizontal: -4, vertical: -4)),
           child: Row(
             children: [
               Icon(Icons.reply, size: 16, color: Colors.blueGrey),
