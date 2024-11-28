@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:bskylog/utils.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
@@ -120,14 +122,19 @@ class _SearchFieldState extends State<SearchField> {
               StreamBuilder<int?>(
                 stream: context.watch<Model>().filterSearchWatchCount(),
                 builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    if (kDebugMode) {
+                      print('filterSearchWatchCount error: ${snapshot.error}');
+                    }
+                    return const Text('0 posts');
+                  }
+
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Text('...');
                   } else if (snapshot.connectionState ==
                           ConnectionState.active ||
                       snapshot.connectionState == ConnectionState.done) {
-                    if (snapshot.hasError) {
-                      return const Text('0 posts');
-                    } else if (snapshot.hasData) {
+                    if (snapshot.hasData) {
                       return Text('${snapshot.data.toString()} posts');
                     } else {
                       return const Text('0 posts');
@@ -146,9 +153,9 @@ class _SearchFieldState extends State<SearchField> {
   }
 
   Widget _buttonPrev() {
-    return TextButton.icon(
+    return rdIconButton(
       icon: const Icon(Icons.navigate_before),
-      label: const Text('prev'),
+      label: 'prev',
       onPressed: context.watch<Model>().canPrevSearch
           ? () => context.read<Model>().prevSearch()
           : null,
@@ -156,10 +163,10 @@ class _SearchFieldState extends State<SearchField> {
   }
 
   Widget _buttonNext() {
-    return TextButton.icon(
+    return rdIconButton(
       iconAlignment: IconAlignment.end,
       icon: const Icon(Icons.navigate_next),
-      label: const Text('next'),
+      label: 'prev',
       onPressed: context.watch<Model>().canNextSearch
           ? () => context.read<Model>().nextSearch()
           : null,

@@ -1,4 +1,7 @@
+import 'package:bskylog/search_field.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:easy_image_viewer/easy_image_viewer.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:bluesky/bluesky.dart' as bluesky;
 
@@ -76,66 +79,78 @@ class _EmbedImagesWidgetState extends State<EmbedImagesWidget> {
       child: InkWell(
         child: CachedNetworkImage(
           imageUrl: image.thumbnail,
-          //height: height,
           fit: BoxFit.cover,
         ),
-        onTap: () => Navigator.push(context, _imageViewRoute(image)),
+        onTap: () {
+          final multiImageProvider = MultiImageProvider(
+            [
+              for (final i in widget.embed.images)
+                CachedNetworkImageProvider(i.fullsize),
+            ],
+            initialIndex: widget.embed.images.indexOf(image),
+          );
+          if (isDesktop) {
+            Navigator.push(context, _imageViewRoute(multiImageProvider));
+          } else {
+            showImageViewerPager(
+              context,
+              multiImageProvider,
+              swipeDismissible: true,
+              doubleTapZoomable: true,
+            );
+          }
+        },
       ),
     );
   }
 
-  Route _imageViewRoute(bluesky.EmbedViewImagesView image) {
+  Route _imageViewRoute(MultiImageProvider multiImageProvider) {
     return MaterialPageRoute(
-      builder: (context) => _ImageViewPage(
-        images: widget.embed.images,
-        initialIndex: widget.embed.images.indexOf(image),
-      ),
+      builder: (context) =>
+          _ImageViewPage(multiImageProvider: multiImageProvider),
     );
   }
 }
 
 class _ImageViewPage extends StatefulWidget {
-  const _ImageViewPage(
-      {super.key, required this.images, required this.initialIndex});
+  const _ImageViewPage({required this.multiImageProvider});
 
-  final List<bluesky.EmbedViewImagesView> images;
-  final int initialIndex;
+  final MultiImageProvider multiImageProvider;
 
   @override
   State<_ImageViewPage> createState() => _ImageViewPageState();
 }
 
 class _ImageViewPageState extends State<_ImageViewPage> {
-  late int _currentIndex;
+  late int _currentIndex = widget.multiImageProvider.initialIndex;
+  late final _pageController =
+      PageController(initialPage: widget.multiImageProvider.initialIndex);
+  static const _kDuration = Duration(milliseconds: 300);
+  static const _kCurve = Curves.ease;
 
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.initialIndex;
-  }
-
-  void _updateImageIndex(int newIndex) {
-    setState(() {
-      _currentIndex = newIndex;
+    _pageController.addListener(() {
+      setState(() {
+        _currentIndex = _pageController.page?.toInt() ?? 0;
+      });
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final length = widget.images.length;
-    final image = widget.images[_currentIndex];
+    final imageCount = widget.multiImageProvider.imageCount;
 
     return Scaffold(
       appBar: AppBar(),
       body: Stack(
         children: [
-          Center(
-            child: CachedNetworkImage(
-              imageUrl: image.fullsize,
-              fit: BoxFit.contain,
-            ),
+          EasyImageViewPager(
+            easyImageProvider: widget.multiImageProvider,
+            pageController: _pageController,
           ),
-          if (length > 1 && _currentIndex > 0)
+          if (imageCount > 1 && _currentIndex > 0)
             Align(
               alignment: Alignment.centerLeft,
               child: Padding(
@@ -143,12 +158,17 @@ class _ImageViewPageState extends State<_ImageViewPage> {
                 child: IconButton.filled(
                   icon: const Icon(Icons.keyboard_arrow_left),
                   onPressed: () {
-                    _updateImageIndex(_currentIndex - 1);
+                    final currentPage = _pageController.page?.toInt() ?? 0;
+                    _pageController.animateToPage(
+                      currentPage > 0 ? currentPage - 1 : 0,
+                      duration: _kDuration,
+                      curve: _kCurve,
+                    );
                   },
                 ),
               ),
             ),
-          if (length > 1 && _currentIndex < length - 1)
+          if (imageCount > 1 && _currentIndex < imageCount - 1)
             Align(
               alignment: Alignment.centerRight,
               child: Padding(
@@ -156,7 +176,13 @@ class _ImageViewPageState extends State<_ImageViewPage> {
                 child: IconButton.filled(
                   icon: const Icon(Icons.keyboard_arrow_right),
                   onPressed: () {
-                    _updateImageIndex(_currentIndex + 1);
+                    final currentPage = _pageController.page?.toInt() ?? 0;
+                    final lastPage = imageCount - 1;
+                    _pageController.animateToPage(
+                      currentPage < lastPage ? currentPage + 1 : lastPage,
+                      duration: _kDuration,
+                      curve: _kCurve,
+                    );
                   },
                 ),
               ),

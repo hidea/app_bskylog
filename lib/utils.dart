@@ -1,9 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import 'model.dart';
+
+final isDesktop = (Platform.isMacOS || Platform.isLinux || Platform.isWindows);
 
 Future launchUrlPlus(String? url) async {
   if (url == null) {
@@ -97,3 +101,23 @@ void showConfirmDialog({
         );
       },
     );
+
+Widget rdIconButton({
+  required Widget icon,
+  required String label,
+  Function()? onPressed,
+  IconAlignment iconAlignment = IconAlignment.start,
+}) {
+  return isDesktop
+      ? TextButton.icon(
+          iconAlignment: iconAlignment,
+          icon: icon,
+          label: Text(label),
+          onPressed: onPressed,
+        )
+      : IconButton(
+          icon: icon,
+          tooltip: label,
+          onPressed: onPressed,
+        );
+}

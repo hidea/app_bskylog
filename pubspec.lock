@@ -90,10 +90,10 @@ packages:
     dependency: "direct main"
     description:
       name: atproto
-      sha256: "90711a8b016a4531892041e6f7834ccadf6ce39b44b0e8fd0c2a10544a44fcc3"
+      sha256: a960f6c3fba2b78bf5c8874859367353c5ab2e950de0b80538368cfc93e7dc01
       url: "https://pub.dev"
     source: hosted
-    version: "0.13.1"
+    version: "0.13.2"
   atproto_core:
     dependency: "direct main"
     description:
@@ -122,10 +122,10 @@ packages:
     dependency: "direct main"
     description:
       name: bluesky
-      sha256: "8acc0822acb73b9ad84f34eed9de2a19502b0a7295ca318f6dae3aa7b99950b8"
+      sha256: "0bce016d4f5422fb2459c09a9fb44f721550c433f8ceaea6f9fed4240adb4459"
       url: "https://pub.dev"
     source: hosted
-    version: "0.18.1"
+    version: "0.18.3"
   bluesky_text:
     dependency: "direct main"
     description:
@@ -390,6 +390,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.19.1"
+  easy_image_viewer:
+    dependency: "direct main"
+    description:
+      name: easy_image_viewer
+      sha256: fb6cb123c3605552cc91150dcdb50ca977001dcddfb71d20caa0c5edc9a80947
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.5.1"
   ed25519_edwards:
     dependency: transitive
     description:
@@ -681,10 +689,10 @@ packages:
     dependency: "direct main"
     description:
       name: material_symbols_icons
-      sha256: "1dea2aef1c83434f832f14341a5ffa1254e76b68e4d90333f95f8a2643bf1024"
+      sha256: "8a57be605b8bc3fd57005eb776ede61f569214e48834258fb02ab80c7034b82c"
       url: "https://pub.dev"
     source: hosted
-    version: "4.2799.0"
+    version: "4.2800.0"
   meta:
     dependency: transitive
     description:
@@ -785,10 +793,10 @@ packages:
     dependency: transitive
     description:
       name: path_provider_android
-      sha256: c464428172cb986b758c6d1724c603097febb8fb855aa265aeecc9280c294d4a
+      sha256: "8c4967f8b7cb46dc914e178daa29813d83ae502e0529d7b0478330616a691ef7"
       url: "https://pub.dev"
     source: hosted
-    version: "2.2.12"
+    version: "2.2.14"
   path_provider_foundation:
     dependency: transitive
     description:

@@ -5,6 +5,7 @@ import 'package:animated_tree_view/animated_tree_view.dart';
 import 'package:bskylog/about_screen.dart';
 import 'package:bskylog/rotation_icon.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -464,7 +465,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildNavigationRail() {
-    final isTablet = MediaQuery.of(context).size.shortestSide > 600;
+    final isTablet = MediaQuery.of(context).size.width > 600;
 
     final actor = context.watch<Model>().currentActor;
     final profile = actor?.profile;
@@ -617,6 +618,21 @@ class _HomeScreenState extends State<HomeScreen> {
                   StreamBuilder(
                     stream: context.watch<Model>().filterSearch().watch(),
                     builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        if (kDebugMode) {
+                          print('filterSearch error: ${snapshot.error}');
+                          return SliverToBoxAdapter(
+                              child: Card(
+                                  color: Colors.red.shade100,
+                                  child: ListTile(
+                                      titleAlignment:
+                                          ListTileTitleAlignment.top,
+                                      leading: const Icon(Icons.error),
+                                      title: Text('Query failed'),
+                                      subtitle:
+                                          Text(snapshot.error.toString()))));
+                        }
+                      }
                       if (!snapshot.hasData) {
                         return const SliverToBoxAdapter(
                             child: Center(child: CircularProgressIndicator()));
