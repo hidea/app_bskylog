@@ -1,3 +1,4 @@
+import 'package:bluesky/app_bsky_embed_video.dart';
 import 'package:bskylog/embed_external.dart';
 import 'package:bskylog/embed_images.dart';
 import 'package:bskylog/embed_record.dart';
@@ -24,18 +25,18 @@ class _EmbedRecordWithMediaWidgetState
   Widget build(BuildContext context) {
     return Column(
       children: [
-        switch (widget.embed.media) {
-          (bluesky.UEmbedViewMediaImages images) =>
-            EmbedImagesWidget(images.data, width: widget.width),
-          (bluesky.UEmbedViewMediaExternal external) => EmbedExternalWidget(
-              external.data,
+        widget.embed.media.when(
+          images: (bluesky.EmbedViewImages images) =>
+              EmbedImagesWidget(images, width: widget.width),
+          external: (bluesky.EmbedViewExternal external) => EmbedExternalWidget(
+              external,
               width: widget.width,
               height: widget.height),
-          (bluesky.UEmbedViewMediaVideo video) => EmbedVideoWidget(video.data,
+          video: (EmbedVideoView video) => EmbedVideoWidget(video,
               width: widget.width, height: widget.height),
-          bluesky.EmbedViewMedia() =>
-            const Text('unsupport embed record media'),
-        },
+          unknown: (Map<String, dynamic> _) =>
+              const Text('unsupport embed record media'),
+        ),
         const SizedBox(height: 10),
         EmbedRecordWidget(widget.embed.record,
             width: widget.width, height: widget.height),

@@ -5,6 +5,7 @@ import 'package:bskylog/utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:bluesky/bluesky.dart' as bluesky;
+import 'package:bluesky/app_bsky_embed_video.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'avatar_icon.dart';
@@ -85,38 +86,39 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
                   children: [
                     if (embeds != null)
                       for (final embed in embeds)
-                        switch (embed) {
-                          (bluesky.UEmbedViewRecord record) =>
-                            EmbedRecordWidget(
-                              record.data,
-                              width: embedWidth,
-                              height: embedWidth,
-                            ),
-                          (bluesky.UEmbedViewRecordWithMedia recordWithMedia) =>
-                            EmbedRecordWithMediaWidget(
-                              recordWithMedia.data,
-                              width: embedWidth,
-                              height: embedWidth,
-                            ),
-                          (bluesky.UEmbedViewImages images) =>
-                            EmbedImagesWidget(
-                              images.data,
-                              width: embedWidth,
-                            ),
-                          (bluesky.UEmbedViewExternal external) =>
-                            EmbedExternalWidget(
-                              external.data,
-                              width: embedWidth,
-                              height: embedWidth * 9 / 16,
-                            ),
-                          (bluesky.UEmbedViewVideo video) => EmbedVideoWidget(
-                              video.data,
-                              width: embedWidth,
-                              height: embedWidth * 9 / 16,
-                            ),
-                          bluesky.EmbedView() =>
-                            const Text('unsupported embed'),
-                        },
+                        embed.when(
+                          record: (bluesky.EmbedViewRecord record) =>
+                              EmbedRecordWidget(
+                            record,
+                            width: embedWidth,
+                            height: embedWidth,
+                          ),
+                          images: (bluesky.EmbedViewImages images) =>
+                              EmbedImagesWidget(
+                            images,
+                            width: embedWidth,
+                          ),
+                          external: (bluesky.EmbedViewExternal external) =>
+                              EmbedExternalWidget(
+                            external,
+                            width: embedWidth,
+                            height: embedWidth * 9 / 16,
+                          ),
+                          recordWithMedia: (bluesky.EmbedViewRecordWithMedia
+                                  recordWithMedia) =>
+                              EmbedRecordWithMediaWidget(
+                            recordWithMedia,
+                            width: embedWidth,
+                            height: embedWidth,
+                          ),
+                          video: (EmbedVideoView video) => EmbedVideoWidget(
+                            video,
+                            width: embedWidth,
+                            height: embedWidth * 9 / 16,
+                          ),
+                          unknown: (Map<String, dynamic> _) =>
+                              const Text('unsupported embed'),
+                        ),
                     _buildFooter(record),
                   ],
                 ),
