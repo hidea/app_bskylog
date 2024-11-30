@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 
+import 'define.dart';
 import 'model.dart';
 
 final isDesktop = (Platform.isMacOS || Platform.isLinux || Platform.isWindows);
@@ -78,9 +79,14 @@ class _SearchFieldState extends State<SearchField> {
             ),
             if (isDesktop)
               IconButton(
-                icon: Icon(widget.visible
-                    ? Icons.arrow_circle_right_outlined
-                    : Icons.manage_search),
+                icon: widget.visible
+                    ? Icon(Icons.arrow_circle_right_outlined)
+                    : Badge(
+                        isLabelVisible: VisibleType.values.any((visibleType) =>
+                            context.watch<Model>().visible(visibleType) !=
+                            VisibleMode.show),
+                        label: Text('✓'),
+                        child: Icon(Icons.manage_search)),
                 tooltip:
                     widget.visible ? 'Close Filter Menu' : 'Open Filter Menu',
                 style: ButtonStyle(

@@ -290,7 +290,10 @@ class _HomeScreenState extends State<HomeScreen> {
   int isSyncing = 0;
   bool visibleTopButton = false;
 
-  void _syncFeed() {
+  Future<void> _syncFeed() async {
+    if (isSyncing != 0) {
+      return;
+    }
     setState(() {
       isSyncing = (DateTime.now().day % 10) + 1;
     });
@@ -372,7 +375,12 @@ class _HomeScreenState extends State<HomeScreen> {
         //toolbarHeight: 36,
         actions: <Widget>[
           IconButton(
-            icon: const Icon(Icons.manage_search),
+            icon: Badge(
+                isLabelVisible: VisibleType.values.any((visibleType) =>
+                    context.watch<Model>().visible(visibleType) !=
+                    VisibleMode.show),
+                label: Text('✓'),
+                child: Icon(Icons.manage_search)),
             onPressed: () => _scaffoldKey.currentState!.openEndDrawer(),
           ),
         ],
@@ -465,16 +473,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildNavigationRail() {
-    final isTablet = MediaQuery.of(context).size.width > 600;
-
     final actor = context.watch<Model>().currentActor;
     final profile = actor?.profile;
 
     return NavigationRail(
       minWidth: 52,
       selectedIndex: null,
-      labelType:
-          isTablet ? NavigationRailLabelType.all : NavigationRailLabelType.none,
+      labelType: isDesktop
+          ? NavigationRailLabelType.all
+          : NavigationRailLabelType.none,
       leading: RotationIcon(
           icon: AvatarIcon(avatar: profile?.avatar, size: 20),
           syncing: isSyncing == 1),
@@ -612,50 +619,54 @@ class _HomeScreenState extends State<HomeScreen> {
         Expanded(
           child: Stack(
             children: [
-              CustomScrollView(
-                controller: _feedController,
-                slivers: [
-                  StreamBuilder(
-                    stream: context.watch<Model>().filterSearch().watch(),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasError) {
-                        if (kDebugMode) {
-                          print('filterSearch error: ${snapshot.error}');
-                          return SliverToBoxAdapter(
-                              child: Card(
-                                  color: Colors.red.shade100,
-                                  child: ListTile(
-                                      titleAlignment:
-                                          ListTileTitleAlignment.top,
-                                      leading: const Icon(Icons.error),
-                                      title: Text('Query failed'),
-                                      subtitle:
-                                          Text(snapshot.error.toString()))));
+              RefreshIndicator(
+                onRefresh: () => _syncFeed(),
+                child: CustomScrollView(
+                  controller: _feedController,
+                  slivers: [
+                    StreamBuilder(
+                      stream: context.watch<Model>().filterSearch().watch(),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasError) {
+                          if (kDebugMode) {
+                            print('filterSearch error: ${snapshot.error}');
+                            return SliverToBoxAdapter(
+                                child: Card(
+                                    color: Colors.red.shade100,
+                                    child: ListTile(
+                                        titleAlignment:
+                                            ListTileTitleAlignment.top,
+                                        leading: const Icon(Icons.error),
+                                        title: Text('Query failed'),
+                                        subtitle:
+                                            Text(snapshot.error.toString()))));
+                          }
                         }
-                      }
-                      if (!snapshot.hasData) {
-                        return const SliverToBoxAdapter(
-                            child: Center(child: CircularProgressIndicator()));
-                      }
-                      final posts = snapshot.data!;
-                      return SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (BuildContext context, int index) {
-                            final feed = posts[index];
-                            final feedView = bluesky.FeedView.fromJson(
-                                jsonDecode(feed.post));
-                            return FeedCard(feed, feedView);
-                          },
-                          childCount: posts.length,
-                        ),
-                      );
-                    },
-                  ),
-                  SliverToBoxAdapter(
-                    child:
-                        SizedBox(height: MediaQuery.paddingOf(context).bottom),
-                  ),
-                ],
+                        if (!snapshot.hasData) {
+                          return const SliverToBoxAdapter(
+                              child:
+                                  Center(child: CircularProgressIndicator()));
+                        }
+                        final posts = snapshot.data!;
+                        return SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (BuildContext context, int index) {
+                              final feed = posts[index];
+                              final feedView = bluesky.FeedView.fromJson(
+                                  jsonDecode(feed.post));
+                              return FeedCard(feed, feedView);
+                            },
+                            childCount: posts.length,
+                          ),
+                        );
+                      },
+                    ),
+                    SliverToBoxAdapter(
+                      child: SizedBox(
+                          height: MediaQuery.paddingOf(context).bottom),
+                    ),
+                  ],
+                ),
               ),
               if (visibleTopButton)
                 Align(

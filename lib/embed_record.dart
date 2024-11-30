@@ -198,6 +198,25 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
 
   @override
   Widget build(BuildContext context) {
+    /*
+    return widget.embed.record.when(
+      record: (bluesky.EmbedViewRecordViewRecord record) => _buildRecord(record),
+       notFound: (bluesky.EmbedViewRecordViewNotFound notFound) => _buildRecordBreak(
+          'Quoted post not found, it may have been deleted.',
+          notFound.uri),
+        blocked: (bluesky.EmbedViewRecordViewBlocked blocked) =>
+        _buildRecordBreak('The quoted post is blocked.', 
+        blocked.uri), 
+        viewDetached: (bluesky.EmbedRecordViewDetached _) => Container(), 
+        generatorView: (bluesky.FeedGeneratorView generatorView) =>
+        _buildGeneratorView(generatorView), 
+        listView: (bluesky.ListView listView) =>
+        _buildListView(listView), 
+        labelerView: (bluesky.LabelerView _) => Container(),
+        unknown: 
+        (Map<String, dynamic>_) => Container(),),
+    */
+
     return switch (widget.embed.record) {
       (bluesky.UEmbedViewRecordViewRecord record) => _buildRecord(record),
       (bluesky.UEmbedViewRecordViewNotFound notFound) => _buildRecordBreak(
@@ -211,6 +230,8 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
       (bluesky.UEmbedViewRecordViewListView listView) =>
         _buildListView(listView),
       (bluesky.UEmbedViewRecordViewLabelerView _) => Container(),
+      (bluesky.UEmbedViewRecordViewUnknown _) =>
+        SizedBox(width: widget.width, child: Text('unsupported embed')),
       bluesky.EmbedViewRecordView() => Container(),
     };
   }
