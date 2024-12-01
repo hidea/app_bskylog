@@ -247,6 +247,13 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
       //facets.sort((a, b) => a.index.byteStart - b.index.byteStart);
 
       for (final facet in facets) {
+        if (facet.index.byteStart < byteCurrent) {
+          if (kDebugMode) {
+            print(
+                'invalid facet: current:$byteCurrent start:${facet.index.byteStart}');
+          }
+          continue;
+        }
         final intro = utf8text.sublist(byteCurrent, facet.index.byteStart);
         spans.add(TextSpan(
             text: utf8.decode(intro), style: TextStyle(color: Colors.black)));

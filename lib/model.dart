@@ -80,6 +80,7 @@ class Model extends ChangeNotifier {
   ActorModel? get currentActor => _currentActor;
 
   DateTime? _lastSync;
+  DateTime? get lastSync => _lastSync;
   String? _tailCursor;
 
   bool _visibleFilterMenu = true;
@@ -841,6 +842,7 @@ class Model extends ChangeNotifier {
     await database.delete(database.posts).go();
     _rootTree.clear();
 
+    _lastSync = null;
     _tailCursor = null;
 
     updateSharedPrefrences();

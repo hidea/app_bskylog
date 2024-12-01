@@ -631,6 +631,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildFeed() {
+    final actor = context.watch<Model>().currentActor;
     return Column(
       children: [
         SearchField(
@@ -645,6 +646,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: CustomScrollView(
                   controller: _feedController,
                   slivers: [
+                    if (context.watch<Model>().lastSync == null)
+                      SliverToBoxAdapter(
+                          child: Padding(
+                              padding: EdgeInsets.only(top: 160),
+                              child: Center(
+                                  child: Text('Let\'s '
+                                      '${(actor != null) ? '' : 'sign in and '}'
+                                      'first sync !')))),
                     StreamBuilder(
                       stream: context.watch<Model>().filterSearch().watch(),
                       builder: (context, snapshot) {
@@ -669,16 +678,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                   Center(child: CircularProgressIndicator()));
                         }
                         final posts = snapshot.data!;
-                        if (posts.isEmpty) {
-                          final signin =
-                              context.watch<Model>().currentActor != null;
-                          return SliverToBoxAdapter(
-                              child: Padding(
-                                  padding: EdgeInsets.only(top: 160),
-                                  child: Center(
-                                      child: Text(
-                                          'Let\'s ${signin ? '' : 'sign in and '}first sync !'))));
-                        }
                         return SliverList(
                           delegate: SliverChildBuilderDelegate(
                             (BuildContext context, int index) {
