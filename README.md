@@ -1,11 +1,19 @@
 # bskylog
 
-This is a tool for saving your Bluesky posts.
+## Overview
+
+This logged everything you have posted on Bluesky to local storage.
+
+You can filter and view by keywords, date, and post type.
 
 ## Getting Started
 
 Made in Flutter.
 
-The log of your posts will be saved to the local storage of device.
+It works on macOS, Windows and iOS, Android maybe.
 
-We have confirmed that it works on macOS and iPad.
+## Operating system
+
+- macOS 11 (Big Sur) or later
+- Microsoft Windows 10 or later
+- iOS, Android (not sure)
