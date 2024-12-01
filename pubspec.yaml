@@ -65,6 +65,8 @@ dependencies:
   super_clipboard: ^0.8.19
   flutter_cache_manager: ^3.4.1
   mime: ^1.0.6
+  video_player_media_kit: ^1.0.5
+  media_kit_libs_windows_video: ^1.0.10
   #flutter_twemoji: ^1.0.1
   #sqlite3_flutter_libs: ^0.5.26
 

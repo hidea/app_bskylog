@@ -279,7 +279,7 @@ class _ImageViewPageState extends State<_ImageViewPage> {
       final outputFile = await FilePicker.platform.saveFile(
         type: FileType.image,
         dialogTitle: 'Please select image to save:',
-        fileName: file.path.split('/').last,
+        fileName: file.basename,
       );
       if (outputFile == null) {
         return null;

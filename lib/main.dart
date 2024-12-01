@@ -15,6 +15,7 @@ import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:bluesky/bluesky.dart' as bluesky;
 import 'package:url_launcher/url_launcher_string.dart';
+import 'package:video_player_media_kit/video_player_media_kit.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'avatar_icon.dart';
@@ -45,6 +46,10 @@ final GlobalKey<ScaffoldMessengerState> scaffoldMsgKey =
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  VideoPlayerMediaKit.ensureInitialized(
+    windows: true,
+  );
 
   if (isDesktop) {
     await windowManager.ensureInitialized();
