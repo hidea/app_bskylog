@@ -1,9 +1,17 @@
-import 'package:bskylog/search_field.dart';
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_image_viewer/easy_image_viewer.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:bluesky/bluesky.dart' as bluesky;
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:mime/mime.dart';
+import 'package:super_clipboard/super_clipboard.dart';
+import 'package:url_launcher/url_launcher_string.dart';
+
+import 'main.dart';
 
 class EmbedImagesWidget extends StatefulWidget {
   const EmbedImagesWidget(this.embed, {super.key, required this.width});
@@ -82,49 +90,58 @@ class _EmbedImagesWidgetState extends State<EmbedImagesWidget> {
           fit: BoxFit.cover,
         ),
         onTap: () {
-          final multiImageProvider = MultiImageProvider(
-            [
-              for (final i in widget.embed.images)
-                CachedNetworkImageProvider(i.fullsize),
-            ],
-            initialIndex: widget.embed.images.indexOf(image),
-          );
           if (isDesktop) {
-            Navigator.push(context, _imageViewRoute(multiImageProvider));
+            Navigator.push(context, _imageViewRoute(image));
           } else {
-            showImageViewerPager(
-              context,
-              multiImageProvider,
-              swipeDismissible: true,
-              doubleTapZoomable: true,
-            );
+            _showImageViewerPager(image);
           }
         },
       ),
     );
   }
 
-  Route _imageViewRoute(MultiImageProvider multiImageProvider) {
+  void _showImageViewerPager(bluesky.EmbedViewImagesView image) {
+    final multiImageProvider = MultiImageProvider(
+      [
+        for (final i in widget.embed.images)
+          CachedNetworkImageProvider(i.fullsize),
+      ],
+      initialIndex: widget.embed.images.indexOf(image),
+    );
+    showImageViewerPager(
+      context,
+      multiImageProvider,
+      swipeDismissible: true,
+      doubleTapZoomable: true,
+    );
+  }
+
+  Route _imageViewRoute(bluesky.EmbedViewImagesView image) {
+    final index = widget.embed.images.indexOf(image);
     return MaterialPageRoute(
       builder: (context) =>
-          _ImageViewPage(multiImageProvider: multiImageProvider),
+          _ImageViewPage(initialIndex: index, images: widget.embed.images),
     );
   }
 }
 
 class _ImageViewPage extends StatefulWidget {
-  const _ImageViewPage({required this.multiImageProvider});
+  const _ImageViewPage({required this.initialIndex, required this.images});
 
-  final MultiImageProvider multiImageProvider;
+  final int initialIndex;
+  final List<bluesky.EmbedViewImagesView> images;
 
   @override
   State<_ImageViewPage> createState() => _ImageViewPageState();
 }
 
 class _ImageViewPageState extends State<_ImageViewPage> {
-  late int _currentIndex = widget.multiImageProvider.initialIndex;
-  late final _pageController =
-      PageController(initialPage: widget.multiImageProvider.initialIndex);
+  late final _multiImageProvider = MultiImageProvider([
+    for (final i in widget.images) CachedNetworkImageProvider(i.fullsize),
+  ], initialIndex: widget.initialIndex);
+  late int _currentIndex = widget.initialIndex;
+  late final _pageController = PageController(initialPage: widget.initialIndex);
+  bool _isSaving = false;
   static const _kDuration = Duration(milliseconds: 300);
   static const _kCurve = Curves.ease;
 
@@ -140,14 +157,29 @@ class _ImageViewPageState extends State<_ImageViewPage> {
 
   @override
   Widget build(BuildContext context) {
-    final imageCount = widget.multiImageProvider.imageCount;
+    final imageCount = _multiImageProvider.imageCount;
 
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        title:
+            imageCount > 1 ? Text('${_currentIndex + 1} / $imageCount') : null,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.copy),
+            tooltip: 'Copy',
+            onPressed: () => _copyToClipboard(),
+          ),
+          IconButton(
+            icon: const Icon(Icons.download),
+            tooltip: 'Save',
+            onPressed: () => _saveToDownload(),
+          ),
+        ],
+      ),
       body: Stack(
         children: [
           EasyImageViewPager(
-            easyImageProvider: widget.multiImageProvider,
+            easyImageProvider: _multiImageProvider,
             pageController: _pageController,
           ),
           if (imageCount > 1 && _currentIndex > 0)
@@ -190,5 +222,89 @@ class _ImageViewPageState extends State<_ImageViewPage> {
         ],
       ),
     );
+  }
+
+  void _copyToClipboard() async {
+    final clipboard = SystemClipboard.instance;
+    if (clipboard != null) {
+      final uri = widget.images[_currentIndex].fullsize;
+      final file = await DefaultCacheManager().getSingleFile(uri);
+      final Uint8List imageData = file.readAsBytesSync();
+
+      FutureOr<EncodedData>? data;
+      Formats.png.mimeTypes;
+      final mimeType = lookupMimeType('bytes', headerBytes: imageData);
+      switch (mimeType) {
+        case 'image/webp':
+          data = Formats.webp(imageData);
+          break;
+        case 'image/png':
+          data = Formats.png(imageData);
+          break;
+        case 'image/jpeg':
+          data = Formats.jpeg(imageData);
+          break;
+      }
+      if (data != null) {
+        final item = DataWriterItem();
+        item.add(data);
+        await clipboard.write([item]);
+
+        scaffoldMsgKey.currentState!.showSnackBar(SnackBar(
+            content: Text("Copy to clipboard."),
+            behavior: SnackBarBehavior.floating));
+      }
+    }
+  }
+
+  void _saveToDownload() async {
+    setState(() {
+      _isSaving = true;
+    });
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Center(
+          child: CircularProgressIndicator(value: 0.0),
+        );
+      },
+    );
+
+    try {
+      final uri = widget.images[_currentIndex].fullsize;
+      final file = await DefaultCacheManager().getSingleFile(uri);
+
+      final outputFile = await FilePicker.platform.saveFile(
+        type: FileType.image,
+        dialogTitle: 'Please select image to save:',
+        fileName: file.path.split('/').last,
+      );
+      if (outputFile == null) {
+        return null;
+      }
+      await file.copy(outputFile);
+
+      scaffoldMsgKey.currentState!.showSnackBar(SnackBar(
+          content: Text("Save done."),
+          behavior: SnackBarBehavior.floating,
+          action: SnackBarAction(
+            label: 'open image',
+            onPressed: () => launchUrlString('file://$outputFile'),
+          ),
+          showCloseIcon: true,
+          duration: const Duration(days: 365)));
+    } catch (e) {
+      scaffoldMsgKey.currentState!.showSnackBar(SnackBar(
+          content: Text("Export failed.\n$e"),
+          showCloseIcon: true,
+          duration: const Duration(days: 365)));
+    } finally {
+      setState(() {
+        _isSaving = false;
+      });
+      Navigator.of(context).pop();
+    }
   }
 }

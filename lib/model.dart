@@ -796,10 +796,6 @@ class Model extends ChangeNotifier {
     }
 
     if (!actor.isSessionValid()) {
-      if (kDebugMode) {
-        print('refresh session');
-      }
-
       final newSession =
           await atproto.refreshSession(refreshJwt: actor.session!.refreshJwt);
 
@@ -824,9 +820,6 @@ class Model extends ChangeNotifier {
     _lastSync = DateTime.now();
 
     // sync old posts
-    if (kDebugMode) {
-      print('syncFeed history start');
-    }
     do {
       _tailCursor = await getFeed(cursor: _tailCursor);
 
@@ -846,9 +839,12 @@ class Model extends ChangeNotifier {
 
   Future clearFeed() async {
     await database.delete(database.posts).go();
-
     _rootTree.clear();
 
+    _tailCursor = null;
+
+    updateSharedPrefrences();
+    countDatePosts();
     notifyListeners();
   }
 

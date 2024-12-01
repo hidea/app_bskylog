@@ -42,7 +42,7 @@ class _FeedCardState extends State<FeedCard> {
             : author.handle;
 
     final embedWidth =
-        isDesktop ? 464.0 : MediaQuery.of(context).size.width - 80.0;
+        isDesktop ? 424.0 : MediaQuery.of(context).size.width - 80.0;
 
     return Card(
       child: Column(

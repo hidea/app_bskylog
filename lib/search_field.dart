@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:bskylog/utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -8,8 +6,6 @@ import 'package:provider/provider.dart';
 
 import 'define.dart';
 import 'model.dart';
-
-final isDesktop = (Platform.isMacOS || Platform.isLinux || Platform.isWindows);
 
 class SearchField extends StatefulWidget {
   const SearchField(

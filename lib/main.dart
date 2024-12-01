@@ -75,6 +75,16 @@ _menuRevealInFolder(BuildContext context) async {
 }
 
 _menuExportToJson(BuildContext context) async {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext context) {
+      return Center(
+        child: CircularProgressIndicator(value: 0.0),
+      );
+    },
+  );
+
   try {
     final outputFile = await FilePicker.platform.saveFile(
       dialogTitle: 'Please select an feed.bsky.app.getAuthorFeed json file:',
@@ -100,6 +110,8 @@ _menuExportToJson(BuildContext context) async {
         content: Text("Export failed.\n$e"),
         showCloseIcon: true,
         duration: const Duration(days: 365)));
+  } finally {
+    Navigator.of(context).pop();
   }
 }
 
@@ -330,6 +342,10 @@ class _HomeScreenState extends State<HomeScreen> {
             });
           }
         }
+      } else {
+        setState(() {
+          visibleTopButton = false;
+        });
       }
     });
   }
@@ -648,6 +664,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                   Center(child: CircularProgressIndicator()));
                         }
                         final posts = snapshot.data!;
+                        if (posts.isEmpty) {
+                          final signin =
+                              context.watch<Model>().currentActor != null;
+                          return SliverToBoxAdapter(
+                              child: Padding(
+                                  padding: EdgeInsets.only(top: 160),
+                                  child: Center(
+                                      child: Text(
+                                          'Let\'s ${signin ? '' : 'sign in and '}first sync !'))));
+                        }
                         return SliverList(
                           delegate: SliverChildBuilderDelegate(
                             (BuildContext context, int index) {
@@ -674,6 +700,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Padding(
                       padding: EdgeInsets.all(16),
                       child: IconButton.outlined(
+                          style: ButtonStyle(
+                              backgroundColor: WidgetStateProperty.all(
+                                  Colors.white.withAlpha(128))),
                           onPressed: () => _feedController
                               .jumpTo(_feedController.position.minScrollExtent),
                           icon: const Icon(Icons.keyboard_arrow_up))),
