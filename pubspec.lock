@@ -122,10 +122,10 @@ packages:
     dependency: "direct main"
     description:
       name: bluesky
-      sha256: "0bce016d4f5422fb2459c09a9fb44f721550c433f8ceaea6f9fed4240adb4459"
+      sha256: "0dad1d56f5311ddedaf085bdefdb76a7f696a22c4413e261dad53fb822aad986"
       url: "https://pub.dev"
     source: hosted
-    version: "0.18.3"
+    version: "0.18.4"
   bluesky_text:
     dependency: "direct main"
     description:
@@ -346,10 +346,10 @@ packages:
     dependency: "direct main"
     description:
       name: dart_jsonwebtoken
-      sha256: adf073720e491d64fa599942615b919915710af2d809b2798146f9b7c4330f3f
+      sha256: "866787dc17afaef46a9ea7dd33eefe60c6d82084b4a36d70e8e788d091cd04ef"
       url: "https://pub.dev"
     source: hosted
-    version: "2.14.1"
+    version: "2.14.2"
   dart_multihash:
     dependency: transitive
     description:
@@ -1121,10 +1121,10 @@ packages:
     dependency: transitive
     description:
       name: shared_preferences_android
-      sha256: "3b9febd815c9ca29c9e3520d50ec32f49157711e143b7a4ca039eb87e8ade5ab"
+      sha256: "7f172d1b06de5da47b6264c2692ee2ead20bbbc246690427cdb4fc301cd0c549"
       url: "https://pub.dev"
     source: hosted
-    version: "2.3.3"
+    version: "2.3.4"
   shared_preferences_foundation:
     dependency: transitive
     description:

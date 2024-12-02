@@ -1,11 +1,14 @@
 import 'dart:convert';
 
-import 'package:bluesky/core.dart';
-import 'package:bskylog/utils.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:bluesky/bluesky.dart' as bluesky;
 import 'package:bluesky/app_bsky_embed_video.dart';
+import 'package:bluesky/app_bsky_embed_record.dart';
+import 'package:bluesky/app_bsky_graph_defs.dart';
+import 'package:bluesky/core.dart';
+import 'package:bskylog/utils.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'avatar_icon.dart';
@@ -30,10 +33,10 @@ class EmbedRecordWidget extends StatefulWidget {
 }
 
 class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
-  Widget _buildRecord(bluesky.UEmbedViewRecordViewRecord record) {
-    final post = record.data.value;
-    final author = record.data.author;
-    final embeds = record.data.embeds;
+  Widget _buildRecord(bluesky.EmbedViewRecordViewRecord record) {
+    final post = record.value;
+    final author = record.author;
+    final embeds = record.embeds;
     final displayName =
         author.displayName != null && author.displayName!.isNotEmpty
             ? author.displayName!
@@ -130,7 +133,7 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
     );
   }
 
-  Widget _buildGeneratorView(bluesky.UEmbedViewRecordViewGeneratorView view) {
+  Widget _buildGeneratorView(bluesky.FeedGeneratorView view) {
     return SizedBox(
       width: widget.width,
       child: Card.outlined(
@@ -138,22 +141,22 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
           child: ListTile(
             contentPadding: const EdgeInsets.only(left: 16.0, right: 12.0),
             titleAlignment: ListTileTitleAlignment.top,
-            leading: AvatarIcon(avatar: view.data.avatar, size: 24),
+            leading: AvatarIcon(avatar: view.avatar, size: 24),
             title: Text(
-              view.data.displayName,
+              view.displayName,
               style: TextStyle(
                   fontSize: Theme.of(context).textTheme.titleMedium!.fontSize,
                   color: Colors.black),
             ),
             subtitle: Text(
-              'feed by @${view.data.createdBy.handle}',
+              'feed by @${view.createdBy.handle}',
               style: TextStyle(
                   fontSize: Theme.of(context).textTheme.titleSmall!.fontSize,
                   color: Colors.black54),
             ),
             onTap: () {
               launchUrlPlus(
-                  '${Define.bskyUrl}/profile/${view.data.createdBy.handle}/feed/${view.data.uri.rkey}');
+                  '${Define.bskyUrl}/profile/${view.createdBy.handle}/feed/${view.uri.rkey}');
             },
           ),
         ),
@@ -161,7 +164,7 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
     );
   }
 
-  Widget _buildListView(bluesky.UEmbedViewRecordViewListView view) {
+  Widget _buildListView(bluesky.ListView view) {
     return SizedBox(
       width: widget.width,
       child: Card.outlined(
@@ -169,23 +172,81 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
           child: ListTile(
             contentPadding: const EdgeInsets.only(left: 16.0, right: 12.0),
             titleAlignment: ListTileTitleAlignment.top,
-            leading: AvatarIcon(avatar: view.data.avatar, size: 24),
+            leading: AvatarIcon(avatar: view.avatar, size: 24),
             title: Text(
-              view.data.name,
+              view.name,
               style: TextStyle(
                   fontSize: Theme.of(context).textTheme.titleMedium!.fontSize,
                   color: Colors.black),
             ),
             subtitle: Text(
-              'list by @${view.data.createdBy.handle}',
+              'list by @${view.createdBy.handle}',
               style: TextStyle(
                   fontSize: Theme.of(context).textTheme.titleSmall!.fontSize,
                   color: Colors.black54),
             ),
             onTap: () {
               launchUrlPlus(
-                  '${Define.bskyUrl}/profile/${view.data.createdBy.handle}/lists/${view.data.uri.rkey}');
+                  '${Define.bskyUrl}/profile/${view.createdBy.handle}/lists/${view.uri.rkey}');
             },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStarterPack(StarterPackViewBasic view) {
+    return SizedBox(
+      width: widget.width,
+      child: Card(
+        clipBehavior: Clip.antiAliasWithSaveLayer,
+        child: SelectionArea(
+          child: InkWell(
+            onTap: () {
+              launchUrlPlus(
+                  'https://bsky.app/starter-pack/${view.creator.handle}/${view.uri.rkey}');
+            },
+            child: Column(
+              children: [
+                CachedNetworkImage(
+                  imageUrl:
+                      'https://ogcard.cdn.bsky.app/start/${view.creator.handle}/${view.uri.rkey}',
+                  fit: BoxFit.contain,
+                ),
+                const SizedBox(height: 4),
+                ListTile(
+                  contentPadding:
+                      const EdgeInsets.only(left: 16.0, right: 12.0),
+                  titleAlignment: ListTileTitleAlignment.center,
+                  leading: AvatarIcon(avatar: view.creator.avatar, size: 16),
+                  title: Text(
+                    view.record.name,
+                    style: TextStyle(
+                        fontSize:
+                            Theme.of(context).textTheme.titleMedium!.fontSize,
+                        color: Colors.black),
+                  ),
+                  subtitle: Text(
+                    '@${view.creator.handle}\'s startar pack',
+                    style: TextStyle(
+                        fontSize:
+                            Theme.of(context).textTheme.titleSmall!.fontSize,
+                        color: Colors.black54),
+                  ),
+                ),
+                if (view.record.description?.isNotEmpty ?? false)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text(
+                      view.record.description!,
+                      maxLines: 2,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                const SizedBox(height: 8),
+              ],
+            ),
           ),
         ),
       ),
@@ -198,42 +259,21 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
 
   @override
   Widget build(BuildContext context) {
-    /*
     return widget.embed.record.when(
-      record: (bluesky.EmbedViewRecordViewRecord record) => _buildRecord(record),
-       notFound: (bluesky.EmbedViewRecordViewNotFound notFound) => _buildRecordBreak(
-          'Quoted post not found, it may have been deleted.',
-          notFound.uri),
-        blocked: (bluesky.EmbedViewRecordViewBlocked blocked) =>
-        _buildRecordBreak('The quoted post is blocked.', 
-        blocked.uri), 
-        viewDetached: (bluesky.EmbedRecordViewDetached _) => Container(), 
-        generatorView: (bluesky.FeedGeneratorView generatorView) =>
-        _buildGeneratorView(generatorView), 
-        listView: (bluesky.ListView listView) =>
-        _buildListView(listView), 
-        labelerView: (bluesky.LabelerView _) => Container(),
-        unknown: 
-        (Map<String, dynamic>_) => Container(),),
-    */
-
-    return switch (widget.embed.record) {
-      (bluesky.UEmbedViewRecordViewRecord record) => _buildRecord(record),
-      (bluesky.UEmbedViewRecordViewNotFound notFound) => _buildRecordBreak(
-          'Quoted post not found, it may have been deleted.',
-          notFound.data.uri),
-      (bluesky.UEmbedViewRecordViewBlocked blocked) =>
-        _buildRecordBreak('The quoted post is blocked.', blocked.data.uri),
-      (bluesky.UEmbedViewRecordViewViewDetached _) => Container(),
-      (bluesky.UEmbedViewRecordViewGeneratorView generatorView) =>
-        _buildGeneratorView(generatorView),
-      (bluesky.UEmbedViewRecordViewListView listView) =>
-        _buildListView(listView),
-      (bluesky.UEmbedViewRecordViewLabelerView _) => Container(),
-      (bluesky.UEmbedViewRecordViewUnknown _) =>
-        SizedBox(width: widget.width, child: Text('unsupported embed')),
-      bluesky.EmbedViewRecordView() => Container(),
-    };
+      record: (bluesky.EmbedViewRecordViewRecord data) => _buildRecord(data),
+      notFound: (bluesky.EmbedViewRecordViewNotFound data) => _buildRecordBreak(
+          'Quoted post not found, it may have been deleted.', data.uri),
+      blocked: (bluesky.EmbedViewRecordViewBlocked data) =>
+          _buildRecordBreak('The quoted post is blocked.', data.uri),
+      viewDetached: (EmbedRecordViewDetached _) => Container(),
+      generatorView: (bluesky.FeedGeneratorView data) =>
+          _buildGeneratorView(data),
+      listView: (bluesky.ListView data) => _buildListView(data),
+      labelerView: (bluesky.LabelerView _) => Container(),
+      unknown: (Map<String, dynamic> _) => Container(),
+      starterPackViewBasic: (StarterPackViewBasic data) =>
+          _buildStarterPack(data),
+    );
   }
 
   Widget _buildRecordText(bluesky.PostRecord record) {
@@ -319,9 +359,9 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
     context.read<Model>().setSearchKeyword('#${feature.tag}');
   }
 
-  Widget _buildFooter(bluesky.UEmbedViewRecordViewRecord record) {
-    final post = record.data;
-    final author = record.data.author;
+  Widget _buildFooter(bluesky.EmbedViewRecordViewRecord record) {
+    final post = record;
+    final author = record.author;
     final postUrl =
         '${Define.bskyUrl}/profile/${author.handle}/post/${post.uri.rkey}';
 
