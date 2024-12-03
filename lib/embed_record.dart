@@ -253,26 +253,38 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
     );
   }
 
-  Widget _buildRecordBreak(String text, AtUri uri) {
-    return Text('$text ${uri.toString()}');
+  Widget _buildRecordBreak(String text, AtUri _) {
+    return SizedBox(
+      width: widget.width,
+      child: Card.outlined(
+        child: SelectionArea(
+          child: ListTile(
+            contentPadding: const EdgeInsets.only(left: 16.0, right: 12.0),
+            leading: Icon(Icons.info_outline),
+            title: Text(text),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return widget.embed.record.when(
       record: (bluesky.EmbedViewRecordViewRecord data) => _buildRecord(data),
-      notFound: (bluesky.EmbedViewRecordViewNotFound data) => _buildRecordBreak(
-          'Quoted post not found, it may have been deleted.', data.uri),
+      notFound: (bluesky.EmbedViewRecordViewNotFound data) =>
+          _buildRecordBreak('Deleted', data.uri),
       blocked: (bluesky.EmbedViewRecordViewBlocked data) =>
-          _buildRecordBreak('The quoted post is blocked.', data.uri),
-      viewDetached: (EmbedRecordViewDetached _) => Container(),
+          _buildRecordBreak('Blocked', data.uri),
+      viewDetached: (EmbedRecordViewDetached data) =>
+          _buildRecordBreak('Removed', data.uri),
       generatorView: (bluesky.FeedGeneratorView data) =>
           _buildGeneratorView(data),
       listView: (bluesky.ListView data) => _buildListView(data),
-      labelerView: (bluesky.LabelerView _) => Container(),
-      unknown: (Map<String, dynamic> _) => Container(),
       starterPackViewBasic: (StarterPackViewBasic data) =>
           _buildStarterPack(data),
+      labelerView: (bluesky.LabelerView _) => Container(),
+      unknown: (Map<String, dynamic> _) => Container(),
     );
   }
 
