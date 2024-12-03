@@ -1,4 +1,4 @@
-package com.example.app_bskylog
+package com.rukari.bskylogApp
 
 import io.flutter.embedding.android.FlutterActivity
 
