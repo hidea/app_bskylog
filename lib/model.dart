@@ -851,25 +851,13 @@ class Model extends ChangeNotifier {
   }
 
   Future<String?> getFeed({String? cursor}) async {
-    final methodId = xrpc.NSID.create(
-      'feed.bsky.app',
-      'getAuthorFeed',
-    );
-
     try {
-      await getBluesky(_currentActor!);
-      final service = _currentActor!.service;
-      final accessJwt = _currentActor!.session!.accessJwt;
+      final bsky = await getBluesky(_currentActor!);
 
-      final response = await xrpc.query<String>(
-        methodId,
-        service: service,
-        headers: {'Authorization': 'Bearer $accessJwt'},
-        parameters: {
-          'actor': _currentActor!.did,
-          'limit': 100,
-          'cursor': cursor ?? '',
-        },
+      final response = await bsky.feed.getAuthorFeed(
+        actor: _currentActor!.did,
+        limit: 100,
+        cursor: cursor ?? '',
       );
 
       final status = response.status;
@@ -884,7 +872,7 @@ class Model extends ChangeNotifier {
         //print(response.data);
       }
 
-      final feedData = bluesky.Feed.fromJson(jsonDecode(response.data));
+      final feedData = response.data;
       cursor = feedData.cursor;
 
       if (kDebugMode) {
@@ -963,13 +951,40 @@ class Model extends ChangeNotifier {
   // { "feed": [ feed.posts ] }
   exportFeed(File file) async {
     try {
-      final posts = await database.select(database.posts).get();
+      final posts = await (database.select(database.posts)
+            ..orderBy([
+              (t) =>
+                  OrderingTerm(expression: t.indexed, mode: OrderingMode.desc)
+            ]))
+          .get();
       final data = posts.map((row) => jsonDecode(row.post)).toList();
       final json = jsonEncode({'feed': data});
       await file.writeAsString(json);
     } catch (e) {
       if (kDebugMode) {
         print(e.toString());
+      }
+      rethrow;
+    }
+  }
+
+  Future<bluesky.PostThread> getPostThread(bluesky_core.AtUri uri) async {
+    try {
+      final bsky = await getBluesky(currentActor!);
+      final response = await bsky.feed.getPostThread(uri: uri);
+      return response.data;
+    } on xrpc.XRPCException catch (e) {
+      final status = e.response.status;
+
+      if (kDebugMode) {
+        print('${status.code} ${status.message}');
+        print(e.response.request.toString());
+        print(e.response.data.toJson());
+      }
+      rethrow;
+    } catch (e) {
+      if (kDebugMode) {
+        print(e);
       }
       rethrow;
     }
