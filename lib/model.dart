@@ -934,8 +934,8 @@ class Model extends ChangeNotifier {
 
   DateTime getFeedIndexed(bluesky.FeedView feedView) {
     final reason = feedView.reason;
-    if (reason != null && reason is bluesky.ReasonRepost) {
-      return (reason as bluesky.ReasonRepost).indexedAt;
+    if (reason != null && reason is bluesky.UReasonRepost) {
+      return reason.data.indexedAt;
     }
     return feedView.post.indexedAt;
   }
