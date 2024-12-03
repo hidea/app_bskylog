@@ -168,7 +168,7 @@ class _SearchFieldState extends State<SearchField> {
     return rdIconButton(
       iconAlignment: IconAlignment.end,
       icon: const Icon(Icons.navigate_next),
-      label: 'prev',
+      label: 'next',
       onPressed: context.watch<Model>().canNextSearch
           ? () => context.read<Model>().nextSearch()
           : null,
