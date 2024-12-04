@@ -67,6 +67,7 @@ dependencies:
   mime: ^1.0.6
   video_player_media_kit: ^1.0.5
   media_kit_libs_windows_video: ^1.0.10
+  http: ^1.2.2
   #flutter_twemoji: ^1.0.1
   #sqlite3_flutter_libs: ^0.5.26
 

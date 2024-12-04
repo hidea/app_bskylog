@@ -34,9 +34,11 @@ class AboutScreen extends StatelessWidget {
             _buildCard(context,
                 icon: Symbols.graph_1,
                 title: 'Version',
-                description: '${context.read<Model>().packageInfo!.version}'
-                    '+${context.read<Model>().packageInfo!.buildNumber}',
-                link: 'https://github.com/hidea/app_bskylog'),
+                description: context.watch<Model>().versionPlusBuildNumber +
+                    (context.watch<Model>().newRelease
+                        ? '\n(New release available)'
+                        : ''),
+                link: 'https://github.com/hidea/app_bskylog/releases'),
             _buildCard(context,
                 color: Colors.purple, title: 'My other product.'),
             _buildCard(

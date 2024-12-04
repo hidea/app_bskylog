@@ -11,6 +11,7 @@ import 'package:bluesky/bluesky.dart' as bluesky;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xrpc/xrpc.dart' as xrpc;
+import 'package:http/http.dart' as http;
 
 import 'database.dart';
 import 'define.dart';
@@ -75,6 +76,17 @@ class Model extends ChangeNotifier {
 
   PackageInfo? _packageInfo;
   PackageInfo? get packageInfo => _packageInfo;
+  String get version => 'v${_packageInfo!.version}';
+  String get versionPlusBuildNumber => 'v${_packageInfo!.version}'
+      '+${_packageInfo!.buildNumber}';
+
+  String? _githubReleaseVersion;
+  String? get githubReleaseVersion => _githubReleaseVersion;
+
+  bool get newRelease =>
+      _packageInfo != null &&
+      _githubReleaseVersion != null &&
+      _githubReleaseVersion != version;
 
   ActorModel? _currentActor;
   ActorModel? get currentActor => _currentActor;
@@ -135,6 +147,7 @@ class Model extends ChangeNotifier {
 
   Future syncDataWithProvider() async {
     _packageInfo = await PackageInfo.fromPlatform();
+    await fetchReleases();
 
     countDatePosts();
 
@@ -675,6 +688,23 @@ class Model extends ChangeNotifier {
     return DateTime(last ~/ 10000, (last % 10000) ~/ 100, last % 100);
   }
 
+  Future fetchReleases() async {
+    final response = await http.get(Uri.parse(Define.githubReleasesApi));
+    if (response.statusCode == 200) {
+      List<dynamic> releases = json.decode(response.body);
+      for (var release in releases) {
+        _githubReleaseVersion = release['name'];
+        if (kDebugMode) {
+          print('github releases $_githubReleaseVersion');
+        }
+      }
+    } else {
+      if (kDebugMode) {
+        print('Failed to fetch releases');
+      }
+    }
+  }
+
   Future createMenuTree() async {
     final tree = TreeNode.root();
 
@@ -949,7 +979,7 @@ class Model extends ChangeNotifier {
   }
 
   // { "feed": [ feed.posts ] }
-  exportFeed(File file) async {
+  Future exportFeed(File file) async {
     try {
       final posts = await (database.select(database.posts)
             ..orderBy([

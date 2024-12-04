@@ -485,8 +485,7 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.fromLTRB(28, 0, 16, 10),
           child: Align(
             alignment: Alignment.centerLeft,
-            child: Text('${context.read<Model>().packageInfo!.version}'
-                '+${context.read<Model>().packageInfo!.buildNumber}'),
+            child: Text(context.read<Model>().version),
           ),
         ),
       ],
@@ -572,9 +571,13 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               Column(
                 children: [
-                  IconButton(
-                    onPressed: () => context.push('/about'),
-                    icon: const Icon(Icons.info),
+                  Badge(
+                    label: Text('new'),
+                    isLabelVisible: context.watch<Model>().newRelease,
+                    child: IconButton(
+                      onPressed: () => context.push('/about'),
+                      icon: const Icon(Icons.info),
+                    ),
                   ),
                   Text('Info',
                       style: Theme.of(context)
@@ -583,8 +586,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              Text('${context.read<Model>().packageInfo!.version}'
-                  '+${context.read<Model>().packageInfo!.buildNumber}'),
+              Text(context.read<Model>().version),
             ],
           ),
         ),

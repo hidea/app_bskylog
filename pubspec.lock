@@ -122,10 +122,10 @@ packages:
     dependency: "direct main"
     description:
       name: bluesky
-      sha256: "0dad1d56f5311ddedaf085bdefdb76a7f696a22c4413e261dad53fb822aad986"
+      sha256: "3094dde1cb8b537139e441a5cdea6639a9c0f525d6c974258d9ac974cc237190"
       url: "https://pub.dev"
     source: hosted
-    version: "0.18.4"
+    version: "0.18.5"
   bluesky_text:
     dependency: "direct main"
     description:
@@ -545,10 +545,10 @@ packages:
     dependency: "direct main"
     description:
       name: go_router
-      sha256: "8660b74171fafae4aa8202100fa2e55349e078281dadc73a241eb8e758534d9d"
+      sha256: "2fd11229f59e23e967b0775df8d5948a519cd7e1e8b6e849729e010587b46539"
       url: "https://pub.dev"
     source: hosted
-    version: "14.6.1"
+    version: "14.6.2"
   graphs:
     dependency: transitive
     description:
@@ -574,7 +574,7 @@ packages:
     source: hosted
     version: "0.15.5"
   http:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: http
       sha256: b9c29a161230ee03d3ccf545097fccd9b87a5264228c5d348202e0f0c28f9010
