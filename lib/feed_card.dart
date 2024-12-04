@@ -229,21 +229,44 @@ class _FeedCardState extends State<FeedCard> {
     final postUrl =
         '${Define.bskyUrl}/profile/${author.handle}/post/${post.uri.rkey}';
 
+    final root = (feedView.reply!.root as bluesky.UReplyPostRecord).data;
+
     return Row(
       children: [
         SizedBox(width: 36),
-        TextButton(
-          onPressed: () => launchUrlPlus(postUrl),
-          style: TextButton.styleFrom(
-              padding: EdgeInsets.all(4),
-              visualDensity: VisualDensity(horizontal: -4, vertical: -4)),
-          child: Row(
-            children: [
-              Icon(Icons.reply, size: 16, color: Colors.blueGrey),
-              SizedBox(width: 4),
-              Text('reply to ', style: TextStyle(color: Colors.blueGrey)),
-              Text(displayName, style: TextStyle(color: Colors.blueGrey)),
-            ],
+        Tooltip(
+          message: 'View on Bluesky',
+          waitDuration: Duration(milliseconds: 500),
+          child: TextButton(
+            onPressed: () => launchUrlPlus(postUrl),
+            style: TextButton.styleFrom(
+                padding: EdgeInsets.all(4),
+                visualDensity: VisualDensity(horizontal: -4, vertical: -4)),
+            child: Row(
+              children: [
+                Icon(Icons.reply, size: 16, color: Colors.blueGrey),
+                SizedBox(width: 4),
+                Text('reply to ', style: TextStyle(color: Colors.blueGrey)),
+                Text(displayName, style: TextStyle(color: Colors.blueGrey)),
+              ],
+            ),
+          ),
+        ),
+        Tooltip(
+          message: 'Search reply chain',
+          child: TextButton(
+            onPressed: () =>
+                context.read<Model>().setSearchKeyword(root.uri.toString()),
+            style: TextButton.styleFrom(
+                padding: EdgeInsets.all(4),
+                visualDensity: VisualDensity(horizontal: -4, vertical: -4)),
+            child: Row(
+              children: [
+                Icon(Icons.search, size: 16, color: Colors.blueGrey),
+                SizedBox(width: 4),
+                Text('search', style: TextStyle(color: Colors.blueGrey)),
+              ],
+            ),
           ),
         ),
       ],
