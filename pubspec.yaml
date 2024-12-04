@@ -70,6 +70,10 @@ dependencies:
   #flutter_twemoji: ^1.0.1
   #sqlite3_flutter_libs: ^0.5.26
 
+dependency_overrides:
+  xrpc:
+    path: ../atproto.dart/packages/xrpc
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
