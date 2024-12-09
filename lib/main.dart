@@ -67,8 +67,8 @@ void main() async {
   }
 
   final database = AppDatabase();
-
   final model = Model(database: database);
+  database.setModel(model);
   await model.syncDataWithProvider();
 
   runApp(ChangeNotifierProvider(create: (_) => model, child: const MyApp()));
@@ -648,38 +648,48 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: CustomScrollView(
                   controller: _feedController,
                   slivers: [
-                    if (context.watch<Model>().lastSync == null)
-                      SliverToBoxAdapter(
-                          child: Padding(
-                              padding: EdgeInsets.only(top: 160),
-                              child: Center(
-                                  child: Text('Let\'s '
-                                      '${(actor != null) ? '' : 'sign in and '}'
-                                      'first sync !')))),
                     StreamBuilder(
                       stream: context.watch<Model>().filterSearch().watch(),
                       builder: (context, snapshot) {
                         if (snapshot.hasError) {
                           if (kDebugMode) {
                             print('filterSearch error: ${snapshot.error}');
-                            return SliverToBoxAdapter(
-                                child: Card(
-                                    color: Colors.red.shade100,
-                                    child: ListTile(
-                                        titleAlignment:
-                                            ListTileTitleAlignment.top,
-                                        leading: const Icon(Icons.error),
-                                        title: Text('Query failed'),
-                                        subtitle:
-                                            Text(snapshot.error.toString()))));
                           }
+                          return SliverToBoxAdapter(
+                              child: Card(
+                                  color: Colors.red.shade100,
+                                  child: ListTile(
+                                      titleAlignment:
+                                          ListTileTitleAlignment.top,
+                                      leading: const Icon(Icons.error),
+                                      title: Text('Query failed'),
+                                      subtitle:
+                                          Text(snapshot.error.toString()))));
                         }
                         if (!snapshot.hasData) {
-                          return const SliverToBoxAdapter(
-                              child:
-                                  Center(child: CircularProgressIndicator()));
+                          final migrationState =
+                              context.watch<Model>().migrationState;
+                          return SliverToBoxAdapter(
+                              child: Padding(
+                                  padding: EdgeInsets.only(top: 180),
+                                  child: Center(
+                                      child: Column(children: [
+                                    CircularProgressIndicator(),
+                                    if (migrationState != null)
+                                      Text(migrationState),
+                                  ]))));
                         }
                         final posts = snapshot.data!;
+                        if (posts.isEmpty &&
+                            context.watch<Model>().lastSync == null) {
+                          return SliverToBoxAdapter(
+                              child: Padding(
+                                  padding: EdgeInsets.only(top: 160),
+                                  child: Center(
+                                      child: Text('Let\'s '
+                                          '${(actor != null) ? '' : 'sign in and '}'
+                                          'first sync !'))));
+                        }
                         return SliverList(
                           delegate: SliverChildBuilderDelegate(
                             (BuildContext context, int index) {
