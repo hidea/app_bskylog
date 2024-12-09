@@ -182,7 +182,11 @@ class Model extends ChangeNotifier {
       _currentActor = ActorModel.fromJson(json['actor']);
     }
     if (json['lastSync'] != null) {
-      _lastSync = DateTime.parse(json['lastSync']);
+      try {
+        _lastSync = DateTime.parse(json['lastSync']);
+      } catch (e) {
+        _lastSync = null;
+      }
     }
     if (json['tailCursor'] != null) {
       _tailCursor = json['tailCursor'];
@@ -214,7 +218,7 @@ class Model extends ChangeNotifier {
         'regExpSearch': _regExpSearch,
         'sortOrder': _sortOrder.toString(),
         'actor': _currentActor?.toJson(),
-        'lastSync': _lastSync.toString(),
+        'lastSync': _lastSync?.toString(),
         'tailCursor': _tailCursor,
         'volume': _volume,
       };
