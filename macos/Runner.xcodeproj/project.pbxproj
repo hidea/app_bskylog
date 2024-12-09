@@ -481,7 +481,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.rukari.appBskylog.RunnerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/app_bskylog.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/app_bskylog";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/bskylog.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/bskylog";
 			};
 			name = Debug;
 		};
@@ -496,7 +496,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.rukari.appBskylog.RunnerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/app_bskylog.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/app_bskylog";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/bskylog.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/bskylog";
 			};
 			name = Release;
 		};
@@ -511,7 +511,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.rukari.appBskylog.RunnerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/app_bskylog.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/app_bskylog";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/bskylog.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/bskylog";
 			};
 			name = Profile;
 		};
