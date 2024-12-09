@@ -74,6 +74,9 @@ class Model extends ChangeNotifier {
 
   final AppDatabase database;
 
+  String? _migrationState;
+  String? get migrationState => _migrationState;
+
   PackageInfo? _packageInfo;
   PackageInfo? get packageInfo => _packageInfo;
   String get version => 'v${_packageInfo!.version}';
@@ -226,6 +229,11 @@ class Model extends ChangeNotifier {
           : VisibleMode.disable;
     }
     return _visible[type] ?? VisibleMode.show;
+  }
+
+  setMigrationState(String? state) {
+    _migrationState = state;
+    notifyListeners();
   }
 
   void setVisible(VisibleType type, VisibleMode mode) {
@@ -920,6 +928,7 @@ class Model extends ChangeNotifier {
         await database.into(database.posts).insert(
               PostsCompanion.insert(
                 uri: repost != null ? repost.toString() : post.uri.toString(),
+                feedAuthorDid: Value(getFeedAuthorDid(feedView)),
                 authorDid: post.author.did,
                 indexed: getFeedIndexed(feedView),
                 replyDid: getFeedReplyDid(feedView),
@@ -962,7 +971,15 @@ class Model extends ChangeNotifier {
     return cursor;
   }
 
-  DateTime getFeedIndexed(bluesky.FeedView feedView) {
+  static String getFeedAuthorDid(bluesky.FeedView feedView) {
+    final reason = feedView.reason;
+    if (reason != null && reason is bluesky.UReasonRepost) {
+      return reason.data.by.did;
+    }
+    return feedView.post.author.did;
+  }
+
+  static DateTime getFeedIndexed(bluesky.FeedView feedView) {
     final reason = feedView.reason;
     if (reason != null && reason is bluesky.UReasonRepost) {
       return reason.data.indexedAt;
@@ -970,7 +987,7 @@ class Model extends ChangeNotifier {
     return feedView.post.indexedAt;
   }
 
-  String getFeedReplyDid(bluesky.FeedView feedView) {
+  static String getFeedReplyDid(bluesky.FeedView feedView) {
     final reply = feedView.reply;
     if (reply != null && reply.parent is bluesky.UReplyPostRecord) {
       return (reply.parent as bluesky.UReplyPostRecord).data.author.did;

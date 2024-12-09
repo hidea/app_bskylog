@@ -67,8 +67,8 @@ void main() async {
   }
 
   final database = AppDatabase();
-
   final model = Model(database: database);
+  database.setModel(model);
   await model.syncDataWithProvider();
 
   runApp(ChangeNotifierProvider(create: (_) => model, child: const MyApp()));
@@ -675,9 +675,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           }
                         }
                         if (!snapshot.hasData) {
-                          return const SliverToBoxAdapter(
-                              child:
-                                  Center(child: CircularProgressIndicator()));
+                          final migrationState =
+                              context.watch<Model>().migrationState;
+                          return SliverToBoxAdapter(
+                              child: Center(
+                                  child: Column(children: [
+                            CircularProgressIndicator(),
+                            if (migrationState != null) Text(migrationState),
+                          ])));
                         }
                         final posts = snapshot.data!;
                         return SliverList(
