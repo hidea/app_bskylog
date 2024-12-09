@@ -67,8 +67,8 @@ void main() async {
   }
 
   final database = AppDatabase();
-
   final model = Model(database: database);
+  database.setModel(model);
   await model.syncDataWithProvider();
 
   runApp(ChangeNotifierProvider(create: (_) => model, child: const MyApp()));
@@ -485,8 +485,7 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.fromLTRB(28, 0, 16, 10),
           child: Align(
             alignment: Alignment.centerLeft,
-            child: Text('${context.read<Model>().packageInfo!.version}'
-                '+${context.read<Model>().packageInfo!.buildNumber}'),
+            child: Text(context.read<Model>().version),
           ),
         ),
       ],
@@ -572,9 +571,13 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               Column(
                 children: [
-                  IconButton(
-                    onPressed: () => context.push('/about'),
-                    icon: const Icon(Icons.info),
+                  Badge(
+                    label: Text('new'),
+                    isLabelVisible: context.watch<Model>().newRelease,
+                    child: IconButton(
+                      onPressed: () => context.push('/about'),
+                      icon: const Icon(Icons.info),
+                    ),
                   ),
                   Text('Info',
                       style: Theme.of(context)
@@ -583,8 +586,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              Text('${context.read<Model>().packageInfo!.version}'
-                  '+${context.read<Model>().packageInfo!.buildNumber}'),
+              Text(context.read<Model>().version),
             ],
           ),
         ),
@@ -643,74 +645,89 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               RefreshIndicator(
                 onRefresh: () => _syncFeed(),
-                child: CustomScrollView(
-                  controller: _feedController,
-                  slivers: [
-                    if (context.watch<Model>().lastSync == null)
-                      SliverToBoxAdapter(
-                          child: Padding(
-                              padding: EdgeInsets.only(top: 160),
-                              child: Center(
-                                  child: Text('Let\'s '
-                                      '${(actor != null) ? '' : 'sign in and '}'
-                                      'first sync !')))),
-                    StreamBuilder(
-                      stream: context.watch<Model>().filterSearch().watch(),
-                      builder: (context, snapshot) {
-                        if (snapshot.hasError) {
-                          if (kDebugMode) {
-                            print('filterSearch error: ${snapshot.error}');
-                            return SliverToBoxAdapter(
-                                child: Card(
-                                    color: Colors.red.shade100,
-                                    child: ListTile(
-                                        titleAlignment:
-                                            ListTileTitleAlignment.top,
-                                        leading: const Icon(Icons.error),
-                                        title: Text('Query failed'),
-                                        subtitle:
-                                            Text(snapshot.error.toString()))));
-                          }
-                        }
-                        if (!snapshot.hasData) {
-                          return const SliverToBoxAdapter(
-                              child:
-                                  Center(child: CircularProgressIndicator()));
-                        }
-                        final posts = snapshot.data!;
-                        return SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (BuildContext context, int index) {
+                child: LayoutBuilder(
+                  builder: (BuildContext context, BoxConstraints constraints) {
+                    return CustomScrollView(
+                      controller: _feedController,
+                      slivers: [
+                        StreamBuilder(
+                          stream: context.watch<Model>().filterSearch().watch(),
+                          builder: (context, snapshot) {
+                            // search error
+                            if (snapshot.hasError) {
+                              if (kDebugMode) {
+                                print('filterSearch error: ${snapshot.error}');
+                              }
+                              return SliverToBoxAdapter(
+                                  child: Card(
+                                      color: Colors.red.shade100,
+                                      child: ListTile(
+                                          titleAlignment:
+                                              ListTileTitleAlignment.top,
+                                          leading: const Icon(Icons.error),
+                                          title: Text('Query failed'),
+                                          subtitle: Text(
+                                              snapshot.error.toString()))));
+                            }
+                            // wait search
+                            if (!snapshot.hasData) {
+                              final migrationState =
+                                  context.watch<Model>().migrationState;
+                              return SliverToBoxAdapter(
+                                  child: SizedBox(
+                                      height: constraints.maxHeight,
+                                      child: Center(
+                                          child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                            CircularProgressIndicator(),
+                                            if (migrationState != null)
+                                              Text(migrationState),
+                                          ]))));
+                            }
+                            final posts = snapshot.data!;
+                            // no sync no data
+                            if (posts.isEmpty &&
+                                context.watch<Model>().lastSync == null) {
+                              return SliverToBoxAdapter(
+                                  child: SizedBox(
+                                      height: constraints.maxHeight,
+                                      child: Center(
+                                          child: Text('Let\'s '
+                                              '${(actor != null) ? '' : 'sign in and '}'
+                                              'first sync !'))));
+                            }
+                            // feed
+                            return SliverList(
+                                delegate: SliverChildBuilderDelegate(
+                                    (BuildContext context, int index) {
                               final feed = posts[index];
                               final feedView = bluesky.FeedView.fromJson(
                                   jsonDecode(feed.post));
                               return FeedCard(feed, feedView);
-                            },
-                            childCount: posts.length,
-                          ),
-                        );
-                      },
-                    ),
-                    SliverToBoxAdapter(
-                      child: SizedBox(
-                          height: MediaQuery.paddingOf(context).bottom),
-                    ),
-                  ],
+                            }, childCount: posts.length));
+                          },
+                        ),
+                        SliverToBoxAdapter(
+                            child: SizedBox(
+                                height: MediaQuery.paddingOf(context).bottom)),
+                      ],
+                    );
+                  },
                 ),
               ),
               if (visibleTopButton)
                 Align(
-                  alignment: Alignment.bottomRight,
-                  child: Padding(
-                      padding: EdgeInsets.all(16),
-                      child: IconButton.outlined(
-                          style: ButtonStyle(
-                              backgroundColor: WidgetStateProperty.all(
-                                  Colors.white.withAlpha(128))),
-                          onPressed: () => _feedController
-                              .jumpTo(_feedController.position.minScrollExtent),
-                          icon: const Icon(Icons.keyboard_arrow_up))),
-                ),
+                    alignment: Alignment.bottomRight,
+                    child: Padding(
+                        padding: EdgeInsets.all(16),
+                        child: IconButton.outlined(
+                            style: ButtonStyle(
+                                backgroundColor: WidgetStateProperty.all(
+                                    Colors.white.withAlpha(128))),
+                            onPressed: () => _feedController.jumpTo(
+                                _feedController.position.minScrollExtent),
+                            icon: const Icon(Icons.keyboard_arrow_up)))),
             ],
           ),
         ),

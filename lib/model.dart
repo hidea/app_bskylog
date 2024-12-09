@@ -11,6 +11,7 @@ import 'package:bluesky/bluesky.dart' as bluesky;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xrpc/xrpc.dart' as xrpc;
+import 'package:http/http.dart' as http;
 
 import 'database.dart';
 import 'define.dart';
@@ -73,8 +74,22 @@ class Model extends ChangeNotifier {
 
   final AppDatabase database;
 
+  String? _migrationState;
+  String? get migrationState => _migrationState;
+
   PackageInfo? _packageInfo;
   PackageInfo? get packageInfo => _packageInfo;
+  String get version => 'v${_packageInfo!.version}';
+  String get versionPlusBuildNumber => 'v${_packageInfo!.version}'
+      '+${_packageInfo!.buildNumber}';
+
+  String? _githubReleaseVersion;
+  String? get githubReleaseVersion => _githubReleaseVersion;
+
+  bool get newRelease =>
+      _packageInfo != null &&
+      _githubReleaseVersion != null &&
+      _githubReleaseVersion != version;
 
   ActorModel? _currentActor;
   ActorModel? get currentActor => _currentActor;
@@ -135,6 +150,7 @@ class Model extends ChangeNotifier {
 
   Future syncDataWithProvider() async {
     _packageInfo = await PackageInfo.fromPlatform();
+    await fetchReleases();
 
     countDatePosts();
 
@@ -169,7 +185,11 @@ class Model extends ChangeNotifier {
       _currentActor = ActorModel.fromJson(json['actor']);
     }
     if (json['lastSync'] != null) {
-      _lastSync = DateTime.parse(json['lastSync']);
+      try {
+        _lastSync = DateTime.parse(json['lastSync']);
+      } catch (e) {
+        _lastSync = null;
+      }
     }
     if (json['tailCursor'] != null) {
       _tailCursor = json['tailCursor'];
@@ -201,7 +221,7 @@ class Model extends ChangeNotifier {
         'regExpSearch': _regExpSearch,
         'sortOrder': _sortOrder.toString(),
         'actor': _currentActor?.toJson(),
-        'lastSync': _lastSync.toString(),
+        'lastSync': _lastSync?.toString(),
         'tailCursor': _tailCursor,
         'volume': _volume,
       };
@@ -213,6 +233,11 @@ class Model extends ChangeNotifier {
           : VisibleMode.disable;
     }
     return _visible[type] ?? VisibleMode.show;
+  }
+
+  setMigrationState(String? state) {
+    _migrationState = state;
+    notifyListeners();
   }
 
   void setVisible(VisibleType type, VisibleMode mode) {
@@ -675,6 +700,23 @@ class Model extends ChangeNotifier {
     return DateTime(last ~/ 10000, (last % 10000) ~/ 100, last % 100);
   }
 
+  Future fetchReleases() async {
+    final response = await http.get(Uri.parse(Define.githubReleasesApi));
+    if (response.statusCode == 200) {
+      List<dynamic> releases = json.decode(response.body);
+      for (var release in releases) {
+        _githubReleaseVersion = release['name'];
+        if (kDebugMode) {
+          print('github releases $_githubReleaseVersion');
+        }
+      }
+    } else {
+      if (kDebugMode) {
+        print('Failed to fetch releases');
+      }
+    }
+  }
+
   Future createMenuTree() async {
     final tree = TreeNode.root();
 
@@ -851,25 +893,13 @@ class Model extends ChangeNotifier {
   }
 
   Future<String?> getFeed({String? cursor}) async {
-    final methodId = xrpc.NSID.create(
-      'feed.bsky.app',
-      'getAuthorFeed',
-    );
-
     try {
-      await getBluesky(_currentActor!);
-      final service = _currentActor!.service;
-      final accessJwt = _currentActor!.session!.accessJwt;
+      final bsky = await getBluesky(_currentActor!);
 
-      final response = await xrpc.query<String>(
-        methodId,
-        service: service,
-        headers: {'Authorization': 'Bearer $accessJwt'},
-        parameters: {
-          'actor': _currentActor!.did,
-          'limit': 100,
-          'cursor': cursor ?? '',
-        },
+      final response = await bsky.feed.getAuthorFeed(
+        actor: _currentActor!.did,
+        limit: 100,
+        cursor: cursor ?? '',
       );
 
       final status = response.status;
@@ -884,7 +914,7 @@ class Model extends ChangeNotifier {
         //print(response.data);
       }
 
-      final feedData = bluesky.Feed.fromJson(jsonDecode(response.data));
+      final feedData = response.data;
       cursor = feedData.cursor;
 
       if (kDebugMode) {
@@ -902,6 +932,7 @@ class Model extends ChangeNotifier {
         await database.into(database.posts).insert(
               PostsCompanion.insert(
                 uri: repost != null ? repost.toString() : post.uri.toString(),
+                feedAuthorDid: Value(getFeedAuthorDid(feedView)),
                 authorDid: post.author.did,
                 indexed: getFeedIndexed(feedView),
                 replyDid: getFeedReplyDid(feedView),
@@ -944,15 +975,23 @@ class Model extends ChangeNotifier {
     return cursor;
   }
 
-  DateTime getFeedIndexed(bluesky.FeedView feedView) {
+  static String getFeedAuthorDid(bluesky.FeedView feedView) {
     final reason = feedView.reason;
-    if (reason != null && reason is bluesky.ReasonRepost) {
-      return (reason as bluesky.ReasonRepost).indexedAt;
+    if (reason != null && reason is bluesky.UReasonRepost) {
+      return reason.data.by.did;
+    }
+    return feedView.post.author.did;
+  }
+
+  static DateTime getFeedIndexed(bluesky.FeedView feedView) {
+    final reason = feedView.reason;
+    if (reason != null && reason is bluesky.UReasonRepost) {
+      return reason.data.indexedAt;
     }
     return feedView.post.indexedAt;
   }
 
-  String getFeedReplyDid(bluesky.FeedView feedView) {
+  static String getFeedReplyDid(bluesky.FeedView feedView) {
     final reply = feedView.reply;
     if (reply != null && reply.parent is bluesky.UReplyPostRecord) {
       return (reply.parent as bluesky.UReplyPostRecord).data.author.did;
@@ -961,15 +1000,42 @@ class Model extends ChangeNotifier {
   }
 
   // { "feed": [ feed.posts ] }
-  exportFeed(File file) async {
+  Future exportFeed(File file) async {
     try {
-      final posts = await database.select(database.posts).get();
+      final posts = await (database.select(database.posts)
+            ..orderBy([
+              (t) =>
+                  OrderingTerm(expression: t.indexed, mode: OrderingMode.desc)
+            ]))
+          .get();
       final data = posts.map((row) => jsonDecode(row.post)).toList();
       final json = jsonEncode({'feed': data});
       await file.writeAsString(json);
     } catch (e) {
       if (kDebugMode) {
         print(e.toString());
+      }
+      rethrow;
+    }
+  }
+
+  Future<bluesky.PostThread> getPostThread(bluesky_core.AtUri uri) async {
+    try {
+      final bsky = await getBluesky(currentActor!);
+      final response = await bsky.feed.getPostThread(uri: uri);
+      return response.data;
+    } on xrpc.XRPCException catch (e) {
+      final status = e.response.status;
+
+      if (kDebugMode) {
+        print('${status.code} ${status.message}');
+        print(e.response.request.toString());
+        print(e.response.data.toJson());
+      }
+      rethrow;
+    } catch (e) {
+      if (kDebugMode) {
+        print(e);
       }
       rethrow;
     }

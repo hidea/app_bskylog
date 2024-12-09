@@ -10,6 +10,10 @@ class Define {
   static const serviceBskySocial = 'bsky.social';
   static const bskyUrl = 'https://bsky.app';
   static const appPasswordUrl = '$bskyUrl/settings/app-passwords';
+
+  static const githubReleasesApi =
+      'https://api.github.com/repos/hidea/app_bskylog/releases';
+  static const githubReleases = 'https://github.com/hidea/app_bskylog/releases';
 }
 
 class FeedNode {
