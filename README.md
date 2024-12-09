@@ -6,6 +6,9 @@ This logged everything you have posted on Bluesky to local storage.
 
 You can filter and view by keywords, date, and post type.
 
+![Screenshot of windows](assets/images/screenshot_windows.png)
+Screenshot of Windows
+
 ## Getting Started
 
 Made in Flutter.
