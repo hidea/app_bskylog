@@ -709,6 +709,7 @@ class Model extends ChangeNotifier {
         if (kDebugMode) {
           print('github releases $_githubReleaseVersion');
         }
+        return;
       }
     } else {
       if (kDebugMode) {
