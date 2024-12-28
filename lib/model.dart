@@ -927,16 +927,40 @@ class Model extends ChangeNotifier {
       final before = await query.map((row) => row.read(itemCount)).getSingle();
 
       for (var feedView in feedData.feed) {
+        final feedAuthorDid = getFeedAuthorDid(feedView);
         final post = feedView.post;
         final repost = feedView.post.viewer.repost;
 
+        // if repost of own post
+        if (repost != null && post.author.did == feedAuthorDid) {
+          await database.into(database.posts).insert(
+                PostsCompanion.insert(
+                  uri: post.uri.toString(),
+                  feedAuthorDid: Value(feedAuthorDid),
+                  authorDid: feedAuthorDid,
+                  indexed: post.indexedAt,
+                  replyDid: getFeedReplyDid(feedView), // who's reply
+                  havEmbedImages: post.embed is bluesky.UEmbedViewImages,
+                  havEmbedExternal: post.embed is bluesky.UEmbedViewExternal,
+                  havEmbedRecord: post.embed is bluesky.UEmbedViewRecord,
+                  havEmbedRecordWithMedia:
+                      post.embed is bluesky.UEmbedViewRecordWithMedia,
+                  havEmbedVideo: post.embed is bluesky.UEmbedViewVideo,
+                  reasonRepost: true,
+                  post: jsonEncode(feedView.toJson()),
+                ),
+                mode: InsertMode.insertOrIgnore,
+              );
+        }
         await database.into(database.posts).insert(
               PostsCompanion.insert(
-                uri: repost != null ? repost.toString() : post.uri.toString(),
-                feedAuthorDid: Value(getFeedAuthorDid(feedView)),
+                uri: repost != null
+                    ? repost.toString()
+                    : post.uri.toString(), // repost or
+                feedAuthorDid: Value(feedAuthorDid), // repost or
                 authorDid: post.author.did,
-                indexed: getFeedIndexed(feedView),
-                replyDid: getFeedReplyDid(feedView),
+                indexed: getFeedIndexed(feedView), // repost or
+                replyDid: getFeedReplyDid(feedView), // who's reply
                 havEmbedImages: post.embed is bluesky.UEmbedViewImages,
                 havEmbedExternal: post.embed is bluesky.UEmbedViewExternal,
                 havEmbedRecord: post.embed is bluesky.UEmbedViewRecord,
