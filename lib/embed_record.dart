@@ -56,8 +56,8 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
                 contentPadding: const EdgeInsets.only(left: 16.0, right: 12.0),
                 titleAlignment: ListTileTitleAlignment.top,
                 leading: AvatarIcon(avatar: author.avatar, size: 12),
-                title: RichText(
-                  text: TextSpan(
+                title: Text.rich(
+                  TextSpan(
                       text: displayName,
                       style: TextStyle(
                           fontSize:
@@ -70,7 +70,7 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
                           style: TextStyle(
                               fontSize: Theme.of(context)
                                   .textTheme
-                                  .bodySmall!
+                                  .titleSmall!
                                   .fontSize,
                               color: Colors.black54),
                         ),
@@ -319,7 +319,11 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
             mention: (mention) {
               spans.add(TooltipSpan(
                   child: InkWell(
-                    child: Text(bodyText, style: TextStyle(color: Colors.blue)),
+                    child: Text(
+                      bodyText,
+                      style: TextStyle(color: Colors.blue),
+                      textScaler: TextScaler.linear(1.0),
+                    ),
                     onTap: () => _tapMention(mention),
                   ),
                   tooltip: 'Search mention'));
@@ -327,7 +331,11 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
             link: (link) {
               spans.add(TooltipSpan(
                   child: InkWell(
-                    child: Text(bodyText, style: TextStyle(color: Colors.blue)),
+                    child: Text(
+                      bodyText,
+                      style: TextStyle(color: Colors.blue),
+                      textScaler: TextScaler.linear(1.0),
+                    ),
                     onTap: () => _tapLink(link),
                   ),
                   tooltip: 'View link'));
@@ -335,7 +343,11 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
             tag: (tag) {
               spans.add(TooltipSpan(
                   child: InkWell(
-                    child: Text(bodyText, style: TextStyle(color: Colors.blue)),
+                    child: Text(
+                      bodyText,
+                      style: TextStyle(color: Colors.blue),
+                      textScaler: TextScaler.linear(1.0),
+                    ),
                     onTap: () => _tapTag(tag),
                   ),
                   tooltip: 'Search hashtag'));

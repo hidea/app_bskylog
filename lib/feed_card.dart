@@ -57,8 +57,8 @@ class _FeedCardState extends State<FeedCard> {
               contentPadding: const EdgeInsets.only(left: 16.0, right: 12.0),
               titleAlignment: ListTileTitleAlignment.top,
               leading: AvatarIcon(avatar: author.avatar, size: 20),
-              title: RichText(
-                text: TextSpan(
+              title: Text.rich(
+                TextSpan(
                     text: displayName,
                     style: TextStyle(
                         fontSize:
@@ -155,7 +155,11 @@ class _FeedCardState extends State<FeedCard> {
             mention: (mention) {
               spans.add(TooltipSpan(
                   child: InkWell(
-                    child: Text(bodyText, style: TextStyle(color: Colors.blue)),
+                    child: Text(
+                      bodyText,
+                      style: TextStyle(color: Colors.blue),
+                      textScaler: TextScaler.linear(1.0),
+                    ),
                     onTap: () => _tapMention(mention),
                   ),
                   tooltip: 'Search mention'));
@@ -163,7 +167,11 @@ class _FeedCardState extends State<FeedCard> {
             link: (link) {
               spans.add(TooltipSpan(
                   child: InkWell(
-                    child: Text(bodyText, style: TextStyle(color: Colors.blue)),
+                    child: Text(
+                      bodyText,
+                      style: TextStyle(color: Colors.blue),
+                      textScaler: TextScaler.linear(1.0),
+                    ),
                     onTap: () => _tapLink(link),
                   ),
                   tooltip: 'View link'));
@@ -171,7 +179,11 @@ class _FeedCardState extends State<FeedCard> {
             tag: (tag) {
               spans.add(TooltipSpan(
                   child: InkWell(
-                    child: Text(bodyText, style: TextStyle(color: Colors.blue)),
+                    child: Text(
+                      bodyText,
+                      style: TextStyle(color: Colors.blue),
+                      textScaler: TextScaler.linear(1.0),
+                    ),
                     onTap: () => _tapTag(tag),
                   ),
                   tooltip: 'Search hashtag'));
