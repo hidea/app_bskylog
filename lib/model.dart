@@ -96,7 +96,7 @@ class Model extends ChangeNotifier {
 
   DateTime? _lastSync;
   DateTime? get lastSync => _lastSync;
-  String? _tailCursor;
+  Map<String, String?> _tailCursors = {};
 
   bool _visibleFilterMenu = true;
   bool get visibleFilterMenu => _visibleFilterMenu;
@@ -147,7 +147,7 @@ class Model extends ChangeNotifier {
   TreeNode get rootTree => _rootTree;
 
   Future updateSharedPrefrences() async {
-    final data = json.encode(toJson());
+    final data = jsonEncode(toJson());
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('settings', data);
   }
@@ -161,7 +161,7 @@ class Model extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     var data = prefs.getString('settings');
     if (data != null) {
-      fromJson(json.decode(data));
+      fromJson(jsonDecode(data));
 
       if (kDebugMode) {
         print(_currentActor?.session?.toJson());
@@ -195,16 +195,20 @@ class Model extends ChangeNotifier {
         _lastSync = null;
       }
     }
-    if (json['tailCursor'] != null) {
-      _tailCursor = json['tailCursor'];
+    if (json['tailCursors'] != null) {
+      final tails = jsonDecode(json['tailCursors']);
+      if (tails is Map) {
+        final Map<String, String?> castedMap = {};
+        tails.forEach((k, v) {
+          castedMap[k.toString()] = v as String?;
+        });
+        _tailCursors = castedMap;
+      }
+    } else if (json['tailCursor'] != null && _currentActor != null) {
+      _tailCursors[_currentActor!.did] = json['tailCursor'];
     }
     if (json['volume'] != null) {
       _volume = json['volume'];
-    }
-
-    if (kDebugMode) {
-      print(_lastSync);
-      print(_tailCursor);
     }
 
     notifyListeners();
@@ -226,7 +230,7 @@ class Model extends ChangeNotifier {
         'sortOrder': _sortOrder.toString(),
         'actor': _currentActor?.toJson(),
         'lastSync': _lastSync?.toString(),
-        'tailCursor': _tailCursor,
+        'tailCursors': jsonEncode(_tailCursors),
         'volume': _volume,
       };
 
@@ -752,7 +756,7 @@ class Model extends ChangeNotifier {
   Future fetchReleases() async {
     final response = await http.get(Uri.parse(Define.githubReleasesApi));
     if (response.statusCode == 200) {
-      List<dynamic> releases = json.decode(response.body);
+      List<dynamic> releases = jsonDecode(response.body);
       for (var release in releases) {
         _githubReleaseVersion = release['name'];
         if (kDebugMode) {
@@ -910,20 +914,25 @@ class Model extends ChangeNotifier {
   }
 
   Future syncFeed() async {
+    if (_currentActor == null) {
+      return;
+    }
     _lastSync = DateTime.now();
 
     // sync old posts
+    var cursor = _tailCursors[_currentActor!.did];
     do {
-      _tailCursor = await getFeed(cursor: _tailCursor);
+      cursor = await getFeed(cursor: cursor);
+      _tailCursors[_currentActor!.did] = cursor;
 
       if (kDebugMode) {
-        print('getFeed $_tailCursor');
+        print('getFeed $cursor');
       }
 
       updateSharedPrefrences();
       countDatePosts();
       notifyListeners();
-    } while (_tailCursor != null && _tailCursor!.isNotEmpty);
+    } while (cursor != null && cursor.isNotEmpty);
 
     if (kDebugMode) {
       print('syncFeed done');
@@ -935,7 +944,7 @@ class Model extends ChangeNotifier {
     _rootTree.clear();
 
     _lastSync = null;
-    _tailCursor = null;
+    _tailCursors.clear();
 
     updateSharedPrefrences();
     countDatePosts();
