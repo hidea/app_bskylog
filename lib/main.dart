@@ -74,6 +74,12 @@ void main() async {
   // Noto Serif JP (NotoSansJP_regular)
   //final notoSansJp = GoogleFonts.notoSansJp();
 
+  //PaintingBinding.instance.systemFonts.addListener(() {
+  //  if (kDebugMode) {
+  //    print('System fonts changed');
+  //  }
+  //});
+
   LicenseRegistry.addLicense(() async* {
     yield LicenseEntryWithLineBreaks(['google_fonts/Roboto'],
         await rootBundle.loadString('assets/google_fonts/Roboto/LICENSE.txt'));
@@ -91,7 +97,12 @@ void main() async {
   database.setModel(model);
   await model.syncDataWithProvider();
 
-  runApp(ChangeNotifierProvider(create: (_) => model, child: const MyApp()));
+  runApp(
+    MultiProvider(
+      providers: [ChangeNotifierProvider(create: (_) => model)],
+      child: const MyApp(),
+    ),
+  );
 }
 
 _menuRevealInFolder(BuildContext context) async {
