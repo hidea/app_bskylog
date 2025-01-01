@@ -81,22 +81,42 @@ class _EmbedImagesWidgetState extends State<EmbedImagesWidget> {
 
   Widget _image(
       bluesky.EmbedViewImagesView image, double width, double height) {
-    return SizedBox(
-      width: width,
-      height: height,
-      child: InkWell(
-        child: CachedNetworkImage(
-          imageUrl: image.thumbnail,
-          fit: BoxFit.cover,
-        ),
-        onTap: () {
-          if (isDesktop) {
-            Navigator.push(context, _imageViewRoute(image));
-          } else {
-            _showImageViewerPager(image);
-          }
-        },
+    return InkWell(
+      child: Stack(
+        children: [
+          SizedBox(
+            width: width,
+            height: height,
+            child: CachedNetworkImage(
+              imageUrl: image.thumbnail,
+              fit: BoxFit.cover,
+            ),
+          ),
+          if (image.alt.isNotEmpty)
+            Positioned(
+              bottom: 2,
+              right: 2,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text(
+                  'ALT',
+                  style: TextStyle(fontSize: 8, color: Colors.black),
+                ),
+              ),
+            ),
+        ],
       ),
+      onTap: () {
+        if (isDesktop) {
+          Navigator.push(context, _imageViewRoute(image));
+        } else {
+          _showImageViewerPager(image);
+        }
+      },
     );
   }
 
@@ -176,48 +196,66 @@ class _ImageViewPageState extends State<_ImageViewPage> {
           ),
         ],
       ),
-      body: Stack(
+      body: Column(
         children: [
-          EasyImageViewPager(
-            easyImageProvider: _multiImageProvider,
-            pageController: _pageController,
-          ),
-          if (imageCount > 1 && _currentIndex > 0)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: IconButton.filled(
-                  icon: const Icon(Icons.keyboard_arrow_left),
-                  onPressed: () {
-                    final currentPage = _pageController.page?.toInt() ?? 0;
-                    _pageController.animateToPage(
-                      currentPage > 0 ? currentPage - 1 : 0,
-                      duration: _kDuration,
-                      curve: _kCurve,
-                    );
-                  },
-                ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Stack(
+                children: [
+                  EasyImageViewPager(
+                    easyImageProvider: _multiImageProvider,
+                    pageController: _pageController,
+                  ),
+                  if (imageCount > 1 && _currentIndex > 0)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: IconButton.filled(
+                          icon: const Icon(Icons.keyboard_arrow_left),
+                          onPressed: () {
+                            final currentPage =
+                                _pageController.page?.toInt() ?? 0;
+                            _pageController.animateToPage(
+                              currentPage > 0 ? currentPage - 1 : 0,
+                              duration: _kDuration,
+                              curve: _kCurve,
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  if (imageCount > 1 && _currentIndex < imageCount - 1)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: IconButton.filled(
+                          icon: const Icon(Icons.keyboard_arrow_right),
+                          onPressed: () {
+                            final currentPage =
+                                _pageController.page?.toInt() ?? 0;
+                            final lastPage = imageCount - 1;
+                            _pageController.animateToPage(
+                              currentPage < lastPage
+                                  ? currentPage + 1
+                                  : lastPage,
+                              duration: _kDuration,
+                              curve: _kCurve,
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
-          if (imageCount > 1 && _currentIndex < imageCount - 1)
-            Align(
-              alignment: Alignment.centerRight,
-              child: Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: IconButton.filled(
-                  icon: const Icon(Icons.keyboard_arrow_right),
-                  onPressed: () {
-                    final currentPage = _pageController.page?.toInt() ?? 0;
-                    final lastPage = imageCount - 1;
-                    _pageController.animateToPage(
-                      currentPage < lastPage ? currentPage + 1 : lastPage,
-                      duration: _kDuration,
-                      curve: _kCurve,
-                    );
-                  },
-                ),
-              ),
+          ),
+          if (widget.images[_currentIndex].alt.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Text(widget.images[_currentIndex].alt),
             ),
         ],
       ),
