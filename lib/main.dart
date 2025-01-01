@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
@@ -65,6 +66,25 @@ void main() async {
       await windowManager.focus();
     });
   }
+
+  // Roboto (Roboto_regular)
+  //final roboto = GoogleFonts.roboto();
+  // Noto Color Emoji (NotoColorEmoji_regular)
+  //final notoColorEmoji = GoogleFonts.notoColorEmoji();
+  // Noto Serif JP (NotoSansJP_regular)
+  //final notoSansJp = GoogleFonts.notoSansJp();
+
+  LicenseRegistry.addLicense(() async* {
+    yield LicenseEntryWithLineBreaks(['google_fonts/Roboto'],
+        await rootBundle.loadString('assets/google_fonts/Roboto/LICENSE.txt'));
+    yield LicenseEntryWithLineBreaks([
+      'google_fonts/Noto_Sans_JP'
+    ], await rootBundle.loadString('assets/google_fonts/Noto_Sans_JP/OFL.txt'));
+    yield LicenseEntryWithLineBreaks(
+        ['google_fonts/Noto_Color_Emoji'],
+        await rootBundle
+            .loadString('assets/google_fonts/Noto_Color_Emoji/OFL.txt'));
+  });
 
   final database = AppDatabase();
   final model = Model(database: database);
@@ -275,6 +295,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final router = MaterialApp.router(
       theme: ThemeData(
+        textTheme: GoogleFonts.robotoTextTheme().apply(
+          fontFamilyFallback: [
+            GoogleFonts.notoColorEmoji().fontFamily!, // NotoColorEmoji_regular
+            GoogleFonts.notoSansJp().fontFamily!, // NotoSansJP_regular
+          ],
+        ),
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlue),
         useMaterial3: true,
       ),
