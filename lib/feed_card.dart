@@ -49,8 +49,7 @@ class _FeedCardState extends State<FeedCard> {
         mainAxisAlignment: MainAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (feed.reasonRepost && feed.feedAuthorDid != feed.authorDid)
-            _buildRepost(),
+          if (feed.reasonRepost) _buildRepost(),
           if (feed.replyDid.isNotEmpty) _buildReply(widget.feedView),
           SelectionArea(
             child: ListTile(

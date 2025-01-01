@@ -946,7 +946,7 @@ class Model extends ChangeNotifier {
                   havEmbedRecordWithMedia:
                       post.embed is bluesky.UEmbedViewRecordWithMedia,
                   havEmbedVideo: post.embed is bluesky.UEmbedViewVideo,
-                  reasonRepost: true,
+                  reasonRepost: false,
                   post: jsonEncode(feedView.toJson()),
                 ),
                 mode: InsertMode.insertOrIgnore,
