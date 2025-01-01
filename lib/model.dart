@@ -121,6 +121,7 @@ class Model extends ChangeNotifier {
   bool get canPrevSearch => _canPrevSearch;
 
   final Map<VisibleType, VisibleMode> _visible = {
+    VisibleType.plane: VisibleMode.show,
     VisibleType.reply: VisibleMode.show,
     VisibleType.repost: VisibleMode.show,
     VisibleType.linkcard: VisibleMode.show,
@@ -479,6 +480,16 @@ class Model extends ChangeNotifier {
       for (var MapEntry(key: key, value: value) in _visible.entries) {
         if (value == VisibleMode.only) {
           switch (key) {
+            case VisibleType.plane:
+              // repost, quote, linkcard, image, video
+              query.where((tbl) =>
+                  tbl.reasonRepost.equals(false) &
+                  tbl.havEmbedRecord.equals(false) &
+                  tbl.havEmbedRecordWithMedia.equals(false) &
+                  tbl.havEmbedExternal.equals(false) &
+                  tbl.havEmbedImages.equals(false) &
+                  tbl.havEmbedVideo.equals(false));
+              break;
             case VisibleType.reply:
               query.where((tbl) => tbl.replyDid.length.isBiggerThanValue(0));
               break;
@@ -506,6 +517,16 @@ class Model extends ChangeNotifier {
       for (var MapEntry(key: key, value: value) in _visible.entries) {
         if (value == VisibleMode.hide) {
           switch (key) {
+            case VisibleType.plane:
+              // repost, quote, linkcard, image, video
+              query.where((tbl) =>
+                  tbl.reasonRepost.equals(true) |
+                  tbl.havEmbedRecord.equals(true) |
+                  tbl.havEmbedRecordWithMedia.equals(true) |
+                  tbl.havEmbedExternal.equals(true) |
+                  tbl.havEmbedImages.equals(true) |
+                  tbl.havEmbedVideo.equals(true));
+              break;
             case VisibleType.reply:
               query.where((tbl) => tbl.replyDid.equals(''));
               break;
@@ -581,6 +602,15 @@ class Model extends ChangeNotifier {
       for (var MapEntry(key: key, value: value) in _visible.entries) {
         if (value == VisibleMode.only) {
           switch (key) {
+            case VisibleType.plane:
+              // repost, quote, linkcard, image, video
+              query.where(database.posts.reasonRepost.equals(false) &
+                  database.posts.havEmbedRecord.equals(false) &
+                  database.posts.havEmbedRecordWithMedia.equals(false) &
+                  database.posts.havEmbedExternal.equals(false) &
+                  database.posts.havEmbedImages.equals(false) &
+                  database.posts.havEmbedVideo.equals(false));
+              break;
             case VisibleType.reply:
               query.where(database.posts.replyDid.length.isBiggerThanValue(0));
               break;
@@ -607,6 +637,15 @@ class Model extends ChangeNotifier {
       for (var MapEntry(key: key, value: value) in _visible.entries) {
         if (value == VisibleMode.hide) {
           switch (key) {
+            case VisibleType.plane:
+              // repost, quote, linkcard, image, video
+              query.where(database.posts.reasonRepost.equals(true) |
+                  database.posts.havEmbedRecord.equals(true) |
+                  database.posts.havEmbedRecordWithMedia.equals(true) |
+                  database.posts.havEmbedExternal.equals(true) |
+                  database.posts.havEmbedImages.equals(true) |
+                  database.posts.havEmbedVideo.equals(true));
+              break;
             case VisibleType.reply:
               query.where(database.posts.replyDid.equals(''));
               break;
