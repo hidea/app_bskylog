@@ -223,11 +223,14 @@ class _ImageViewPageState extends State<_ImageViewPage> {
           ),
         ],
       ),
+      bottomNavigationBar: widget.images[_currentIndex].alt.isNotEmpty
+          ? BottomAppBar(child: Text(widget.images[_currentIndex].alt))
+          : null,
       body: Column(
         children: [
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(8),
               child: Stack(
                 children: [
                   EasyImageViewPager(
@@ -279,11 +282,6 @@ class _ImageViewPageState extends State<_ImageViewPage> {
               ),
             ),
           ),
-          if (widget.images[_currentIndex].alt.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.all(8),
-              child: Text(widget.images[_currentIndex].alt),
-            ),
         ],
       ),
     );
