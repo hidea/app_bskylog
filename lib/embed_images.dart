@@ -8,10 +8,12 @@ import 'package:flutter/material.dart';
 import 'package:bluesky/bluesky.dart' as bluesky;
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:mime/mime.dart';
+import 'package:provider/provider.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import 'main.dart';
+import 'model.dart';
 
 class EmbedImagesWidget extends StatefulWidget {
   const EmbedImagesWidget(this.embed, {super.key, required this.width});
@@ -26,6 +28,25 @@ class EmbedImagesWidget extends StatefulWidget {
 class _EmbedImagesWidgetState extends State<EmbedImagesWidget> {
   @override
   Widget build(BuildContext context) {
+    if (!context.watch<Model>().visibleImage) {
+      return Row(
+        children: [
+          for (final image in widget.embed.images)
+            SizedBox(
+              width: 24,
+              height: 24,
+              child: IconButton(
+                icon: const Icon(Icons.image),
+                iconSize: 24,
+                padding: EdgeInsets.zero,
+                tooltip: image.alt,
+                onPressed: () => _onTapImage(image),
+              ),
+            ),
+        ],
+      );
+    }
+
     if (widget.embed.images.length == 1) {
       final width = widget.width;
       return _image(widget.embed.images[0], width, width * 9 / 16);
@@ -96,28 +117,34 @@ class _EmbedImagesWidgetState extends State<EmbedImagesWidget> {
             Positioned(
               bottom: 2,
               right: 2,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Text(
-                  'ALT',
-                  style: TextStyle(fontSize: 8, color: Colors.black),
+              child: Tooltip(
+                message: image.alt,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Text(
+                    'ALT',
+                    style: TextStyle(fontSize: 8, color: Colors.black),
+                  ),
                 ),
               ),
             ),
         ],
       ),
-      onTap: () {
-        if (isDesktop) {
-          Navigator.push(context, _imageViewRoute(image));
-        } else {
-          _showImageViewerPager(image);
-        }
-      },
+      onTap: () => _onTapImage(image),
     );
+  }
+
+  void _onTapImage(bluesky.EmbedViewImagesView image) {
+    if (isDesktop) {
+      Navigator.push(context, _imageViewRoute(image));
+    } else {
+      _showImageViewerPager(image);
+    }
   }
 
   void _showImageViewerPager(bluesky.EmbedViewImagesView image) {

@@ -132,6 +132,9 @@ class Model extends ChangeNotifier {
   SortOrder _sortOrder = SortOrder.desc;
   SortOrder get sortOrder => _sortOrder;
 
+  bool _visibleImage = true;
+  bool get visibleImage => _visibleImage;
+
   double _volume = 0.0;
   double get volume => _volume;
 
@@ -210,6 +213,9 @@ class Model extends ChangeNotifier {
     if (json['volume'] != null) {
       _volume = json['volume'];
     }
+    if (json['visibleImage'] != null) {
+      _visibleImage = json['visibleImage'];
+    }
 
     notifyListeners();
   }
@@ -232,6 +238,7 @@ class Model extends ChangeNotifier {
         'lastSync': _lastSync?.toString(),
         'tailCursors': jsonEncode(_tailCursors),
         'volume': _volume,
+        'visibleImage': _visibleImage,
       };
 
   VisibleMode visible(VisibleType type) {
@@ -272,6 +279,12 @@ class Model extends ChangeNotifier {
     _volume = _volume == 0 ? 1 : 0;
     notifyListeners();
     return _volume;
+  }
+
+  void toggleImage() {
+    _visibleImage = !_visibleImage;
+
+    notifyListeners();
   }
 
   void toggleVisibleFilterMenu() {

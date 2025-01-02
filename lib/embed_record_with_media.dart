@@ -24,6 +24,7 @@ class _EmbedRecordWithMediaWidgetState
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         widget.embed.media.when(
           images: (bluesky.EmbedViewImages images) =>

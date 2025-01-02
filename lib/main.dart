@@ -505,6 +505,12 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Divider(),
         ),
         NavigationDrawerDestination(
+          label: const Text('Media'),
+          icon: context.watch<Model>().visibleImage
+              ? const Icon(Icons.image)
+              : const Icon(Icons.image_not_supported),
+        ),
+        NavigationDrawerDestination(
           label: const Text('Sound'),
           icon: context.watch<Model>().volume == 0
               ? const Icon(Icons.volume_off)
@@ -559,6 +565,20 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
+              Column(
+                children: [
+                  IconButton(
+                    onPressed: () => context.read<Model>().toggleImage(),
+                    icon: context.watch<Model>().visibleImage
+                        ? const Icon(Icons.image)
+                        : const Icon(Icons.image_not_supported),
+                  ),
+                  Text('Media',
+                      style: Theme.of(context)
+                          .navigationRailTheme
+                          .selectedLabelTextStyle),
+                ],
+              ),
               Column(
                 children: [
                   IconButton(
