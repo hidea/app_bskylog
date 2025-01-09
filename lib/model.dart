@@ -112,8 +112,6 @@ class Model extends ChangeNotifier {
 
   String? _searchKeyword;
   String? get searchKeyword => _searchKeyword;
-  bool _searchKeywordNotify = false;
-  bool get searchKeywordNotify => _searchKeywordNotify;
 
   bool _canNextSearch = false;
   bool get canNextSearch => _canNextSearch;
@@ -450,13 +448,6 @@ class Model extends ChangeNotifier {
 
   void setSearchKeyword(String keyword) {
     _searchKeyword = keyword;
-    _searchKeywordNotify = true;
-
-    notifyListeners();
-  }
-
-  void clearSearchKeywordNotify() {
-    _searchKeywordNotify = false;
 
     notifyListeners();
   }
