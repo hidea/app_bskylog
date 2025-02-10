@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:bluesky/app_bsky_embed_video.dart';
 import 'package:bskylog/embed_external.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:bluesky/bluesky.dart' as bluesky;
@@ -141,6 +142,13 @@ class _FeedCardState extends State<FeedCard> {
       //facets.sort((a, b) => a.index.byteStart - b.index.byteStart);
 
       for (final facet in facets) {
+        if (facet.index.byteStart < byteCurrent) {
+          if (kDebugMode) {
+            print(
+                'invalid facet: current:$byteCurrent start:${facet.index.byteStart}');
+          }
+          continue;
+        }
         final intro = utf8text.sublist(byteCurrent, facet.index.byteStart);
         spans.add(TextSpan(
             text: utf8.decode(intro), style: TextStyle(color: Colors.black)));
