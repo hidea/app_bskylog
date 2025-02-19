@@ -51,7 +51,7 @@ dependencies:
   path_provider: ^2.1.4
   path: ^1.9.0
   package_info_plus: ^8.1.0
-  intl: ^0.19.0
+  intl: ^0.20.2
   window_manager: ^0.4.3
   animated_tree_view: ^2.3.0
   table_calendar: ^3.1.2
@@ -69,6 +69,7 @@ dependencies:
   media_kit_libs_windows_video: ^1.0.10
   http: ^1.2.2
   google_fonts: ^6.2.1
+  collection: ^1.19.0
   #sqlite3_flutter_libs: ^0.5.26
 
 dependency_overrides:
