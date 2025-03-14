@@ -3,12 +3,14 @@ import 'package:bluesky/app_bsky_embed_video.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 
+import 'database.dart';
 import 'model.dart';
 
 class EmbedVideoWidget extends StatefulWidget {
-  const EmbedVideoWidget(this.embed,
+  const EmbedVideoWidget(this.feed, this.embed,
       {super.key, required this.width, required this.height});
 
+  final Post feed;
   final EmbedVideoView embed;
   final double width;
   final double height;

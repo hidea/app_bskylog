@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bskylog/database.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_image_viewer/easy_image_viewer.dart';
 import 'package:file_picker/file_picker.dart';
@@ -16,8 +17,10 @@ import 'main.dart';
 import 'model.dart';
 
 class EmbedImagesWidget extends StatefulWidget {
-  const EmbedImagesWidget(this.embed, {super.key, required this.width});
+  const EmbedImagesWidget(this.feed, this.embed,
+      {super.key, required this.width});
 
+  final Post feed;
   final bluesky.EmbedViewImages embed;
   final double width;
 

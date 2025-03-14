@@ -759,9 +759,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                 delegate: SliverChildBuilderDelegate(
                                     (BuildContext context, int index) {
                               final feed = posts[index];
-                              final feedView = bluesky.FeedView.fromJson(
-                                  jsonDecode(feed.post));
-                              return FeedCard(feed, feedView);
+                              final post =
+                                  jsonDecode(feed.post) as Map<String, Object?>;
+                              return post.isEmpty
+                                  ? Card(
+                                      child: ListTile(
+                                          title: Center(
+                                              child: Text(
+                                                  'probably repost, deleted post by other.'))))
+                                  : FeedCard(
+                                      feed, bluesky.FeedView.fromJson(post));
                             }, childCount: posts.length));
                           },
                         ),

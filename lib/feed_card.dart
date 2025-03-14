@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:bluesky/app_bsky_embed_video.dart';
 import 'package:bskylog/embed_external.dart';
+import 'package:diff_match_patch/diff_match_patch.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -10,6 +12,7 @@ import 'package:bluesky/bluesky.dart' as bluesky;
 import 'package:provider/provider.dart';
 
 import 'avatar_icon.dart';
+import 'database.dart';
 import 'define.dart';
 import 'embed_record.dart';
 import 'embed_images.dart';
@@ -21,10 +24,14 @@ import 'utils.dart';
 
 final isDesktop = (Platform.isMacOS || Platform.isLinux || Platform.isWindows);
 
+const elapseHalf = 0.5;
+const elapseMin = 30;
+const elapseMax = 60 * 24 * 30;
+
 class FeedCard extends StatefulWidget {
   const FeedCard(this.feed, this.feedView, {super.key});
 
-  final dynamic feed;
+  final Post feed;
   final bluesky.FeedView feedView;
 
   @override
@@ -32,6 +39,89 @@ class FeedCard extends StatefulWidget {
 }
 
 class _FeedCardState extends State<FeedCard> {
+  late Future<bluesky.Posts> _future;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final model = context.read<Model>();
+    final currentActorDid = model.currentActor?.did;
+    final feed = widget.feed;
+    final post = widget.feedView.post;
+
+    // reget post
+    // need currentActor is feed author
+    if (currentActorDid == feed.feedAuthorDid) {
+      // if post author is not feed author (it's repost)
+      //  -> possibility deleted
+      // if hav embed.record, embed.recordWithMedia
+      //  -> possibility deleted, blocked
+      if (feed.reasonRepost ||
+          (feed.havEmbedRecord || feed.havEmbedRecordWithMedia)) {
+        // time elapsed since post indexed, last retrieval
+        final indexedElapse =
+            DateTime.now().difference(feed.indexed.toLocal()).inMinutes;
+        final retrievedElapse =
+            DateTime.now().difference(feed.retrieved).inMinutes;
+
+        if (retrievedElapse * elapseHalf >
+            math.max(math.min(indexedElapse, elapseMax), elapseMin)) {
+          context.read<Model>().getUriPosts([post.uri]).then((posts) {
+            if (feed.reasonRepost) {
+              // (repost) post deleted, post column to empty
+              // otherwize, update retrieved only
+              if (posts.posts.isEmpty) {
+                model.updateFeedOnlyPosts(feed.uri, '{}');
+              } else {
+                model.updateFeedRetrieved(feed.uri);
+              }
+            } else if (feed.havEmbedRecord || feed.havEmbedRecordWithMedia) {
+              // feedAuthorDid's post deleted, embed replace to notFound
+              // otherwize, replace all
+              if (posts.posts.isEmpty) {
+                final recordNotFound = {
+                  "\$type": "app.bsky.embed.record#viewNotFound",
+                  "uri": post.uri.toString(),
+                  "notFound": true,
+                };
+                if (feed.havEmbedRecord) {
+                  // replase embed to recordNotFound
+                  final feedView = widget.feedView.toJson();
+                  feedView['post']['embed'] = {
+                    "\$type": "app.bsky.embed.record#view",
+                    "record": recordNotFound
+                  };
+                  model.updateFeedOnlyPosts(feed.uri, jsonEncode(feedView));
+                } else if (feed.havEmbedRecordWithMedia) {
+                  // replase embed.record.record to recordNotFound
+                  final feedView = widget.feedView.toJson();
+                  feedView['post']['embed']['record']['record'] =
+                      recordNotFound;
+                  model.updateFeedOnlyPosts(feed.uri, jsonEncode(feedView));
+                }
+              } else {
+                // ポスト全部を差し替える
+                if (kDebugMode) {
+                  final original = jsonEncode(post.toJson());
+                  final current = jsonEncode(posts.posts[0].toJson());
+                  final d = diff(original, current);
+                  print('[EUP]replase embed post: $d');
+                }
+                model.updateFeedOnlyPosts(
+                    feed.uri, jsonEncode({"post": posts.posts[0]}));
+              }
+            }
+          }).catchError((e) {
+            if (kDebugMode) {
+              print('reget post error: $e');
+            }
+          });
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final feed = widget.feed;
@@ -92,17 +182,20 @@ class _FeedCardState extends State<FeedCard> {
                     post.embed!.when(
                         record: (bluesky.EmbedViewRecord record) =>
                             EmbedRecordWidget(
+                              widget.feed,
                               record,
                               width: embedWidth,
                               height: embedWidth,
                             ),
                         images: (bluesky.EmbedViewImages images) =>
                             EmbedImagesWidget(
+                              widget.feed,
                               images,
                               width: embedWidth,
                             ),
                         external: (bluesky.EmbedViewExternal external) =>
                             EmbedExternalWidget(
+                              widget.feed,
                               external,
                               width: embedWidth,
                               height: embedWidth * 9 / 16,
@@ -110,11 +203,13 @@ class _FeedCardState extends State<FeedCard> {
                         recordWithMedia: (bluesky.EmbedViewRecordWithMedia
                                 recordWithMedia) =>
                             EmbedRecordWithMediaWidget(
+                              widget.feed,
                               recordWithMedia,
                               width: embedWidth,
                               height: embedWidth,
                             ),
                         video: (EmbedVideoView video) => EmbedVideoWidget(
+                              widget.feed,
                               video,
                               width: embedWidth,
                               height: embedWidth * 9 / 16,
@@ -308,8 +403,14 @@ class _FeedCardState extends State<FeedCard> {
             style: TextButton.styleFrom(
                 padding: EdgeInsets.all(4),
                 visualDensity: VisualDensity(horizontal: -4, vertical: -4)),
-            child: Text(
-                DateFormat('H:mm yyyy-MM-dd').format(post.indexedAt.toLocal())),
+            child: Row(
+              children: [
+                Icon(Icons.open_in_browser, size: 16),
+                SizedBox(width: 4),
+                Text(DateFormat('H:mm yyyy-MM-dd')
+                    .format(post.indexedAt.toLocal())),
+              ],
+            ),
             onPressed: () => launchUrlPlus(postUrl),
           ),
         ),

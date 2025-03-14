@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 
@@ -452,7 +453,7 @@ class Model extends ChangeNotifier {
     notifyListeners();
   }
 
-  SimpleSelectStatement filterSearch() {
+  SimpleSelectStatement<$PostsTable, Post> filterSearch() {
     final query = database.posts.select();
 
     if (_searchYear != null) {
@@ -992,6 +993,7 @@ class Model extends ChangeNotifier {
         final feedAuthorDid = getFeedAuthorDid(feedView);
         final post = feedView.post;
         final repost = feedView.post.viewer.repost;
+        final retrieved = DateTime.now();
 
         // if repost of own post
         if (repost != null && post.author.did == feedAuthorDid) {
@@ -1009,6 +1011,7 @@ class Model extends ChangeNotifier {
                       post.embed is bluesky.UEmbedViewRecordWithMedia,
                   havEmbedVideo: post.embed is bluesky.UEmbedViewVideo,
                   reasonRepost: false,
+                  retrieved: Value(retrieved),
                   post: jsonEncode(feedView.toJson()),
                 ),
                 mode: InsertMode.insertOrIgnore,
@@ -1030,6 +1033,7 @@ class Model extends ChangeNotifier {
                     post.embed is bluesky.UEmbedViewRecordWithMedia,
                 havEmbedVideo: post.embed is bluesky.UEmbedViewVideo,
                 reasonRepost: repost != null,
+                retrieved: Value(retrieved),
                 post: jsonEncode(feedView.toJson()),
               ),
               mode: InsertMode.insertOrIgnore,
@@ -1060,6 +1064,17 @@ class Model extends ChangeNotifier {
     }
 
     return cursor;
+  }
+
+  Future updateFeedOnlyPosts(String uri, String posts) async {
+    await (database.update(database.posts)..where((tbl) => tbl.uri.equals(uri)))
+        .write(PostsCompanion(
+            post: Value(posts), retrieved: Value(DateTime.now())));
+  }
+
+  Future updateFeedRetrieved(String uri) async {
+    await (database.update(database.posts)..where((tbl) => tbl.uri.equals(uri)))
+        .write(PostsCompanion(retrieved: Value(DateTime.now())));
   }
 
   static String getFeedAuthorDid(bluesky.FeedView feedView) {
@@ -1101,6 +1116,67 @@ class Model extends ChangeNotifier {
     } catch (e) {
       if (kDebugMode) {
         print(e.toString());
+      }
+      rethrow;
+    }
+  }
+
+  final _postsCache = Queue<bluesky.Post>();
+
+  Future<bluesky.Posts> getPosts(List<String> uriStrings) async {
+    final uris = uriStrings.map((uri) => bluesky_core.AtUri(uri)).toList();
+    return getUriPosts(uris);
+  }
+
+  Future<bluesky.Posts> getUriPosts(List<bluesky_core.AtUri> uris) async {
+    final cachedPosts = <bluesky.Post>[];
+    final missingUris = <bluesky_core.AtUri>[];
+
+    for (final uri in uris) {
+      final cachedPost = null;
+      //_postsCache.firstWhereOrNull((post) => post.uri == uri);
+      if (cachedPost != null) {
+        cachedPosts.add(cachedPost);
+      } else {
+        missingUris.add(uri);
+      }
+    }
+
+    try {
+      if (missingUris.isNotEmpty) {
+        final bsky = await getBluesky(currentActor!);
+        final response = await bsky.feed.getPosts(uris: missingUris);
+
+        for (final post in response.data.posts) {
+          _postsCache.add(post);
+          if (_postsCache.length > 256) {
+            _postsCache.removeFirst();
+          }
+        }
+        cachedPosts.addAll(response.data.posts);
+
+        if (kDebugMode) {
+          print('response ${response}');
+        }
+      }
+
+      if (kDebugMode) {
+        print('missingUris ${missingUris}');
+      }
+
+      return bluesky.Posts(posts: cachedPosts);
+    } on xrpc.XRPCException catch (e) {
+      final status = e.response.status;
+
+      if (kDebugMode) {
+        print('${status.code} ${status.message}');
+        print(e.response.request.toString());
+        print(e.response.data.toJson());
+      }
+      rethrow;
+    } catch (e) {
+      if (kDebugMode) {
+        print(e);
       }
       rethrow;
     }
