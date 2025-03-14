@@ -308,7 +308,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         textTheme: GoogleFonts.robotoTextTheme().apply(
           fontFamilyFallback: [
-            GoogleFonts.notoColorEmoji().fontFamily!, // NotoColorEmoji_regular
+            //GoogleFonts.notoColorEmoji().fontFamily!, // NotoColorEmoji_regular
             GoogleFonts.notoSansJp().fontFamily!, // NotoSansJP_regular
           ],
         ),

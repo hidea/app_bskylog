@@ -39,7 +39,7 @@ class FeedCard extends StatefulWidget {
 }
 
 class _FeedCardState extends State<FeedCard> {
-  late Future<bluesky.Posts> _future;
+  //late Future<bluesky.Posts> _future;
 
   @override
   void initState() {
