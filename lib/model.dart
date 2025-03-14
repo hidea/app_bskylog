@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 
@@ -96,7 +97,7 @@ class Model extends ChangeNotifier {
 
   DateTime? _lastSync;
   DateTime? get lastSync => _lastSync;
-  String? _tailCursor;
+  Map<String, String?> _tailCursors = {};
 
   bool _visibleFilterMenu = true;
   bool get visibleFilterMenu => _visibleFilterMenu;
@@ -109,6 +110,7 @@ class Model extends ChangeNotifier {
   int? get searchDay => _searchDay;
   bool _regExpSearch = false;
   bool get regExpSearch => _regExpSearch;
+
   String? _searchKeyword;
   String? get searchKeyword => _searchKeyword;
 
@@ -118,6 +120,7 @@ class Model extends ChangeNotifier {
   bool get canPrevSearch => _canPrevSearch;
 
   final Map<VisibleType, VisibleMode> _visible = {
+    VisibleType.plane: VisibleMode.show,
     VisibleType.reply: VisibleMode.show,
     VisibleType.repost: VisibleMode.show,
     VisibleType.linkcard: VisibleMode.show,
@@ -127,6 +130,9 @@ class Model extends ChangeNotifier {
 
   SortOrder _sortOrder = SortOrder.desc;
   SortOrder get sortOrder => _sortOrder;
+
+  bool _visibleImage = true;
+  bool get visibleImage => _visibleImage;
 
   double _volume = 0.0;
   double get volume => _volume;
@@ -143,7 +149,7 @@ class Model extends ChangeNotifier {
   TreeNode get rootTree => _rootTree;
 
   Future updateSharedPrefrences() async {
-    final data = json.encode(toJson());
+    final data = jsonEncode(toJson());
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('settings', data);
   }
@@ -157,7 +163,7 @@ class Model extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     var data = prefs.getString('settings');
     if (data != null) {
-      fromJson(json.decode(data));
+      fromJson(jsonDecode(data));
 
       if (kDebugMode) {
         print(_currentActor?.session?.toJson());
@@ -191,16 +197,23 @@ class Model extends ChangeNotifier {
         _lastSync = null;
       }
     }
-    if (json['tailCursor'] != null) {
-      _tailCursor = json['tailCursor'];
+    if (json['tailCursors'] != null) {
+      final tails = jsonDecode(json['tailCursors']);
+      if (tails is Map) {
+        final Map<String, String?> castedMap = {};
+        tails.forEach((k, v) {
+          castedMap[k.toString()] = v as String?;
+        });
+        _tailCursors = castedMap;
+      }
+    } else if (json['tailCursor'] != null && _currentActor != null) {
+      _tailCursors[_currentActor!.did] = json['tailCursor'];
     }
     if (json['volume'] != null) {
       _volume = json['volume'];
     }
-
-    if (kDebugMode) {
-      print(_lastSync);
-      print(_tailCursor);
+    if (json['visibleImage'] != null) {
+      _visibleImage = json['visibleImage'];
     }
 
     notifyListeners();
@@ -222,8 +235,9 @@ class Model extends ChangeNotifier {
         'sortOrder': _sortOrder.toString(),
         'actor': _currentActor?.toJson(),
         'lastSync': _lastSync?.toString(),
-        'tailCursor': _tailCursor,
+        'tailCursors': jsonEncode(_tailCursors),
         'volume': _volume,
+        'visibleImage': _visibleImage,
       };
 
   VisibleMode visible(VisibleType type) {
@@ -264,6 +278,12 @@ class Model extends ChangeNotifier {
     _volume = _volume == 0 ? 1 : 0;
     notifyListeners();
     return _volume;
+  }
+
+  void toggleImage() {
+    _visibleImage = !_visibleImage;
+
+    notifyListeners();
   }
 
   void toggleVisibleFilterMenu() {
@@ -433,7 +453,7 @@ class Model extends ChangeNotifier {
     notifyListeners();
   }
 
-  SimpleSelectStatement filterSearch() {
+  SimpleSelectStatement<$PostsTable, Post> filterSearch() {
     final query = database.posts.select();
 
     if (_searchYear != null) {
@@ -469,6 +489,16 @@ class Model extends ChangeNotifier {
       for (var MapEntry(key: key, value: value) in _visible.entries) {
         if (value == VisibleMode.only) {
           switch (key) {
+            case VisibleType.plane:
+              // repost, quote, linkcard, image, video
+              query.where((tbl) =>
+                  tbl.reasonRepost.equals(false) &
+                  tbl.havEmbedRecord.equals(false) &
+                  tbl.havEmbedRecordWithMedia.equals(false) &
+                  tbl.havEmbedExternal.equals(false) &
+                  tbl.havEmbedImages.equals(false) &
+                  tbl.havEmbedVideo.equals(false));
+              break;
             case VisibleType.reply:
               query.where((tbl) => tbl.replyDid.length.isBiggerThanValue(0));
               break;
@@ -496,6 +526,16 @@ class Model extends ChangeNotifier {
       for (var MapEntry(key: key, value: value) in _visible.entries) {
         if (value == VisibleMode.hide) {
           switch (key) {
+            case VisibleType.plane:
+              // repost, quote, linkcard, image, video
+              query.where((tbl) =>
+                  tbl.reasonRepost.equals(true) |
+                  tbl.havEmbedRecord.equals(true) |
+                  tbl.havEmbedRecordWithMedia.equals(true) |
+                  tbl.havEmbedExternal.equals(true) |
+                  tbl.havEmbedImages.equals(true) |
+                  tbl.havEmbedVideo.equals(true));
+              break;
             case VisibleType.reply:
               query.where((tbl) => tbl.replyDid.equals(''));
               break;
@@ -571,6 +611,15 @@ class Model extends ChangeNotifier {
       for (var MapEntry(key: key, value: value) in _visible.entries) {
         if (value == VisibleMode.only) {
           switch (key) {
+            case VisibleType.plane:
+              // repost, quote, linkcard, image, video
+              query.where(database.posts.reasonRepost.equals(false) &
+                  database.posts.havEmbedRecord.equals(false) &
+                  database.posts.havEmbedRecordWithMedia.equals(false) &
+                  database.posts.havEmbedExternal.equals(false) &
+                  database.posts.havEmbedImages.equals(false) &
+                  database.posts.havEmbedVideo.equals(false));
+              break;
             case VisibleType.reply:
               query.where(database.posts.replyDid.length.isBiggerThanValue(0));
               break;
@@ -597,6 +646,15 @@ class Model extends ChangeNotifier {
       for (var MapEntry(key: key, value: value) in _visible.entries) {
         if (value == VisibleMode.hide) {
           switch (key) {
+            case VisibleType.plane:
+              // repost, quote, linkcard, image, video
+              query.where(database.posts.reasonRepost.equals(true) |
+                  database.posts.havEmbedRecord.equals(true) |
+                  database.posts.havEmbedRecordWithMedia.equals(true) |
+                  database.posts.havEmbedExternal.equals(true) |
+                  database.posts.havEmbedImages.equals(true) |
+                  database.posts.havEmbedVideo.equals(true));
+              break;
             case VisibleType.reply:
               query.where(database.posts.replyDid.equals(''));
               break;
@@ -703,7 +761,7 @@ class Model extends ChangeNotifier {
   Future fetchReleases() async {
     final response = await http.get(Uri.parse(Define.githubReleasesApi));
     if (response.statusCode == 200) {
-      List<dynamic> releases = json.decode(response.body);
+      List<dynamic> releases = jsonDecode(response.body);
       for (var release in releases) {
         _githubReleaseVersion = release['name'];
         if (kDebugMode) {
@@ -861,20 +919,25 @@ class Model extends ChangeNotifier {
   }
 
   Future syncFeed() async {
+    if (_currentActor == null) {
+      return;
+    }
     _lastSync = DateTime.now();
 
     // sync old posts
+    var cursor = _tailCursors[_currentActor!.did];
     do {
-      _tailCursor = await getFeed(cursor: _tailCursor);
+      cursor = await getFeed(cursor: cursor);
+      _tailCursors[_currentActor!.did] = cursor;
 
       if (kDebugMode) {
-        print('getFeed $_tailCursor');
+        print('getFeed $cursor');
       }
 
       updateSharedPrefrences();
       countDatePosts();
       notifyListeners();
-    } while (_tailCursor != null && _tailCursor!.isNotEmpty);
+    } while (cursor != null && cursor.isNotEmpty);
 
     if (kDebugMode) {
       print('syncFeed done');
@@ -886,7 +949,7 @@ class Model extends ChangeNotifier {
     _rootTree.clear();
 
     _lastSync = null;
-    _tailCursor = null;
+    _tailCursors.clear();
 
     updateSharedPrefrences();
     countDatePosts();
@@ -927,16 +990,42 @@ class Model extends ChangeNotifier {
       final before = await query.map((row) => row.read(itemCount)).getSingle();
 
       for (var feedView in feedData.feed) {
+        final feedAuthorDid = getFeedAuthorDid(feedView);
         final post = feedView.post;
         final repost = feedView.post.viewer.repost;
+        final retrieved = DateTime.now();
 
+        // if repost of own post
+        if (repost != null && post.author.did == feedAuthorDid) {
+          await database.into(database.posts).insert(
+                PostsCompanion.insert(
+                  uri: post.uri.toString(),
+                  feedAuthorDid: Value(feedAuthorDid),
+                  authorDid: feedAuthorDid,
+                  indexed: post.indexedAt,
+                  replyDid: getFeedReplyDid(feedView), // who's reply
+                  havEmbedImages: post.embed is bluesky.UEmbedViewImages,
+                  havEmbedExternal: post.embed is bluesky.UEmbedViewExternal,
+                  havEmbedRecord: post.embed is bluesky.UEmbedViewRecord,
+                  havEmbedRecordWithMedia:
+                      post.embed is bluesky.UEmbedViewRecordWithMedia,
+                  havEmbedVideo: post.embed is bluesky.UEmbedViewVideo,
+                  reasonRepost: false,
+                  retrieved: Value(retrieved),
+                  post: jsonEncode(feedView.toJson()),
+                ),
+                mode: InsertMode.insertOrIgnore,
+              );
+        }
         await database.into(database.posts).insert(
               PostsCompanion.insert(
-                uri: repost != null ? repost.toString() : post.uri.toString(),
-                feedAuthorDid: Value(getFeedAuthorDid(feedView)),
+                uri: repost != null
+                    ? repost.toString()
+                    : post.uri.toString(), // repost or
+                feedAuthorDid: Value(feedAuthorDid), // repost or
                 authorDid: post.author.did,
-                indexed: getFeedIndexed(feedView),
-                replyDid: getFeedReplyDid(feedView),
+                indexed: getFeedIndexed(feedView), // repost or
+                replyDid: getFeedReplyDid(feedView), // who's reply
                 havEmbedImages: post.embed is bluesky.UEmbedViewImages,
                 havEmbedExternal: post.embed is bluesky.UEmbedViewExternal,
                 havEmbedRecord: post.embed is bluesky.UEmbedViewRecord,
@@ -944,6 +1033,7 @@ class Model extends ChangeNotifier {
                     post.embed is bluesky.UEmbedViewRecordWithMedia,
                 havEmbedVideo: post.embed is bluesky.UEmbedViewVideo,
                 reasonRepost: repost != null,
+                retrieved: Value(retrieved),
                 post: jsonEncode(feedView.toJson()),
               ),
               mode: InsertMode.insertOrIgnore,
@@ -974,6 +1064,17 @@ class Model extends ChangeNotifier {
     }
 
     return cursor;
+  }
+
+  Future updateFeedOnlyPosts(String uri, String posts) async {
+    await (database.update(database.posts)..where((tbl) => tbl.uri.equals(uri)))
+        .write(PostsCompanion(
+            post: Value(posts), retrieved: Value(DateTime.now())));
+  }
+
+  Future updateFeedRetrieved(String uri) async {
+    await (database.update(database.posts)..where((tbl) => tbl.uri.equals(uri)))
+        .write(PostsCompanion(retrieved: Value(DateTime.now())));
   }
 
   static String getFeedAuthorDid(bluesky.FeedView feedView) {
@@ -1015,6 +1116,67 @@ class Model extends ChangeNotifier {
     } catch (e) {
       if (kDebugMode) {
         print(e.toString());
+      }
+      rethrow;
+    }
+  }
+
+  final _postsCache = Queue<bluesky.Post>();
+
+  Future<bluesky.Posts> getPosts(List<String> uriStrings) async {
+    final uris = uriStrings.map((uri) => bluesky_core.AtUri(uri)).toList();
+    return getUriPosts(uris);
+  }
+
+  Future<bluesky.Posts> getUriPosts(List<bluesky_core.AtUri> uris) async {
+    final cachedPosts = <bluesky.Post>[];
+    final missingUris = <bluesky_core.AtUri>[];
+
+    for (final uri in uris) {
+      final cachedPost = null;
+      //_postsCache.firstWhereOrNull((post) => post.uri == uri);
+      if (cachedPost != null) {
+        cachedPosts.add(cachedPost);
+      } else {
+        missingUris.add(uri);
+      }
+    }
+
+    try {
+      if (missingUris.isNotEmpty) {
+        final bsky = await getBluesky(currentActor!);
+        final response = await bsky.feed.getPosts(uris: missingUris);
+
+        for (final post in response.data.posts) {
+          _postsCache.add(post);
+          if (_postsCache.length > 256) {
+            _postsCache.removeFirst();
+          }
+        }
+        cachedPosts.addAll(response.data.posts);
+
+        if (kDebugMode) {
+          print('response ${response}');
+        }
+      }
+
+      if (kDebugMode) {
+        print('missingUris ${missingUris}');
+      }
+
+      return bluesky.Posts(posts: cachedPosts);
+    } on xrpc.XRPCException catch (e) {
+      final status = e.response.status;
+
+      if (kDebugMode) {
+        print('${status.code} ${status.message}');
+        print(e.response.request.toString());
+        print(e.response.data.toJson());
+      }
+      rethrow;
+    } catch (e) {
+      if (kDebugMode) {
+        print(e);
       }
       rethrow;
     }

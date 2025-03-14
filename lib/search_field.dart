@@ -21,21 +21,16 @@ class SearchField extends StatefulWidget {
 class _SearchFieldState extends State<SearchField> {
   final _editController = TextEditingController();
   //TextEditingValue? _lastValue;
-
-  @override
-  void initState() {
-    super.initState();
-
-    final model = context.read<Model>();
-    model.addListener(() {
-      if (_editController.text != model.searchKeyword) {
-        _editController.text = model.searchKeyword ?? '';
-      }
-    });
-  }
+  String? _lastSearchKeyword;
 
   @override
   Widget build(BuildContext context) {
+    final lastSearchKeyword = context.watch<Model>().searchKeyword ?? '';
+    if (lastSearchKeyword != _lastSearchKeyword) {
+      _editController.text = lastSearchKeyword;
+      _lastSearchKeyword = lastSearchKeyword;
+    }
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [

@@ -39,6 +39,23 @@ class AboutScreen extends StatelessWidget {
                         ? '\n(New release available)'
                         : ''),
                 link: 'https://github.com/hidea/app_bskylog/releases'),
+            _buildCard(
+              context,
+              color: Colors.teal,
+              icon: Icons.library_books,
+              title: 'Licenses',
+              description: 'Show licenses for software used.',
+              onPressed: (context) => showLicensePage(
+                context: context,
+                applicationName: context.read<Model>().packageInfo!.appName,
+                applicationVersion: context.read<Model>().packageInfo!.version,
+                applicationIcon: Image.asset(
+                  'assets/icon/icon-1024x1024.png',
+                  width: 128,
+                  height: 128,
+                ),
+              ),
+            ),
             _buildCard(context,
                 color: Colors.purple, title: 'My other product.'),
             _buildCard(
@@ -82,12 +99,15 @@ class AboutScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCard(BuildContext context,
-      {Color color = Colors.grey,
-      IconData? icon,
-      String? title,
-      String? description,
-      String? link}) {
+  Widget _buildCard(
+    BuildContext context, {
+    Color color = Colors.grey,
+    IconData? icon,
+    String? title,
+    String? description,
+    String? link,
+    dynamic Function(BuildContext)? onPressed,
+  }) {
     return Card.outlined(
       color:
           ColorScheme.fromSeed(seedColor: color, brightness: Brightness.light)
@@ -102,7 +122,11 @@ class AboutScreen extends StatelessWidget {
             ? () {
                 launchUrlString(link);
               }
-            : null,
+            : onPressed != null
+                ? () {
+                    onPressed(context);
+                  }
+                : null,
         child: ListTile(
           titleAlignment: ListTileTitleAlignment.top,
           leading: icon != null ? Icon(icon) : null,

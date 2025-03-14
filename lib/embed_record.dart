@@ -12,6 +12,7 @@ import 'package:bskylog/utils.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'avatar_icon.dart';
+import 'database.dart';
 import 'define.dart';
 import 'embed_external.dart';
 import 'embed_images.dart';
@@ -21,9 +22,10 @@ import 'model.dart';
 import 'tooltip_span.dart';
 
 class EmbedRecordWidget extends StatefulWidget {
-  const EmbedRecordWidget(this.embed,
+  const EmbedRecordWidget(this.feed, this.embed,
       {super.key, required this.width, required this.height});
 
+  final Post feed;
   final bluesky.EmbedViewRecord embed;
   final double width;
   final double height;
@@ -56,8 +58,8 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
                 contentPadding: const EdgeInsets.only(left: 16.0, right: 12.0),
                 titleAlignment: ListTileTitleAlignment.top,
                 leading: AvatarIcon(avatar: author.avatar, size: 12),
-                title: RichText(
-                  text: TextSpan(
+                title: Text.rich(
+                  TextSpan(
                       text: displayName,
                       style: TextStyle(
                           fontSize:
@@ -70,7 +72,7 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
                           style: TextStyle(
                               fontSize: Theme.of(context)
                                   .textTheme
-                                  .bodySmall!
+                                  .titleSmall!
                                   .fontSize,
                               color: Colors.black54),
                         ),
@@ -92,17 +94,20 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
                         embed.when(
                           record: (bluesky.EmbedViewRecord record) =>
                               EmbedRecordWidget(
+                            widget.feed,
                             record,
                             width: embedWidth,
                             height: embedWidth,
                           ),
                           images: (bluesky.EmbedViewImages images) =>
                               EmbedImagesWidget(
+                            widget.feed,
                             images,
                             width: embedWidth,
                           ),
                           external: (bluesky.EmbedViewExternal external) =>
                               EmbedExternalWidget(
+                            widget.feed,
                             external,
                             width: embedWidth,
                             height: embedWidth * 9 / 16,
@@ -110,11 +115,13 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
                           recordWithMedia: (bluesky.EmbedViewRecordWithMedia
                                   recordWithMedia) =>
                               EmbedRecordWithMediaWidget(
+                            widget.feed,
                             recordWithMedia,
                             width: embedWidth,
                             height: embedWidth,
                           ),
                           video: (EmbedVideoView video) => EmbedVideoWidget(
+                            widget.feed,
                             video,
                             width: embedWidth,
                             height: embedWidth * 9 / 16,
@@ -319,7 +326,11 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
             mention: (mention) {
               spans.add(TooltipSpan(
                   child: InkWell(
-                    child: Text(bodyText, style: TextStyle(color: Colors.blue)),
+                    child: Text(
+                      bodyText,
+                      style: TextStyle(color: Colors.blue),
+                      textScaler: TextScaler.linear(1.0),
+                    ),
                     onTap: () => _tapMention(mention),
                   ),
                   tooltip: 'Search mention'));
@@ -327,7 +338,11 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
             link: (link) {
               spans.add(TooltipSpan(
                   child: InkWell(
-                    child: Text(bodyText, style: TextStyle(color: Colors.blue)),
+                    child: Text(
+                      bodyText,
+                      style: TextStyle(color: Colors.blue),
+                      textScaler: TextScaler.linear(1.0),
+                    ),
                     onTap: () => _tapLink(link),
                   ),
                   tooltip: 'View link'));
@@ -335,7 +350,11 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
             tag: (tag) {
               spans.add(TooltipSpan(
                   child: InkWell(
-                    child: Text(bodyText, style: TextStyle(color: Colors.blue)),
+                    child: Text(
+                      bodyText,
+                      style: TextStyle(color: Colors.blue),
+                      textScaler: TextScaler.linear(1.0),
+                    ),
                     onTap: () => _tapTag(tag),
                   ),
                   tooltip: 'Search hashtag'));
@@ -387,8 +406,14 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
             style: TextButton.styleFrom(
                 padding: EdgeInsets.all(4),
                 visualDensity: VisualDensity(horizontal: -4, vertical: -4)),
-            child: Text(
-                DateFormat('H:mm yyyy-MM-dd').format(post.indexedAt.toLocal())),
+            child: Row(
+              children: [
+                Icon(Icons.open_in_browser, size: 16),
+                SizedBox(width: 4),
+                Text(DateFormat('H:mm yyyy-MM-dd')
+                    .format(post.indexedAt.toLocal())),
+              ],
+            ),
             onPressed: () => launchUrlPlus(postUrl),
           ),
         ),

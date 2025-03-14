@@ -1,15 +1,16 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:bluesky/app_bsky_embed_video.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 
+import 'database.dart';
 import 'model.dart';
 
 class EmbedVideoWidget extends StatefulWidget {
-  const EmbedVideoWidget(this.embed,
+  const EmbedVideoWidget(this.feed, this.embed,
       {super.key, required this.width, required this.height});
 
+  final Post feed;
   final EmbedVideoView embed;
   final double width;
   final double height;
@@ -41,6 +42,20 @@ class _EmbedVideoWidgetState extends State<EmbedVideoWidget> {
 
   @override
   Widget build(BuildContext context) {
+    if (!context.watch<Model>().visibleImage) {
+      return SizedBox(
+        width: 24,
+        height: 24,
+        child: IconButton(
+          icon: const Icon(Icons.video_collection),
+          iconSize: 24,
+          padding: EdgeInsets.zero,
+          tooltip: widget.embed.alt,
+          onPressed: () {},
+        ),
+      );
+    }
+
     return _controller.value.isInitialized
         ? Container(
             constraints: BoxConstraints(

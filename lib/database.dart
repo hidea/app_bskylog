@@ -28,6 +28,8 @@ class Posts extends Table {
   BoolColumn get havEmbedVideo => boolean()(); // video
   BoolColumn get reasonRepost => boolean()(); // repost
   TextColumn get post => text()(); // Post
+  DateTimeColumn get retrieved => dateTime()
+      .withDefault(Constant(DateTime(2024, 1, 1)))(); // last retrieved DateTime
 }
 
 @DriftDatabase(tables: [Posts])
@@ -40,11 +42,18 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onUpgrade: stepByStep(
+          from2To3: (Migrator m, Schema3 schema) async {
+            _model?.setMigrationState('Database migration');
+
+            await m.addColumn(schema.posts, schema.posts.retrieved);
+
+            _model?.setMigrationState(null);
+          },
           from1To2: (Migrator m, Schema2 schema) async {
             _model?.setMigrationState('Database migration');
 

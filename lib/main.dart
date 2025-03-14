@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
@@ -66,12 +67,42 @@ void main() async {
     });
   }
 
+  // Roboto (Roboto_regular)
+  //final roboto = GoogleFonts.roboto();
+  // Noto Color Emoji (NotoColorEmoji_regular)
+  //final notoColorEmoji = GoogleFonts.notoColorEmoji();
+  // Noto Serif JP (NotoSansJP_regular)
+  //final notoSansJp = GoogleFonts.notoSansJp();
+
+  //PaintingBinding.instance.systemFonts.addListener(() {
+  //  if (kDebugMode) {
+  //    print('System fonts changed');
+  //  }
+  //});
+
+  LicenseRegistry.addLicense(() async* {
+    yield LicenseEntryWithLineBreaks(['google_fonts/Roboto'],
+        await rootBundle.loadString('assets/google_fonts/Roboto/LICENSE.txt'));
+    yield LicenseEntryWithLineBreaks([
+      'google_fonts/Noto_Sans_JP'
+    ], await rootBundle.loadString('assets/google_fonts/Noto_Sans_JP/OFL.txt'));
+    yield LicenseEntryWithLineBreaks(
+        ['google_fonts/Noto_Color_Emoji'],
+        await rootBundle
+            .loadString('assets/google_fonts/Noto_Color_Emoji/OFL.txt'));
+  });
+
   final database = AppDatabase();
   final model = Model(database: database);
   database.setModel(model);
   await model.syncDataWithProvider();
 
-  runApp(ChangeNotifierProvider(create: (_) => model, child: const MyApp()));
+  runApp(
+    MultiProvider(
+      providers: [ChangeNotifierProvider(create: (_) => model)],
+      child: const MyApp(),
+    ),
+  );
 }
 
 _menuRevealInFolder(BuildContext context) async {
@@ -275,6 +306,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final router = MaterialApp.router(
       theme: ThemeData(
+        textTheme: GoogleFonts.robotoTextTheme().apply(
+          fontFamilyFallback: [
+            //GoogleFonts.notoColorEmoji().fontFamily!, // NotoColorEmoji_regular
+            GoogleFonts.notoSansJp().fontFamily!, // NotoSansJP_regular
+          ],
+        ),
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlue),
         useMaterial3: true,
       ),
@@ -468,6 +505,12 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Divider(),
         ),
         NavigationDrawerDestination(
+          label: const Text('Media'),
+          icon: context.watch<Model>().visibleImage
+              ? const Icon(Icons.image)
+              : const Icon(Icons.image_not_supported),
+        ),
+        NavigationDrawerDestination(
           label: const Text('Sound'),
           icon: context.watch<Model>().volume == 0
               ? const Icon(Icons.volume_off)
@@ -522,6 +565,20 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
+              Column(
+                children: [
+                  IconButton(
+                    onPressed: () => context.read<Model>().toggleImage(),
+                    icon: context.watch<Model>().visibleImage
+                        ? const Icon(Icons.image)
+                        : const Icon(Icons.image_not_supported),
+                  ),
+                  Text('Media',
+                      style: Theme.of(context)
+                          .navigationRailTheme
+                          .selectedLabelTextStyle),
+                ],
+              ),
               Column(
                 children: [
                   IconButton(
@@ -702,9 +759,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                 delegate: SliverChildBuilderDelegate(
                                     (BuildContext context, int index) {
                               final feed = posts[index];
-                              final feedView = bluesky.FeedView.fromJson(
-                                  jsonDecode(feed.post));
-                              return FeedCard(feed, feedView);
+                              final post =
+                                  jsonDecode(feed.post) as Map<String, Object?>;
+                              return post.isEmpty
+                                  ? Card(
+                                      child: ListTile(
+                                          title: Center(
+                                              child: Text(
+                                                  'probably repost, deleted post by other.'))))
+                                  : FeedCard(
+                                      feed, bluesky.FeedView.fromJson(post));
                             }, childCount: posts.length));
                           },
                         ),

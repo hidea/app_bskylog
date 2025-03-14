@@ -139,7 +139,7 @@ SPEC CHECKSUMS:
   device_info_plus: 97af1d7e84681a90d0693e63169a5d50e0839a0d
   DKImagePickerController: 946cec48c7873164274ecc4624d19e3da4c1ef3c
   DKPhotoGallery: b3834fecb755ee09a593d7c9e389d8b5d6deed60
-  file_picker: d501d290f7e4495a00a6ac7e2519e51c9d6ec5d4
+  file_picker: 41ba05caf092cb827be6191f8e92f490260cf84f
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   irondash_engine_context: 3458bf979b90d616ffb8ae03a150bafe2e860cc9
   media_kit_native_event_loop: f1ee9f941ec0af371b245969a3e010901c375480
@@ -156,8 +156,8 @@ SPEC CHECKSUMS:
   url_launcher_ios: 5334b05cef931de560670eeae103fd3e431ac3fe
   video_player_avfoundation: 7c6c11d8470e1675df7397027218274b6d2360b3
   volume_controller: 531ddf792994285c9b17f9d8a7e4dcdd29b3eae9
-  wakelock_plus: 78ec7c5b202cab7761af8e2b2b3d0671be6c4ae1
+  wakelock_plus: 373cfe59b235a6dd5837d0fb88791d2f13a90d56
 
 PODFILE CHECKSUM: 5c64f470b04ee16e0d78fbcc7d0da5aa90c1baf3
 
-COCOAPODS: 1.15.2
+COCOAPODS: 1.16.2

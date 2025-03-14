@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bskylog/database.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_image_viewer/easy_image_viewer.dart';
 import 'package:file_picker/file_picker.dart';
@@ -8,14 +9,18 @@ import 'package:flutter/material.dart';
 import 'package:bluesky/bluesky.dart' as bluesky;
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:mime/mime.dart';
+import 'package:provider/provider.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import 'main.dart';
+import 'model.dart';
 
 class EmbedImagesWidget extends StatefulWidget {
-  const EmbedImagesWidget(this.embed, {super.key, required this.width});
+  const EmbedImagesWidget(this.feed, this.embed,
+      {super.key, required this.width});
 
+  final Post feed;
   final bluesky.EmbedViewImages embed;
   final double width;
 
@@ -26,6 +31,25 @@ class EmbedImagesWidget extends StatefulWidget {
 class _EmbedImagesWidgetState extends State<EmbedImagesWidget> {
   @override
   Widget build(BuildContext context) {
+    if (!context.watch<Model>().visibleImage) {
+      return Row(
+        children: [
+          for (final image in widget.embed.images)
+            SizedBox(
+              width: 24,
+              height: 24,
+              child: IconButton(
+                icon: const Icon(Icons.image),
+                iconSize: 24,
+                padding: EdgeInsets.zero,
+                tooltip: image.alt,
+                onPressed: () => _onTapImage(image),
+              ),
+            ),
+        ],
+      );
+    }
+
     if (widget.embed.images.length == 1) {
       final width = widget.width;
       return _image(widget.embed.images[0], width, width * 9 / 16);
@@ -81,23 +105,49 @@ class _EmbedImagesWidgetState extends State<EmbedImagesWidget> {
 
   Widget _image(
       bluesky.EmbedViewImagesView image, double width, double height) {
-    return SizedBox(
-      width: width,
-      height: height,
-      child: InkWell(
-        child: CachedNetworkImage(
-          imageUrl: image.thumbnail,
-          fit: BoxFit.cover,
-        ),
-        onTap: () {
-          if (isDesktop) {
-            Navigator.push(context, _imageViewRoute(image));
-          } else {
-            _showImageViewerPager(image);
-          }
-        },
+    return InkWell(
+      child: Stack(
+        children: [
+          SizedBox(
+            width: width,
+            height: height,
+            child: CachedNetworkImage(
+              imageUrl: image.thumbnail,
+              fit: BoxFit.cover,
+            ),
+          ),
+          if (image.alt.isNotEmpty)
+            Positioned(
+              bottom: 2,
+              right: 2,
+              child: Tooltip(
+                message: image.alt,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Text(
+                    'ALT',
+                    style: TextStyle(fontSize: 8, color: Colors.black),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
+      onTap: () => _onTapImage(image),
     );
+  }
+
+  void _onTapImage(bluesky.EmbedViewImagesView image) {
+    if (isDesktop) {
+      Navigator.push(context, _imageViewRoute(image));
+    } else {
+      _showImageViewerPager(image);
+    }
   }
 
   void _showImageViewerPager(bluesky.EmbedViewImagesView image) {
@@ -176,49 +226,65 @@ class _ImageViewPageState extends State<_ImageViewPage> {
           ),
         ],
       ),
-      body: Stack(
+      bottomNavigationBar: widget.images[_currentIndex].alt.isNotEmpty
+          ? BottomAppBar(child: Text(widget.images[_currentIndex].alt))
+          : null,
+      body: Column(
         children: [
-          EasyImageViewPager(
-            easyImageProvider: _multiImageProvider,
-            pageController: _pageController,
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Stack(
+                children: [
+                  EasyImageViewPager(
+                    easyImageProvider: _multiImageProvider,
+                    pageController: _pageController,
+                  ),
+                  if (imageCount > 1 && _currentIndex > 0)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: IconButton.filled(
+                          icon: const Icon(Icons.keyboard_arrow_left),
+                          onPressed: () {
+                            final currentPage =
+                                _pageController.page?.toInt() ?? 0;
+                            _pageController.animateToPage(
+                              currentPage > 0 ? currentPage - 1 : 0,
+                              duration: _kDuration,
+                              curve: _kCurve,
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  if (imageCount > 1 && _currentIndex < imageCount - 1)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: IconButton.filled(
+                          icon: const Icon(Icons.keyboard_arrow_right),
+                          onPressed: () {
+                            final currentPage =
+                                _pageController.page?.toInt() ?? 0;
+                            final lastPage = imageCount - 1;
+                            _pageController.animateToPage(
+                              currentPage < lastPage
+                                  ? currentPage + 1
+                                  : lastPage,
+                              duration: _kDuration,
+                              curve: _kCurve,
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
-          if (imageCount > 1 && _currentIndex > 0)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: IconButton.filled(
-                  icon: const Icon(Icons.keyboard_arrow_left),
-                  onPressed: () {
-                    final currentPage = _pageController.page?.toInt() ?? 0;
-                    _pageController.animateToPage(
-                      currentPage > 0 ? currentPage - 1 : 0,
-                      duration: _kDuration,
-                      curve: _kCurve,
-                    );
-                  },
-                ),
-              ),
-            ),
-          if (imageCount > 1 && _currentIndex < imageCount - 1)
-            Align(
-              alignment: Alignment.centerRight,
-              child: Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: IconButton.filled(
-                  icon: const Icon(Icons.keyboard_arrow_right),
-                  onPressed: () {
-                    final currentPage = _pageController.page?.toInt() ?? 0;
-                    final lastPage = imageCount - 1;
-                    _pageController.animateToPage(
-                      currentPage < lastPage ? currentPage + 1 : lastPage,
-                      duration: _kDuration,
-                      curve: _kCurve,
-                    );
-                  },
-                ),
-              ),
-            ),
         ],
       ),
     );

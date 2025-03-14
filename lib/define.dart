@@ -1,6 +1,6 @@
 enum VisibleMode { show, hide, only, disable }
 
-enum VisibleType { reply, repost, quote, linkcard, image, video }
+enum VisibleType { plane, reply, repost, quote, linkcard, image, video }
 
 enum SortOrder { asc, desc }
 
