@@ -19,7 +19,7 @@ import 'embed_images.dart';
 import 'embed_record_with_media.dart';
 import 'embed_video.dart';
 import 'model.dart';
-import 'tooltip_span.dart';
+import 'post_record.dart';
 import 'utils.dart';
 
 final isDesktop = (Platform.isMacOS || Platform.isLinux || Platform.isWindows);
@@ -167,7 +167,11 @@ class _FeedCardState extends State<FeedCard> {
                       ),
                     ]),
               ),
-              subtitle: _buildRecordText(post.record),
+              subtitle: PostRecordWidget(
+                  record: post.record,
+                  onMention: _tapMention,
+                  onLink: _tapLink,
+                  onTag: _tapTag),
             ),
           ),
           Row(
@@ -224,88 +228,6 @@ class _FeedCardState extends State<FeedCard> {
         ],
       ),
     );
-  }
-
-  Widget _buildRecordText(bluesky.PostRecord record) {
-    final utf8text = utf8.encode(record.text);
-
-    List<InlineSpan> spans = [];
-    int byteCurrent = 0;
-
-    if (record.facets != null && record.facets!.isNotEmpty) {
-      final facets = record.facets!;
-      //facets.sort((a, b) => a.index.byteStart - b.index.byteStart);
-
-      for (final facet in facets) {
-        if (facet.index.byteStart < byteCurrent) {
-          if (kDebugMode) {
-            print(
-                'invalid facet: current:$byteCurrent start:${facet.index.byteStart}');
-          }
-          continue;
-        }
-        final intro = utf8text.sublist(byteCurrent, facet.index.byteStart);
-        spans.add(TextSpan(
-            text: utf8.decode(intro), style: TextStyle(color: Colors.black)));
-
-        final body =
-            utf8text.sublist(facet.index.byteStart, facet.index.byteEnd);
-        final bodyText = utf8.decode(body);
-
-        for (final feature in facet.features) {
-          feature.when(
-            mention: (mention) {
-              spans.add(TooltipSpan(
-                  child: InkWell(
-                    child: Text(
-                      bodyText,
-                      style: TextStyle(color: Colors.blue),
-                      textScaler: TextScaler.linear(1.0),
-                    ),
-                    onTap: () => _tapMention(mention),
-                  ),
-                  tooltip: 'Search mention'));
-            },
-            link: (link) {
-              spans.add(TooltipSpan(
-                  child: InkWell(
-                    child: Text(
-                      bodyText,
-                      style: TextStyle(color: Colors.blue),
-                      textScaler: TextScaler.linear(1.0),
-                    ),
-                    onTap: () => _tapLink(link),
-                  ),
-                  tooltip: 'View link'));
-            },
-            tag: (tag) {
-              spans.add(TooltipSpan(
-                  child: InkWell(
-                    child: Text(
-                      bodyText,
-                      style: TextStyle(color: Colors.blue),
-                      textScaler: TextScaler.linear(1.0),
-                    ),
-                    onTap: () => _tapTag(tag),
-                  ),
-                  tooltip: 'Search hashtag'));
-            },
-            unknown: (unknown) {
-              spans.add(TextSpan(
-                  text: bodyText, style: TextStyle(color: Colors.black)));
-            },
-          );
-          break;
-        }
-
-        byteCurrent = facet.index.byteEnd;
-      }
-    }
-    final left = utf8text.sublist(byteCurrent);
-    spans.add(TextSpan(
-        text: utf8.decode(left), style: TextStyle(color: Colors.black)));
-
-    return Text.rich(TextSpan(children: spans));
   }
 
   void _tapMention(bluesky.FacetMention feature) {
