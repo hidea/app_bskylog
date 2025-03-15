@@ -101,7 +101,7 @@ class _FeedCardState extends State<FeedCard> {
                   model.updateFeedOnlyPosts(feed.uri, jsonEncode(feedView));
                 }
               } else {
-                // ポスト全部を差し替える
+                // replase embed to new post
                 if (kDebugMode) {
                   final original = jsonEncode(post.toJson());
                   final current = jsonEncode(posts.posts[0].toJson());
