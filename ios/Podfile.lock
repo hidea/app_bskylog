@@ -38,8 +38,6 @@ PODS:
   - Flutter (1.0.0)
   - irondash_engine_context (0.0.1):
     - Flutter
-  - media_kit_native_event_loop (1.0.0):
-    - Flutter
   - media_kit_video (0.0.1):
     - Flutter
   - package_info_plus (0.4.5):
@@ -47,8 +45,6 @@ PODS:
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
-  - screen_brightness_ios (0.1.0):
-    - Flutter
   - SDWebImage (5.20.0):
     - SDWebImage/Core (= 5.20.0)
   - SDWebImage/Core (5.20.0)
@@ -78,11 +74,9 @@ DEPENDENCIES:
   - file_picker (from `.symlinks/plugins/file_picker/ios`)
   - Flutter (from `Flutter`)
   - irondash_engine_context (from `.symlinks/plugins/irondash_engine_context/ios`)
-  - media_kit_native_event_loop (from `.symlinks/plugins/media_kit_native_event_loop/ios`)
   - media_kit_video (from `.symlinks/plugins/media_kit_video/ios`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
-  - screen_brightness_ios (from `.symlinks/plugins/screen_brightness_ios/ios`)
   - share_plus (from `.symlinks/plugins/share_plus/ios`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
   - sqflite_darwin (from `.symlinks/plugins/sqflite_darwin/darwin`)
@@ -108,16 +102,12 @@ EXTERNAL SOURCES:
     :path: Flutter
   irondash_engine_context:
     :path: ".symlinks/plugins/irondash_engine_context/ios"
-  media_kit_native_event_loop:
-    :path: ".symlinks/plugins/media_kit_native_event_loop/ios"
   media_kit_video:
     :path: ".symlinks/plugins/media_kit_video/ios"
   package_info_plus:
     :path: ".symlinks/plugins/package_info_plus/ios"
   path_provider_foundation:
     :path: ".symlinks/plugins/path_provider_foundation/darwin"
-  screen_brightness_ios:
-    :path: ".symlinks/plugins/screen_brightness_ios/ios"
   share_plus:
     :path: ".symlinks/plugins/share_plus/ios"
   shared_preferences_foundation:
@@ -142,11 +132,9 @@ SPEC CHECKSUMS:
   file_picker: 41ba05caf092cb827be6191f8e92f490260cf84f
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   irondash_engine_context: 3458bf979b90d616ffb8ae03a150bafe2e860cc9
-  media_kit_native_event_loop: f1ee9f941ec0af371b245969a3e010901c375480
   media_kit_video: 26c5b265a4094a2df3e8d41e6724d9b964c13151
   package_info_plus: c0502532a26c7662a62a356cebe2692ec5fe4ec4
   path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
-  screen_brightness_ios: 715ca807df953bf676d339f11464e438143ee625
   SDWebImage: 73c6079366fea25fa4bb9640d5fb58f0893facd8
   share_plus: 8b6f8b3447e494cca5317c8c3073de39b3600d1f
   shared_preferences_foundation: fcdcbc04712aee1108ac7fda236f363274528f78
@@ -155,8 +143,8 @@ SPEC CHECKSUMS:
   SwiftyGif: 706c60cf65fa2bc5ee0313beece843c8eb8194d4
   url_launcher_ios: 5334b05cef931de560670eeae103fd3e431ac3fe
   video_player_avfoundation: 7c6c11d8470e1675df7397027218274b6d2360b3
-  volume_controller: 531ddf792994285c9b17f9d8a7e4dcdd29b3eae9
-  wakelock_plus: 373cfe59b235a6dd5837d0fb88791d2f13a90d56
+  volume_controller: 2e3de73d6e7e81a0067310d17fb70f2f86d71ac7
+  wakelock_plus: 76957ab028e12bfa4e66813c99e46637f367fc7e
 
 PODFILE CHECKSUM: 5c64f470b04ee16e0d78fbcc7d0da5aa90c1baf3
 
