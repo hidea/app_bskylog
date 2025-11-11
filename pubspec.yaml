@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.1.2+26
+version: 0.1.2+27
 
 environment:
   sdk: ^3.5.4
@@ -39,7 +39,7 @@ dependencies:
   drift: ^2.19.1+1
   shared_preferences: ^2.3.2
   provider: ^6.1.2
-  go_router: ^15.1.2
+  go_router: ^16.0.0
   bluesky_text: ^0.7.0
   video_player: ^2.9.2
   image: ^4.3.0
@@ -52,7 +52,7 @@ dependencies:
   path: ^1.9.0
   package_info_plus: ^8.1.0
   intl: ^0.20.2
-  window_manager: ^0.4.3
+  window_manager: ^0.5.0
   animated_tree_view: ^2.3.0
   table_calendar: ^3.1.2
   flutter_launcher_icons: ^0.14.1
@@ -62,7 +62,7 @@ dependencies:
   material_symbols_icons: ^4.2799.0
   easy_image_viewer: ^1.5.1
   share_plus: ^11.0.0
-  super_clipboard: ^0.8.19
+  super_clipboard: ^0.9.1
   flutter_cache_manager: ^3.4.1
   mime: ^1.0.6
   video_player_media_kit: ^1.0.5
@@ -71,7 +71,7 @@ dependencies:
   google_fonts: ^6.2.1
   collection: ^1.19.0
   diff_match_patch: ^0.4.1
-  #sqlite3_flutter_libs: ^0.5.26
+  #sqlite3_flutter_libs: ^0.5.27
 
 dependency_overrides:
   #xrpc:
@@ -86,7 +86,7 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
   drift_dev: ^2.19.1
   build_runner: ^2.4.13

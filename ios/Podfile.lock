@@ -126,11 +126,11 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/wakelock_plus/ios"
 
 SPEC CHECKSUMS:
-  device_info_plus: 97af1d7e84681a90d0693e63169a5d50e0839a0d
+  device_info_plus: bf2e3232933866d73fe290f2942f2156cdd10342
   DKImagePickerController: 946cec48c7873164274ecc4624d19e3da4c1ef3c
   DKPhotoGallery: b3834fecb755ee09a593d7c9e389d8b5d6deed60
   file_picker: 41ba05caf092cb827be6191f8e92f490260cf84f
-  Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
+  Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   irondash_engine_context: 3458bf979b90d616ffb8ae03a150bafe2e860cc9
   media_kit_video: 26c5b265a4094a2df3e8d41e6724d9b964c13151
   package_info_plus: c0502532a26c7662a62a356cebe2692ec5fe4ec4
@@ -146,6 +146,6 @@ SPEC CHECKSUMS:
   volume_controller: 2e3de73d6e7e81a0067310d17fb70f2f86d71ac7
   wakelock_plus: 76957ab028e12bfa4e66813c99e46637f367fc7e
 
-PODFILE CHECKSUM: 5c64f470b04ee16e0d78fbcc7d0da5aa90c1baf3
+PODFILE CHECKSUM: 40ed9ecdb2585e6933d4c445294c130e0c3a5107
 
 COCOAPODS: 1.16.2
