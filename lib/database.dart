@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:bluesky/app_bsky_feed_defs.dart' as bsky_feed;
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
-import 'package:bluesky/bluesky.dart' as bluesky;
 
 import 'database.steps.dart';
 import 'model.dart';
@@ -81,7 +81,7 @@ class AppDatabase extends _$AppDatabase {
 
                   for (final post in postsList) {
                     final feedView =
-                        bluesky.FeedView.fromJson(jsonDecode(post.post));
+                        bsky_feed.FeedViewPost.fromJson(jsonDecode(post.post));
                     final newFeedAuthorDid = Model.getFeedAuthorDid(feedView);
                     final newIndexed = Model.getFeedIndexed(feedView);
 

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:animated_tree_view/animated_tree_view.dart';
+import 'package:bluesky/app_bsky_feed_defs.dart' as bsky_feed;
 import 'package:bskylog/about_screen.dart';
 import 'package:bskylog/rotation_icon.dart';
 import 'package:file_picker/file_picker.dart';
@@ -14,7 +15,6 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:bluesky/bluesky.dart' as bluesky;
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:video_player_media_kit/video_player_media_kit.dart';
 import 'package:window_manager/window_manager.dart';
@@ -767,8 +767,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                           title: Center(
                                               child: Text(
                                                   'probably repost, deleted post by other.'))))
-                                  : FeedCard(
-                                      feed, bluesky.FeedView.fromJson(post));
+                                  : FeedCard(feed,
+                                      bsky_feed.FeedViewPost.fromJson(post));
                             }, childCount: posts.length));
                           },
                         ),

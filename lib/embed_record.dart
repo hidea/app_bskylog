@@ -1,10 +1,13 @@
+import 'package:bluesky/app_bsky_feed_defs.dart' as bsky_feed;
+import 'package:bluesky/app_bsky_feed_post.dart';
+import 'package:bluesky/app_bsky_graph_starterpack.dart';
+import 'package:bluesky/app_bsky_richtext_facet.dart';
 import 'package:bskylog/post_record.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/material.dart';
-import 'package:bluesky/bluesky.dart' as bluesky;
+import 'package:flutter/material.dart' hide ListView;
 import 'package:bluesky/app_bsky_embed_video.dart';
 import 'package:bluesky/app_bsky_embed_record.dart';
-import 'package:bluesky/app_bsky_graph_defs.dart';
+import 'package:bluesky/app_bsky_graph_defs.dart' as bsky_graph;
 import 'package:bluesky/core.dart';
 import 'package:bskylog/utils.dart';
 import 'package:intl/intl.dart';
@@ -23,7 +26,7 @@ class EmbedRecordWidget extends StatefulWidget {
       {super.key, required this.width, required this.height});
 
   final Post feed;
-  final bluesky.EmbedViewRecord embed;
+  final EmbedRecordView embed;
   final double width;
   final double height;
 
@@ -32,7 +35,7 @@ class EmbedRecordWidget extends StatefulWidget {
 }
 
 class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
-  Widget _buildRecord(bluesky.EmbedViewRecordViewRecord record) {
+  Widget _buildRecord(EmbedRecordViewRecord record) {
     final post = record.value;
     final author = record.author;
     final embeds = record.embeds;
@@ -76,7 +79,7 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
                       ]),
                 ),
                 subtitle: PostRecordWidget(
-                    record: post,
+                    record: FeedPostRecord.fromJson(post),
                     onMention: _tapMention,
                     onLink: _tapLink,
                     onTag: _tapTag),
@@ -93,35 +96,32 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
                     if (embeds != null)
                       for (final embed in embeds)
                         embed.when(
-                          record: (bluesky.EmbedViewRecord record) =>
-                              EmbedRecordWidget(
+                          embedRecordView: (record) => EmbedRecordWidget(
                             widget.feed,
                             record,
                             width: embedWidth,
                             height: embedWidth,
                           ),
-                          images: (bluesky.EmbedViewImages images) =>
-                              EmbedImagesWidget(
+                          embedImagesView: (images) => EmbedImagesWidget(
                             widget.feed,
                             images,
                             width: embedWidth,
                           ),
-                          external: (bluesky.EmbedViewExternal external) =>
-                              EmbedExternalWidget(
+                          embedExternalView: (external) => EmbedExternalWidget(
                             widget.feed,
                             external,
                             width: embedWidth,
                             height: embedWidth * 9 / 16,
                           ),
-                          recordWithMedia: (bluesky.EmbedViewRecordWithMedia
-                                  recordWithMedia) =>
+                          embedRecordWithMediaView: (recordWithMedia) =>
                               EmbedRecordWithMediaWidget(
                             widget.feed,
                             recordWithMedia,
                             width: embedWidth,
                             height: embedWidth,
                           ),
-                          video: (EmbedVideoView video) => EmbedVideoWidget(
+                          embedVideoView: (EmbedVideoView video) =>
+                              EmbedVideoWidget(
                             widget.feed,
                             video,
                             width: embedWidth,
@@ -141,7 +141,7 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
     );
   }
 
-  Widget _buildGeneratorView(bluesky.FeedGeneratorView view) {
+  Widget _buildGeneratorView(bsky_feed.GeneratorView view) {
     return SizedBox(
       width: widget.width,
       child: Card.outlined(
@@ -157,14 +157,14 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
                   color: Colors.black),
             ),
             subtitle: Text(
-              'feed by @${view.createdBy.handle}',
+              'feed by @${view.creator.handle}',
               style: TextStyle(
                   fontSize: Theme.of(context).textTheme.titleSmall!.fontSize,
                   color: Colors.black54),
             ),
             onTap: () {
               launchUrlPlus(
-                  '${Define.bskyUrl}/profile/${view.createdBy.handle}/feed/${view.uri.rkey}');
+                  '${Define.bskyUrl}/profile/${view.creator.handle}/feed/${view.uri.rkey}');
             },
           ),
         ),
@@ -172,7 +172,7 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
     );
   }
 
-  Widget _buildListView(bluesky.ListView view) {
+  Widget _buildListView(bsky_graph.ListView view) {
     return SizedBox(
       width: widget.width,
       child: Card.outlined(
@@ -188,14 +188,14 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
                   color: Colors.black),
             ),
             subtitle: Text(
-              'list by @${view.createdBy.handle}',
+              'list by @${view.creator.handle}',
               style: TextStyle(
                   fontSize: Theme.of(context).textTheme.titleSmall!.fontSize,
                   color: Colors.black54),
             ),
             onTap: () {
               launchUrlPlus(
-                  '${Define.bskyUrl}/profile/${view.createdBy.handle}/lists/${view.uri.rkey}');
+                  '${Define.bskyUrl}/profile/${view.creator.handle}/lists/${view.uri.rkey}');
             },
           ),
         ),
@@ -203,7 +203,8 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
     );
   }
 
-  Widget _buildStarterPack(StarterPackViewBasic view) {
+  Widget _buildStarterPack(bsky_graph.StarterPackViewBasic view) {
+    final record = GraphStarterpackRecord.fromJson(view.record);
     return SizedBox(
       width: widget.width,
       child: Card(
@@ -228,7 +229,7 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
                   titleAlignment: ListTileTitleAlignment.center,
                   leading: AvatarIcon(avatar: view.creator.avatar, size: 16),
                   title: Text(
-                    view.record.name,
+                    record.name,
                     style: TextStyle(
                         fontSize:
                             Theme.of(context).textTheme.titleMedium!.fontSize,
@@ -242,12 +243,12 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
                         color: Colors.black54),
                   ),
                 ),
-                if (view.record.description?.isNotEmpty ?? false)
+                if (record.description?.isNotEmpty ?? false)
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Text(
-                      view.record.description!,
+                      record.description!,
                       maxLines: 2,
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
@@ -279,36 +280,33 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
   @override
   Widget build(BuildContext context) {
     return widget.embed.record.when(
-      record: (bluesky.EmbedViewRecordViewRecord data) => _buildRecord(data),
-      notFound: (bluesky.EmbedViewRecordViewNotFound data) =>
-          _buildRecordBreak('Deleted', data.uri),
-      blocked: (bluesky.EmbedViewRecordViewBlocked data) =>
-          _buildRecordBreak('Blocked', data.uri),
-      viewDetached: (EmbedRecordViewDetached data) =>
+      embedRecordViewRecord: (data) => _buildRecord(data),
+      embedRecordViewNotFound: (data) => _buildRecordBreak('Deleted', data.uri),
+      embedRecordViewBlocked: (data) => _buildRecordBreak('Blocked', data.uri),
+      embedRecordViewDetached: (EmbedRecordViewDetached data) =>
           _buildRecordBreak('Removed', data.uri),
-      generatorView: (bluesky.FeedGeneratorView data) =>
-          _buildGeneratorView(data),
-      listView: (bluesky.ListView data) => _buildListView(data),
-      starterPackViewBasic: (StarterPackViewBasic data) =>
+      generatorView: (data) => _buildGeneratorView(data),
+      listView: (data) => _buildListView(data),
+      starterPackViewBasic: (bsky_graph.StarterPackViewBasic data) =>
           _buildStarterPack(data),
-      labelerView: (bluesky.LabelerView _) => Container(),
-      unknown: (Map<String, dynamic> _) => Container(),
+      labelerView: (_) => Container(),
+      unknown: (_) => Container(),
     );
   }
 
-  void _tapMention(bluesky.FacetMention feature) {
+  void _tapMention(RichtextFacetMention feature) {
     context.read<Model>().setSearchKeyword(feature.did);
   }
 
-  void _tapLink(bluesky.FacetLink feature) {
+  void _tapLink(RichtextFacetLink feature) {
     launchUrlPlus(feature.uri);
   }
 
-  void _tapTag(bluesky.FacetTag feature) {
+  void _tapTag(RichtextFacetTag feature) {
     context.read<Model>().setSearchKeyword('#${feature.tag}');
   }
 
-  Widget _buildFooter(bluesky.EmbedViewRecordViewRecord record) {
+  Widget _buildFooter(EmbedRecordViewRecord record) {
     final post = record;
     final author = record.author;
     final postUrl =

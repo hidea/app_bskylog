@@ -2,13 +2,14 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 
-import 'package:bluesky/app_bsky_embed_video.dart';
+import 'package:bluesky/app_bsky_feed_defs.dart' as bsky_feed;
+import 'package:bluesky/app_bsky_feed_post.dart';
+import 'package:bluesky/app_bsky_richtext_facet.dart';
 import 'package:bskylog/embed_external.dart';
 import 'package:diff_match_patch/diff_match_patch.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:bluesky/bluesky.dart' as bluesky;
 import 'package:provider/provider.dart';
 
 import 'avatar_icon.dart';
@@ -32,7 +33,7 @@ class FeedCard extends StatefulWidget {
   const FeedCard(this.feed, this.feedView, {super.key});
 
   final Post feed;
-  final bluesky.FeedView feedView;
+  final bsky_feed.FeedViewPost feedView;
 
   @override
   State<FeedCard> createState() => _FeedCardState();
@@ -141,7 +142,9 @@ class _FeedCardState extends State<FeedCard> {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (feed.reasonRepost) _buildRepost(),
-          if (feed.replyDid.isNotEmpty) _buildReply(widget.feedView),
+          if (widget.feedView.reply != null &&
+              widget.feedView.reply!.parent.isPostView)
+            _buildReply(widget.feedView),
           SelectionArea(
             child: ListTile(
               contentPadding: const EdgeInsets.only(left: 16.0, right: 12.0),
@@ -168,7 +171,7 @@ class _FeedCardState extends State<FeedCard> {
                     ]),
               ),
               subtitle: PostRecordWidget(
-                  record: post.record,
+                  record: FeedPostRecord.fromJson(post.record),
                   onMention: _tapMention,
                   onLink: _tapLink,
                   onTag: _tapTag),
@@ -184,42 +187,37 @@ class _FeedCardState extends State<FeedCard> {
                 children: [
                   if (post.embed != null)
                     post.embed!.when(
-                        record: (bluesky.EmbedViewRecord record) =>
-                            EmbedRecordWidget(
+                        embedRecordView: (record) => EmbedRecordWidget(
                               widget.feed,
                               record,
                               width: embedWidth,
                               height: embedWidth,
                             ),
-                        images: (bluesky.EmbedViewImages images) =>
-                            EmbedImagesWidget(
+                        embedImagesView: (images) => EmbedImagesWidget(
                               widget.feed,
                               images,
                               width: embedWidth,
                             ),
-                        external: (bluesky.EmbedViewExternal external) =>
-                            EmbedExternalWidget(
+                        embedExternalView: (external) => EmbedExternalWidget(
                               widget.feed,
                               external,
                               width: embedWidth,
                               height: embedWidth * 9 / 16,
                             ),
-                        recordWithMedia: (bluesky.EmbedViewRecordWithMedia
-                                recordWithMedia) =>
+                        embedRecordWithMediaView: (recordWithMedia) =>
                             EmbedRecordWithMediaWidget(
                               widget.feed,
                               recordWithMedia,
                               width: embedWidth,
                               height: embedWidth,
                             ),
-                        video: (EmbedVideoView video) => EmbedVideoWidget(
+                        embedVideoView: (video) => EmbedVideoWidget(
                               widget.feed,
                               video,
                               width: embedWidth,
                               height: embedWidth * 9 / 16,
                             ),
-                        unknown: (Map<String, dynamic> _) =>
-                            const Text('unsupported embed')),
+                        unknown: (_) => const Text('unsupported embed')),
                   _buildFooter(post),
                 ],
               ),
@@ -230,15 +228,15 @@ class _FeedCardState extends State<FeedCard> {
     );
   }
 
-  void _tapMention(bluesky.FacetMention feature) {
+  void _tapMention(RichtextFacetMention feature) {
     context.read<Model>().setSearchKeyword(feature.did);
   }
 
-  void _tapLink(bluesky.FacetLink feature) {
+  void _tapLink(RichtextFacetLink feature) {
     launchUrlPlus(feature.uri);
   }
 
-  void _tapTag(bluesky.FacetTag feature) {
+  void _tapTag(RichtextFacetTag feature) {
     context.read<Model>().setSearchKeyword('#${feature.tag}');
   }
 
@@ -256,8 +254,9 @@ class _FeedCardState extends State<FeedCard> {
     );
   }
 
-  Widget _buildReply(bluesky.FeedView feedView) {
-    final post = (feedView.reply!.parent as bluesky.UReplyPostRecord).data;
+  Widget _buildReply(bsky_feed.FeedViewPost feedView) {
+    final post =
+        (feedView.reply!.parent as bsky_feed.UReplyRefParentPostView).data;
     final author = post.author;
     final displayName =
         author.displayName != null && author.displayName!.isNotEmpty
@@ -265,8 +264,7 @@ class _FeedCardState extends State<FeedCard> {
             : author.handle;
     final postUrl =
         '${Define.bskyUrl}/profile/${author.handle}/post/${post.uri.rkey}';
-
-    final root = (feedView.reply!.root as bluesky.UReplyPostRecord).data;
+    final root = (feedView.reply!.root as bsky_feed.UReplyRefRootPostView).data;
 
     return Row(
       children: [
@@ -310,7 +308,7 @@ class _FeedCardState extends State<FeedCard> {
     );
   }
 
-  Widget _buildFooter(bluesky.Post post) {
+  Widget _buildFooter(bsky_feed.PostView post) {
     final author = post.author;
     final postUrl =
         '${Define.bskyUrl}/profile/${author.handle}/post/${post.uri.rkey}';

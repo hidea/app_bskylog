@@ -1,8 +1,9 @@
 import 'dart:convert';
 
+import 'package:bluesky/app_bsky_feed_post.dart';
+import 'package:bluesky/app_bsky_richtext_facet.dart' as bsky_facet;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:bluesky/bluesky.dart' as bluesky;
 
 import 'tooltip_span.dart';
 
@@ -14,10 +15,10 @@ class PostRecordWidget extends StatefulWidget {
       required this.onTag,
       super.key});
 
-  final bluesky.PostRecord record;
-  final void Function(bluesky.FacetMention) onMention;
-  final void Function(bluesky.FacetLink) onLink;
-  final void Function(bluesky.FacetTag) onTag;
+  final FeedPostRecord record;
+  final void Function(bsky_facet.RichtextFacetMention) onMention;
+  final void Function(bsky_facet.RichtextFacetLink) onLink;
+  final void Function(bsky_facet.RichtextFacetTag) onTag;
 
   @override
   State<PostRecordWidget> createState() => _PostRecordWidgetState();
@@ -61,7 +62,7 @@ class _PostRecordWidgetState extends State<PostRecordWidget> {
 
         for (final feature in facet.features) {
           feature.when(
-            mention: (mention) {
+            richtextFacetMention: (mention) {
               spans.add(TooltipSpan(
                   child: InkWell(
                     child: Text(
@@ -73,7 +74,7 @@ class _PostRecordWidgetState extends State<PostRecordWidget> {
                   ),
                   tooltip: 'Search mention'));
             },
-            link: (link) {
+            richtextFacetLink: (link) {
               spans.add(TooltipSpan(
                   child: InkWell(
                     child: Text(
@@ -85,7 +86,7 @@ class _PostRecordWidgetState extends State<PostRecordWidget> {
                   ),
                   tooltip: 'View link'));
             },
-            tag: (tag) {
+            richtextFacetTag: (tag) {
               spans.add(TooltipSpan(
                   child: InkWell(
                     child: Text(
