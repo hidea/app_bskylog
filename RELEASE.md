@@ -79,7 +79,11 @@ To test the Windows version on a develop branch:
 5. Choose Build type (debug / release)
 6. Click "Run workflow"
 
-After the build completes, download from Artifacts (retained for 7 days).
+After the build completes:
+
+1. Click on the completed workflow run
+2. Scroll down to the "Artifacts" section at the bottom of the page
+3. Download the zip file (retained for 7 days)
 
 ---
 
