@@ -1,82 +1,82 @@
 name: Build Windows
 
 on:
-    # 手動実行（developブランチなどでお試しビルド）
-    workflow_dispatch:
-        inputs:
-            build_type:
-                description: "Build type"
-                required: true
-                default: "debug"
-                type: choice
-                options:
-                    - debug
-                    - release
+  # 手動実行（developブランチなどでお試しビルド）
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: "Build type"
+        required: true
+        default: "debug"
+        type: choice
+        options:
+          - debug
+          - release
 
-    # リリース時（タグプッシュ）
-    push:
-        tags:
-            - "v*"
+  # リリース時（タグプッシュ）
+  push:
+    tags:
+      - "v*"
 
 jobs:
-    build-windows:
-        runs-on: windows-latest
-        steps:
-            - uses: actions/checkout@v4
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
 
-            - uses: subosito/flutter-action@v2
-              with:
-                  flutter-version: "3.27.0"
-                  channel: "stable"
-                  cache: true
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.27.0"
+          channel: "stable"
+          cache: false
 
-            - name: Install dependencies
-              run: flutter pub get
+      - name: Install dependencies
+        run: flutter pub get
 
-            - name: Get version from pubspec.yaml
-              id: version
-              shell: pwsh
-              run: |
-                  $content = Get-Content pubspec.yaml -Raw
-                  if ($content -match 'version:\s*(\S+)') {
-                      $version = $matches[1]
-                      echo "VERSION=$version" >> $env:GITHUB_OUTPUT
-                      echo "Version: $version"
-                  }
+      - name: Get version from pubspec.yaml
+        id: version
+        shell: pwsh
+        run: |
+          $content = Get-Content pubspec.yaml -Raw
+          if ($content -match 'version:\s*(\S+)') {
+              $version = $matches[1]
+              echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+              echo "Version: $version"
+          }
 
-            - name: Build Windows (Release)
-              if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.build_type == 'release'
-              run: flutter build windows --release
+      - name: Build Windows (Release)
+        if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.build_type == 'release'
+        run: flutter build windows --release
 
-            - name: Build Windows (Debug)
-              if: github.event.inputs.build_type == 'debug'
-              run: flutter build windows --debug
+      - name: Build Windows (Debug)
+        if: github.event.inputs.build_type == 'debug'
+        run: flutter build windows --debug
 
-            - name: Create zip (Release)
-              if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.build_type == 'release'
-              run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath bskylog-${{ steps.version.outputs.VERSION }}-windows.zip
+      - name: Create zip (Release)
+        if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.build_type == 'release'
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath bskylog-${{ steps.version.outputs.VERSION }}-windows.zip
 
-            - name: Create zip (Debug)
-              if: github.event.inputs.build_type == 'debug'
-              run: Compress-Archive -Path build/windows/x64/runner/Debug/* -DestinationPath bskylog-${{ steps.version.outputs.VERSION }}-windows-debug.zip
+      - name: Create zip (Debug)
+        if: github.event.inputs.build_type == 'debug'
+        run: Compress-Archive -Path build/windows/x64/runner/Debug/* -DestinationPath bskylog-${{ steps.version.outputs.VERSION }}-windows-debug.zip
 
-            # 手動ビルド時はArtifactとしてアップロード
-            - name: Upload artifact (Manual build)
-              if: github.event_name == 'workflow_dispatch'
-              uses: actions/upload-artifact@v4
-              with:
-                  name: bskylog-${{ steps.version.outputs.VERSION }}-windows-${{ github.event.inputs.build_type }}
-                  path: bskylog-*.zip
-                  retention-days: 7
+      # 手動ビルド時はArtifactとしてアップロード
+      - name: Upload artifact (Manual build)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: bskylog-${{ steps.version.outputs.VERSION }}-windows-${{ github.event.inputs.build_type }}
+          path: bskylog-*.zip
+          retention-days: 7
 
-            # タグプッシュ時はReleaseにアップロード（ドラフトで作成）
-            # ローカルでビルドしたmacOS版は後から追加でアップロード
-            - name: Upload to Release
-              if: startsWith(github.ref, 'refs/tags/')
-              uses: softprops/action-gh-release@v1
-              with:
-                  files: bskylog-${{ steps.version.outputs.VERSION }}-windows.zip
-                  draft: true
-                  generate_release_notes: true
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # タグプッシュ時はReleaseにアップロード（ドラフトで作成）
+      # ローカルでビルドしたmacOS版は後から追加でアップロード
+      - name: Upload to Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: bskylog-${{ steps.version.outputs.VERSION }}-windows.zip
+          draft: true
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
