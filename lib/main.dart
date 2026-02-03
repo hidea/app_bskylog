@@ -45,6 +45,19 @@ final isDesktop = (Platform.isMacOS || Platform.isLinux || Platform.isWindows);
 final GlobalKey<ScaffoldMessengerState> scaffoldMsgKey =
     GlobalKey<ScaffoldMessengerState>();
 
+// グローバルなデータベース参照（終了時のクローズ用）
+late AppDatabase _appDatabase;
+
+/// アプリ終了時のウィンドウリスナー
+class _AppWindowListener extends WindowListener {
+  @override
+  Future<void> onWindowClose() async {
+    // データベースを明示的にクローズしてからアプリを終了
+    await _appDatabase.close();
+    await windowManager.destroy();
+  }
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -65,6 +78,9 @@ void main() async {
       await windowManager.show();
       await windowManager.focus();
     });
+    // ウィンドウクローズイベントをハンドル
+    windowManager.addListener(_AppWindowListener());
+    await windowManager.setPreventClose(true);
   }
 
   // Roboto (Roboto_regular)
@@ -92,7 +108,8 @@ void main() async {
             .loadString('assets/google_fonts/Noto_Color_Emoji/OFL.txt'));
   });
 
-  final database = AppDatabase();
+  _appDatabase = AppDatabase();
+  final database = _appDatabase;
   final model = Model(database: database);
   database.setModel(model);
   await model.syncDataWithProvider();
