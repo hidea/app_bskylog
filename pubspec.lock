@@ -205,18 +205,10 @@ packages:
     dependency: transitive
     description:
       name: cbor
-      sha256: f3981ba6fb63199e37cfb70ca860de2e811455b39382681727177baad9dd68b5
+      sha256: "259230d0c7f3ae58cb68cbc17b95484a038b2f63b15963b019d4bd9d28bf3fe0"
       url: "https://pub.dev"
     source: hosted
-    version: "6.4.0"
-  chalkdart:
-    dependency: transitive
-    description:
-      name: chalkdart
-      sha256: "7ffc6bd39c81453fb9ba8dbce042a9c960219b75ea1c07196a7fa41c2fab9e86"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.0.5"
+    version: "6.5.0"
   characters:
     dependency: transitive
     description:
@@ -269,10 +261,10 @@ packages:
     dependency: transitive
     description:
       name: code_assets
-      sha256: ae0db647e668cbb295a3527f0938e4039e004c80099dce2f964102373f5ce0b5
+      sha256: "83ccdaa064c980b5596c35dd64a8d3ecc68620174ab9b90b6343b753aa721687"
       url: "https://pub.dev"
     source: hosted
-    version: "0.19.10"
+    version: "1.0.0"
   code_builder:
     dependency: transitive
     description:
@@ -309,10 +301,10 @@ packages:
     dependency: transitive
     description:
       name: cross_file
-      sha256: "701dcfc06da0882883a2657c445103380e53e647060ad8d9dfb710c100996608"
+      sha256: "28bb3ae56f117b5aec029d702a90f57d285cd975c3c5c281eaca38dbc47c5937"
       url: "https://pub.dev"
     source: hosted
-    version: "0.3.5+1"
+    version: "0.3.5+2"
   crypto:
     dependency: transitive
     description:
@@ -461,10 +453,10 @@ packages:
     dependency: "direct main"
     description:
       name: file_picker
-      sha256: d974b6ba2606371ac71dd94254beefb6fa81185bde0b59bdc1df09885da85fde
+      sha256: "57d9a1dd5063f85fa3107fb42d1faffda52fdc948cefd5fe5ea85267a5fc7343"
       url: "https://pub.dev"
     source: hosted
-    version: "10.3.8"
+    version: "10.3.10"
   fixnum:
     dependency: transitive
     description:
@@ -556,10 +548,10 @@ packages:
     dependency: "direct main"
     description:
       name: google_fonts
-      sha256: ca1cc501704c47e478f69a667d7f2d882755ddf7baad3f60c3b1256594467022
+      sha256: bf1fe61d4a53420a94cbbd4326e07702d247757926f6955af9667765a8324413
       url: "https://pub.dev"
     source: hosted
-    version: "7.0.2"
+    version: "8.0.0"
   graphs:
     dependency: transitive
     description:
@@ -580,10 +572,10 @@ packages:
     dependency: transitive
     description:
       name: hooks
-      sha256: "5410b9f4f6c9f01e8ff0eb81c9801ea13a3c3d39f8f0b1613cda08e27eab3c18"
+      sha256: "5d309c86e7ce34cd8e37aa71cb30cb652d3829b900ab145e4d9da564b31d59f7"
       url: "https://pub.dev"
     source: hosted
-    version: "0.20.5"
+    version: "1.0.0"
   html:
     dependency: transitive
     description:
@@ -616,14 +608,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.1.2"
-  ieee754:
-    dependency: transitive
-    description:
-      name: ieee754
-      sha256: "7d87451c164a56c156180d34a4e93779372edd191d2c219206100b976203128c"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.3"
   image:
     dependency: "direct main"
     description:
@@ -676,10 +660,10 @@ packages:
     dependency: transitive
     description:
       name: json_annotation
-      sha256: "1ce844379ca14835a50d2f019a3099f419082cfdd231cd86a142af94dd5c6bb1"
+      sha256: "805fa86df56383000f640384b282ce0cb8431f1a7a2396de92fb66186d8c57df"
       url: "https://pub.dev"
     source: hosted
-    version: "4.9.0"
+    version: "4.10.0"
   leak_tracker:
     dependency: transitive
     description:
@@ -708,10 +692,10 @@ packages:
     dependency: transitive
     description:
       name: lints
-      sha256: a5e2b223cb7c9c8efdc663ef484fdd95bb243bff242ef5b13e26883547fce9a0
+      sha256: "12f842a479589fea194fe5c5a3095abc7be0c1f2ddfa9a0e76aed1dbd26a87df"
       url: "https://pub.dev"
     source: hosted
-    version: "6.0.0"
+    version: "6.1.0"
   logging:
     dependency: transitive
     description:
@@ -740,10 +724,10 @@ packages:
     dependency: "direct main"
     description:
       name: material_symbols_icons
-      sha256: "02555a48e1ec02b16e532dfd4ef13c4f6bf7ec7c20230e58e56641a393433dc3"
+      sha256: c62b15f2b3de98d72cbff0148812f5ef5159f05e61fc9f9a089ec2bb234df082
       url: "https://pub.dev"
     source: hosted
-    version: "4.2892.0"
+    version: "4.2906.0"
   media_kit:
     dependency: transitive
     description:
@@ -804,10 +788,10 @@ packages:
     dependency: transitive
     description:
       name: native_toolchain_c
-      sha256: f8872ea6c7a50ce08db9ae280ca2b8efdd973157ce462826c82f3c3051d154ce
+      sha256: "89e83885ba09da5fdf2cdacc8002a712ca238c28b7f717910b34bcd27b0d03ac"
       url: "https://pub.dev"
     source: hosted
-    version: "0.17.2"
+    version: "0.17.4"
   nested:
     dependency: transitive
     description:
@@ -828,10 +812,10 @@ packages:
     dependency: transitive
     description:
       name: objective_c
-      sha256: "55eb67ede1002d9771b3f9264d2c9d30bc364f0267bc1c6cc0883280d5f0c7cb"
+      sha256: "983c7fa1501f6dcc0cb7af4e42072e9993cb28d73604d25ebf4dab08165d997e"
       url: "https://pub.dev"
     source: hosted
-    version: "9.2.2"
+    version: "9.2.5"
   octo_image:
     dependency: transitive
     description:
@@ -1020,10 +1004,10 @@ packages:
     dependency: transitive
     description:
       name: safe_local_storage
-      sha256: e9a21b6fec7a8aa62cc2585ff4c1b127df42f3185adbd2aca66b47abe2e80236
+      sha256: "287ea1f667c0b93cdc127dccc707158e2d81ee59fba0459c31a0c7da4d09c755"
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.1"
+    version: "2.0.3"
   screen_retriever:
     dependency: transitive
     description:
@@ -1100,10 +1084,10 @@ packages:
     dependency: transitive
     description:
       name: shared_preferences_android
-      sha256: "83af5c682796c0f7719c2bbf74792d113e40ae97981b8f266fa84574573556bc"
+      sha256: cbc40be9be1c5af4dab4d6e0de4d5d3729e6f3d65b89d21e1815d57705644a6f
       url: "https://pub.dev"
     source: hosted
-    version: "2.4.18"
+    version: "2.4.20"
   shared_preferences_foundation:
     dependency: transitive
     description:
@@ -1193,10 +1177,10 @@ packages:
     dependency: transitive
     description:
       name: source_gen
-      sha256: "585bc140f20da42c584ece2df28f4d9ef2566955332b626f655957b3a8c8ad54"
+      sha256: "1d562a3c1f713904ebbed50d2760217fd8a51ca170ac4b05b0db490699dbac17"
       url: "https://pub.dev"
     source: hosted
-    version: "4.1.2"
+    version: "4.2.0"
   source_map_stack_trace:
     dependency: transitive
     description:
@@ -1497,10 +1481,10 @@ packages:
     dependency: transitive
     description:
       name: video_player_avfoundation
-      sha256: "2a7aaf2f28212c285e0fb29b50728bbea513d743dd48d3024098015f169fb937"
+      sha256: "7cc0a9257103851eb299a2407e895b0fd6832d323dcfde622a23cdc25a1de269"
       url: "https://pub.dev"
     source: hosted
-    version: "2.8.10"
+    version: "2.9.0"
   video_player_media_kit:
     dependency: "direct main"
     description:

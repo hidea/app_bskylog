@@ -68,7 +68,7 @@ dependencies:
   video_player_media_kit: ^2.0.0
   media_kit_libs_windows_video: ^1.0.10
   http: ^1.2.2
-  google_fonts: ^7.0.0
+  google_fonts: ^8.0.0
   collection: ^1.19.0
   diff_match_patch: ^0.4.1
   #sqlite3_flutter_libs: ^0.5.27
