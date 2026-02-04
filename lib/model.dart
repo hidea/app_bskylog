@@ -3,6 +3,10 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:animated_tree_view/tree_view/tree_node.dart';
+import 'package:bluesky/app_bsky_actor_defs.dart' as bsky_actor;
+import 'package:bluesky/app_bsky_feed_defs.dart' as bsky_feed;
+import 'package:bluesky/app_bsky_feed_getposts.dart';
+import 'package:bluesky/app_bsky_feed_getpostthread.dart';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
@@ -23,7 +27,7 @@ class ActorModel {
   final String did;
 
   bluesky_core.Session? session;
-  bluesky.ActorProfile? profile;
+  bsky_actor.ProfileViewDetailed? profile;
 
   ActorModel({
     required this.service,
@@ -39,7 +43,7 @@ class ActorModel {
             ? bluesky_core.Session.fromJson(json['session'])
             : null,
         profile = json['profile'] != null
-            ? bluesky.ActorProfile.fromJson(json['profile'])
+            ? bsky_actor.ProfileViewDetailed.fromJson(json['profile'])
             : null;
 
   Map toJson() => {
@@ -992,7 +996,7 @@ class Model extends ChangeNotifier {
       for (var feedView in feedData.feed) {
         final feedAuthorDid = getFeedAuthorDid(feedView);
         final post = feedView.post;
-        final repost = feedView.post.viewer.repost;
+        final repost = feedView.post.viewer?.repost;
         final retrieved = DateTime.now();
 
         // if repost of own post
@@ -1004,12 +1008,16 @@ class Model extends ChangeNotifier {
                   authorDid: feedAuthorDid,
                   indexed: post.indexedAt,
                   replyDid: getFeedReplyDid(feedView), // who's reply
-                  havEmbedImages: post.embed is bluesky.UEmbedViewImages,
-                  havEmbedExternal: post.embed is bluesky.UEmbedViewExternal,
-                  havEmbedRecord: post.embed is bluesky.UEmbedViewRecord,
-                  havEmbedRecordWithMedia:
-                      post.embed is bluesky.UEmbedViewRecordWithMedia,
-                  havEmbedVideo: post.embed is bluesky.UEmbedViewVideo,
+                  havEmbedImages:
+                      post.embed is bsky_feed.UPostViewEmbedEmbedImagesView,
+                  havEmbedExternal:
+                      post.embed is bsky_feed.UPostViewEmbedEmbedExternalView,
+                  havEmbedRecord:
+                      post.embed is bsky_feed.UPostViewEmbedEmbedRecordView,
+                  havEmbedRecordWithMedia: post.embed
+                      is bsky_feed.UPostViewEmbedEmbedRecordWithMediaView,
+                  havEmbedVideo:
+                      post.embed is bsky_feed.UPostViewEmbedEmbedVideoView,
                   reasonRepost: false,
                   retrieved: Value(retrieved),
                   post: jsonEncode(feedView.toJson()),
@@ -1026,12 +1034,16 @@ class Model extends ChangeNotifier {
                 authorDid: post.author.did,
                 indexed: getFeedIndexed(feedView), // repost or
                 replyDid: getFeedReplyDid(feedView), // who's reply
-                havEmbedImages: post.embed is bluesky.UEmbedViewImages,
-                havEmbedExternal: post.embed is bluesky.UEmbedViewExternal,
-                havEmbedRecord: post.embed is bluesky.UEmbedViewRecord,
-                havEmbedRecordWithMedia:
-                    post.embed is bluesky.UEmbedViewRecordWithMedia,
-                havEmbedVideo: post.embed is bluesky.UEmbedViewVideo,
+                havEmbedImages:
+                    post.embed is bsky_feed.UPostViewEmbedEmbedImagesView,
+                havEmbedExternal:
+                    post.embed is bsky_feed.UPostViewEmbedEmbedExternalView,
+                havEmbedRecord:
+                    post.embed is bsky_feed.UPostViewEmbedEmbedRecordView,
+                havEmbedRecordWithMedia: post.embed
+                    is bsky_feed.UPostViewEmbedEmbedRecordWithMediaView,
+                havEmbedVideo:
+                    post.embed is bsky_feed.UPostViewEmbedEmbedVideoView,
                 reasonRepost: repost != null,
                 retrieved: Value(retrieved),
                 post: jsonEncode(feedView.toJson()),
@@ -1077,26 +1089,29 @@ class Model extends ChangeNotifier {
         .write(PostsCompanion(retrieved: Value(DateTime.now())));
   }
 
-  static String getFeedAuthorDid(bluesky.FeedView feedView) {
+  static String getFeedAuthorDid(bsky_feed.FeedViewPost feedView) {
     final reason = feedView.reason;
-    if (reason != null && reason is bluesky.UReasonRepost) {
+    if (reason != null && reason is bsky_feed.UFeedViewPostReasonReasonRepost) {
       return reason.data.by.did;
     }
     return feedView.post.author.did;
   }
 
-  static DateTime getFeedIndexed(bluesky.FeedView feedView) {
+  static DateTime getFeedIndexed(bsky_feed.FeedViewPost feedView) {
     final reason = feedView.reason;
-    if (reason != null && reason is bluesky.UReasonRepost) {
+    if (reason != null && reason is bsky_feed.UFeedViewPostReasonReasonRepost) {
       return reason.data.indexedAt;
     }
     return feedView.post.indexedAt;
   }
 
-  static String getFeedReplyDid(bluesky.FeedView feedView) {
+  static String getFeedReplyDid(bsky_feed.FeedViewPost feedView) {
     final reply = feedView.reply;
-    if (reply != null && reply.parent is bluesky.UReplyPostRecord) {
-      return (reply.parent as bluesky.UReplyPostRecord).data.author.did;
+    if (reply != null && reply.parent.isPostView) {
+      return (reply.parent as bsky_feed.UReplyRefParentPostView)
+          .data
+          .author
+          .did;
     }
     return '';
   }
@@ -1121,15 +1136,15 @@ class Model extends ChangeNotifier {
     }
   }
 
-  final _postsCache = Queue<bluesky.Post>();
+  final _postsCache = Queue<bsky_feed.PostView>();
 
-  Future<bluesky.Posts> getPosts(List<String> uriStrings) async {
+  Future<FeedGetPostsOutput> getPosts(List<String> uriStrings) async {
     final uris = uriStrings.map((uri) => bluesky_core.AtUri(uri)).toList();
     return getUriPosts(uris);
   }
 
-  Future<bluesky.Posts> getUriPosts(List<bluesky_core.AtUri> uris) async {
-    final cachedPosts = <bluesky.Post>[];
+  Future<FeedGetPostsOutput> getUriPosts(List<bluesky_core.AtUri> uris) async {
+    final cachedPosts = <bsky_feed.PostView>[];
     final missingUris = <bluesky_core.AtUri>[];
 
     for (final uri in uris) {
@@ -1164,7 +1179,7 @@ class Model extends ChangeNotifier {
         print('missingUris ${missingUris}');
       }
 
-      return bluesky.Posts(posts: cachedPosts);
+      return FeedGetPostsOutput(posts: cachedPosts);
     } on xrpc.XRPCException catch (e) {
       final status = e.response.status;
 
@@ -1182,7 +1197,7 @@ class Model extends ChangeNotifier {
     }
   }
 
-  Future<bluesky.PostThread> getPostThread(bluesky_core.AtUri uri) async {
+  Future<FeedGetPostThreadOutput> getPostThread(bluesky_core.AtUri uri) async {
     try {
       final bsky = await getBluesky(currentActor!);
       final response = await bsky.feed.getPostThread(uri: uri);

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:animated_tree_view/animated_tree_view.dart';
+import 'package:bluesky/app_bsky_feed_defs.dart' as bsky_feed;
 import 'package:bskylog/about_screen.dart';
 import 'package:bskylog/rotation_icon.dart';
 import 'package:file_picker/file_picker.dart';
@@ -14,7 +15,6 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:bluesky/bluesky.dart' as bluesky;
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:video_player_media_kit/video_player_media_kit.dart';
 import 'package:window_manager/window_manager.dart';
@@ -45,6 +45,19 @@ final isDesktop = (Platform.isMacOS || Platform.isLinux || Platform.isWindows);
 final GlobalKey<ScaffoldMessengerState> scaffoldMsgKey =
     GlobalKey<ScaffoldMessengerState>();
 
+// グローバルなデータベース参照（終了時のクローズ用）
+late AppDatabase _appDatabase;
+
+/// アプリ終了時のウィンドウリスナー
+class _AppWindowListener extends WindowListener {
+  @override
+  Future<void> onWindowClose() async {
+    // データベースを明示的にクローズしてからアプリを終了
+    await _appDatabase.close();
+    await windowManager.destroy();
+  }
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -65,6 +78,9 @@ void main() async {
       await windowManager.show();
       await windowManager.focus();
     });
+    // ウィンドウクローズイベントをハンドル
+    windowManager.addListener(_AppWindowListener());
+    await windowManager.setPreventClose(true);
   }
 
   // Roboto (Roboto_regular)
@@ -92,7 +108,8 @@ void main() async {
             .loadString('assets/google_fonts/Noto_Color_Emoji/OFL.txt'));
   });
 
-  final database = AppDatabase();
+  _appDatabase = AppDatabase();
+  final database = _appDatabase;
   final model = Model(database: database);
   database.setModel(model);
   await model.syncDataWithProvider();
@@ -767,8 +784,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                           title: Center(
                                               child: Text(
                                                   'probably repost, deleted post by other.'))))
-                                  : FeedCard(
-                                      feed, bluesky.FeedView.fromJson(post));
+                                  : FeedCard(feed,
+                                      bsky_feed.FeedViewPost.fromJson(post));
                             }, childCount: posts.length));
                           },
                         ),
