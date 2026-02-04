@@ -1,12 +1,12 @@
 import 'dart:async';
 
+import 'package:bluesky/app_bsky_embed_images.dart';
 import 'package:bskylog/database.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_image_viewer/easy_image_viewer.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:bluesky/bluesky.dart' as bluesky;
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:mime/mime.dart';
 import 'package:provider/provider.dart';
@@ -21,7 +21,7 @@ class EmbedImagesWidget extends StatefulWidget {
       {super.key, required this.width});
 
   final Post feed;
-  final bluesky.EmbedViewImages embed;
+  final EmbedImagesView embed;
   final double width;
 
   @override
@@ -103,8 +103,7 @@ class _EmbedImagesWidgetState extends State<EmbedImagesWidget> {
     return Container();
   }
 
-  Widget _image(
-      bluesky.EmbedViewImagesView image, double width, double height) {
+  Widget _image(EmbedImagesViewImage image, double width, double height) {
     return InkWell(
       child: Stack(
         children: [
@@ -112,7 +111,7 @@ class _EmbedImagesWidgetState extends State<EmbedImagesWidget> {
             width: width,
             height: height,
             child: CachedNetworkImage(
-              imageUrl: image.thumbnail,
+              imageUrl: image.thumb,
               fit: BoxFit.cover,
             ),
           ),
@@ -142,7 +141,7 @@ class _EmbedImagesWidgetState extends State<EmbedImagesWidget> {
     );
   }
 
-  void _onTapImage(bluesky.EmbedViewImagesView image) {
+  void _onTapImage(EmbedImagesViewImage image) {
     if (isDesktop) {
       Navigator.push(context, _imageViewRoute(image));
     } else {
@@ -150,7 +149,7 @@ class _EmbedImagesWidgetState extends State<EmbedImagesWidget> {
     }
   }
 
-  void _showImageViewerPager(bluesky.EmbedViewImagesView image) {
+  void _showImageViewerPager(EmbedImagesViewImage image) {
     final multiImageProvider = MultiImageProvider(
       [
         for (final i in widget.embed.images)
@@ -166,7 +165,7 @@ class _EmbedImagesWidgetState extends State<EmbedImagesWidget> {
     );
   }
 
-  Route _imageViewRoute(bluesky.EmbedViewImagesView image) {
+  Route _imageViewRoute(EmbedImagesViewImage image) {
     final index = widget.embed.images.indexOf(image);
     return MaterialPageRoute(
       builder: (context) =>
@@ -179,7 +178,7 @@ class _ImageViewPage extends StatefulWidget {
   const _ImageViewPage({required this.initialIndex, required this.images});
 
   final int initialIndex;
-  final List<bluesky.EmbedViewImagesView> images;
+  final List<EmbedImagesViewImage> images;
 
   @override
   State<_ImageViewPage> createState() => _ImageViewPageState();

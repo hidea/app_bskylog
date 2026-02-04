@@ -2,13 +2,14 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 
-import 'package:bluesky/app_bsky_embed_video.dart';
+import 'package:bluesky/app_bsky_feed_defs.dart' as bsky_feed;
+import 'package:bluesky/app_bsky_feed_post.dart';
+import 'package:bluesky/app_bsky_richtext_facet.dart';
 import 'package:bskylog/embed_external.dart';
 import 'package:diff_match_patch/diff_match_patch.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:bluesky/bluesky.dart' as bluesky;
 import 'package:provider/provider.dart';
 
 import 'avatar_icon.dart';
@@ -19,7 +20,7 @@ import 'embed_images.dart';
 import 'embed_record_with_media.dart';
 import 'embed_video.dart';
 import 'model.dart';
-import 'tooltip_span.dart';
+import 'post_record.dart';
 import 'utils.dart';
 
 final isDesktop = (Platform.isMacOS || Platform.isLinux || Platform.isWindows);
@@ -32,7 +33,7 @@ class FeedCard extends StatefulWidget {
   const FeedCard(this.feed, this.feedView, {super.key});
 
   final Post feed;
-  final bluesky.FeedView feedView;
+  final bsky_feed.FeedViewPost feedView;
 
   @override
   State<FeedCard> createState() => _FeedCardState();
@@ -101,7 +102,7 @@ class _FeedCardState extends State<FeedCard> {
                   model.updateFeedOnlyPosts(feed.uri, jsonEncode(feedView));
                 }
               } else {
-                // ポスト全部を差し替える
+                // replase embed to new post
                 if (kDebugMode) {
                   final original = jsonEncode(post.toJson());
                   final current = jsonEncode(posts.posts[0].toJson());
@@ -141,7 +142,9 @@ class _FeedCardState extends State<FeedCard> {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (feed.reasonRepost) _buildRepost(),
-          if (feed.replyDid.isNotEmpty) _buildReply(widget.feedView),
+          if (widget.feedView.reply != null &&
+              widget.feedView.reply!.parent.isPostView)
+            _buildReply(widget.feedView),
           SelectionArea(
             child: ListTile(
               contentPadding: const EdgeInsets.only(left: 16.0, right: 12.0),
@@ -167,7 +170,11 @@ class _FeedCardState extends State<FeedCard> {
                       ),
                     ]),
               ),
-              subtitle: _buildRecordText(post.record),
+              subtitle: PostRecordWidget(
+                  record: FeedPostRecord.fromJson(post.record),
+                  onMention: _tapMention,
+                  onLink: _tapLink,
+                  onTag: _tapTag),
             ),
           ),
           Row(
@@ -180,42 +187,37 @@ class _FeedCardState extends State<FeedCard> {
                 children: [
                   if (post.embed != null)
                     post.embed!.when(
-                        record: (bluesky.EmbedViewRecord record) =>
-                            EmbedRecordWidget(
+                        embedRecordView: (record) => EmbedRecordWidget(
                               widget.feed,
                               record,
                               width: embedWidth,
                               height: embedWidth,
                             ),
-                        images: (bluesky.EmbedViewImages images) =>
-                            EmbedImagesWidget(
+                        embedImagesView: (images) => EmbedImagesWidget(
                               widget.feed,
                               images,
                               width: embedWidth,
                             ),
-                        external: (bluesky.EmbedViewExternal external) =>
-                            EmbedExternalWidget(
+                        embedExternalView: (external) => EmbedExternalWidget(
                               widget.feed,
                               external,
                               width: embedWidth,
                               height: embedWidth * 9 / 16,
                             ),
-                        recordWithMedia: (bluesky.EmbedViewRecordWithMedia
-                                recordWithMedia) =>
+                        embedRecordWithMediaView: (recordWithMedia) =>
                             EmbedRecordWithMediaWidget(
                               widget.feed,
                               recordWithMedia,
                               width: embedWidth,
                               height: embedWidth,
                             ),
-                        video: (EmbedVideoView video) => EmbedVideoWidget(
+                        embedVideoView: (video) => EmbedVideoWidget(
                               widget.feed,
                               video,
                               width: embedWidth,
                               height: embedWidth * 9 / 16,
                             ),
-                        unknown: (Map<String, dynamic> _) =>
-                            const Text('unsupported embed')),
+                        unknown: (_) => const Text('unsupported embed')),
                   _buildFooter(post),
                 ],
               ),
@@ -226,97 +228,15 @@ class _FeedCardState extends State<FeedCard> {
     );
   }
 
-  Widget _buildRecordText(bluesky.PostRecord record) {
-    final utf8text = utf8.encode(record.text);
-
-    List<InlineSpan> spans = [];
-    int byteCurrent = 0;
-
-    if (record.facets != null && record.facets!.isNotEmpty) {
-      final facets = record.facets!;
-      //facets.sort((a, b) => a.index.byteStart - b.index.byteStart);
-
-      for (final facet in facets) {
-        if (facet.index.byteStart < byteCurrent) {
-          if (kDebugMode) {
-            print(
-                'invalid facet: current:$byteCurrent start:${facet.index.byteStart}');
-          }
-          continue;
-        }
-        final intro = utf8text.sublist(byteCurrent, facet.index.byteStart);
-        spans.add(TextSpan(
-            text: utf8.decode(intro), style: TextStyle(color: Colors.black)));
-
-        final body =
-            utf8text.sublist(facet.index.byteStart, facet.index.byteEnd);
-        final bodyText = utf8.decode(body);
-
-        for (final feature in facet.features) {
-          feature.when(
-            mention: (mention) {
-              spans.add(TooltipSpan(
-                  child: InkWell(
-                    child: Text(
-                      bodyText,
-                      style: TextStyle(color: Colors.blue),
-                      textScaler: TextScaler.linear(1.0),
-                    ),
-                    onTap: () => _tapMention(mention),
-                  ),
-                  tooltip: 'Search mention'));
-            },
-            link: (link) {
-              spans.add(TooltipSpan(
-                  child: InkWell(
-                    child: Text(
-                      bodyText,
-                      style: TextStyle(color: Colors.blue),
-                      textScaler: TextScaler.linear(1.0),
-                    ),
-                    onTap: () => _tapLink(link),
-                  ),
-                  tooltip: 'View link'));
-            },
-            tag: (tag) {
-              spans.add(TooltipSpan(
-                  child: InkWell(
-                    child: Text(
-                      bodyText,
-                      style: TextStyle(color: Colors.blue),
-                      textScaler: TextScaler.linear(1.0),
-                    ),
-                    onTap: () => _tapTag(tag),
-                  ),
-                  tooltip: 'Search hashtag'));
-            },
-            unknown: (unknown) {
-              spans.add(TextSpan(
-                  text: bodyText, style: TextStyle(color: Colors.black)));
-            },
-          );
-          break;
-        }
-
-        byteCurrent = facet.index.byteEnd;
-      }
-    }
-    final left = utf8text.sublist(byteCurrent);
-    spans.add(TextSpan(
-        text: utf8.decode(left), style: TextStyle(color: Colors.black)));
-
-    return Text.rich(TextSpan(children: spans));
-  }
-
-  void _tapMention(bluesky.FacetMention feature) {
+  void _tapMention(RichtextFacetMention feature) {
     context.read<Model>().setSearchKeyword(feature.did);
   }
 
-  void _tapLink(bluesky.FacetLink feature) {
+  void _tapLink(RichtextFacetLink feature) {
     launchUrlPlus(feature.uri);
   }
 
-  void _tapTag(bluesky.FacetTag feature) {
+  void _tapTag(RichtextFacetTag feature) {
     context.read<Model>().setSearchKeyword('#${feature.tag}');
   }
 
@@ -334,8 +254,9 @@ class _FeedCardState extends State<FeedCard> {
     );
   }
 
-  Widget _buildReply(bluesky.FeedView feedView) {
-    final post = (feedView.reply!.parent as bluesky.UReplyPostRecord).data;
+  Widget _buildReply(bsky_feed.FeedViewPost feedView) {
+    final post =
+        (feedView.reply!.parent as bsky_feed.UReplyRefParentPostView).data;
     final author = post.author;
     final displayName =
         author.displayName != null && author.displayName!.isNotEmpty
@@ -343,8 +264,7 @@ class _FeedCardState extends State<FeedCard> {
             : author.handle;
     final postUrl =
         '${Define.bskyUrl}/profile/${author.handle}/post/${post.uri.rkey}';
-
-    final root = (feedView.reply!.root as bluesky.UReplyPostRecord).data;
+    final root = (feedView.reply!.root as bsky_feed.UReplyRefRootPostView).data;
 
     return Row(
       children: [
@@ -388,7 +308,7 @@ class _FeedCardState extends State<FeedCard> {
     );
   }
 
-  Widget _buildFooter(bluesky.Post post) {
+  Widget _buildFooter(bsky_feed.PostView post) {
     final author = post.author;
     final postUrl =
         '${Define.bskyUrl}/profile/${author.handle}/post/${post.uri.rkey}';
