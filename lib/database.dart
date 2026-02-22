@@ -51,11 +51,10 @@ class AppDatabase extends _$AppDatabase {
             _model?.setMigrationState('Database migration');
 
             // retrievedカラムが存在しない場合のみ追加
-            final hasRetrieved = await customSelect(
-              "PRAGMA table_info(posts);"
-            ).get().then((rows) =>
-              rows.any((row) => row.data['name'] == 'retrieved')
-            );
+            final hasRetrieved = await customSelect("PRAGMA table_info(posts);")
+                .get()
+                .then((rows) =>
+                    rows.any((row) => row.data['name'] == 'retrieved'));
             if (!hasRetrieved) {
               await m.addColumn(schema.posts, schema.posts.retrieved);
             }
