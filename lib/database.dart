@@ -50,7 +50,15 @@ class AppDatabase extends _$AppDatabase {
           from2To3: (Migrator m, Schema3 schema) async {
             _model?.setMigrationState('Database migration');
 
-            await m.addColumn(schema.posts, schema.posts.retrieved);
+            // retrievedカラムが存在しない場合のみ追加
+            final hasRetrieved = await customSelect(
+              "PRAGMA table_info(posts);"
+            ).get().then((rows) =>
+              rows.any((row) => row.data['name'] == 'retrieved')
+            );
+            if (!hasRetrieved) {
+              await m.addColumn(schema.posts, schema.posts.retrieved);
+            }
 
             _model?.setMigrationState(null);
           },
