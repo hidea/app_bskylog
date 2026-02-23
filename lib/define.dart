@@ -6,6 +6,7 @@ enum SortOrder { asc, desc }
 
 class Define {
   static const title = 'bskylog';
+  static const mcpVersion = '1.0.0';
 
   static const serviceBskySocial = 'bsky.social';
   static const bskyUrl = 'https://bsky.app';

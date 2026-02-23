@@ -71,6 +71,7 @@ dependencies:
   google_fonts: ^8.0.0
   collection: ^1.19.0
   diff_match_patch: ^0.4.1
+  mcp_dart: ^1.3.0
   #sqlite3_flutter_libs: ^0.5.27
 
 dependency_overrides:

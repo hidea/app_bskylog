@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
@@ -20,6 +21,10 @@ import 'package:http/http.dart' as http;
 
 import 'database.dart';
 import 'define.dart';
+import 'mcp_tools.dart';
+import 'package:mcp_dart/mcp_dart.dart';
+import 'mcp_service.dart';
+export 'mcp_service.dart';
 
 class ActorModel {
   final String service;
@@ -75,9 +80,30 @@ class ActorModel {
 }
 
 class Model extends ChangeNotifier {
-  Model({required this.database});
-
   final AppDatabase database;
+  late final McpService mcpService;
+  late final McpTools mcpTools;
+
+  Model({required this.database}) {
+    mcpTools = McpTools(database);
+    mcpService = McpService(mcpTools: mcpTools);
+    
+    // Listen for McpService state changes and call notifyListeners
+    mcpService.addListener(() => notifyListeners());
+  }
+
+  McpServerState get mcpServerState => mcpService.mcpServerState;
+
+  int get mcpServerPort => mcpService.mcpServerPort;
+  void setMcpServerPort(int port) {
+    mcpService.mcpServerPort = port;
+    updateSharedPrefrences();
+    notifyListeners();
+  }
+
+  Future<void> startMcpServer() => mcpService.startMcpServer();
+  Future<void> stopMcpServer() => mcpService.stopMcpServer();
+  Future<void> toggleMcpServer() => mcpService.toggleMcpServer();
 
   String? _migrationState;
   String? get migrationState => _migrationState;
@@ -216,10 +242,13 @@ class Model extends ChangeNotifier {
     if (json['volume'] != null) {
       _volume = json['volume'];
     }
+    if (json['mcpServerPort'] != null) {
+      mcpService.mcpServerPort = json['mcpServerPort'];
+    }
     if (json['visibleImage'] != null) {
       _visibleImage = json['visibleImage'];
     }
-
+    
     notifyListeners();
   }
 
@@ -242,6 +271,7 @@ class Model extends ChangeNotifier {
         'tailCursors': jsonEncode(_tailCursors),
         'volume': _volume,
         'visibleImage': _visibleImage,
+        'mcpServerPort': mcpService.mcpServerPort,
       };
 
   VisibleMode visible(VisibleType type) {
@@ -843,7 +873,7 @@ class Model extends ChangeNotifier {
   Future signin(
       String newService, String newIdentifier, String newPassword) async {
     try {
-      // newIdentifire が.を含まない場合、serviceを追加
+      // Add service suffix if newIdentifier doesn't contain a dot
       if (!newIdentifier.contains('.')) {
         newIdentifier = '$newIdentifier.$newService';
       }
