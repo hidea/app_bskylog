@@ -48,6 +48,25 @@ class McpTools {
         .toList();
   }
 
+  /// Resolves a handle (e.g. "@hidea.bsky.social" or "hidea.bsky.social") to a DID
+  /// by searching the local database. Returns null if not found.
+  Future<String?> resolveHandleToDid(String handle) async {
+    // Remove '@' if present
+    final cleanHandle = handle.startsWith('@') ? handle.substring(1) : handle;
+
+    // Search for a post that contains this handle in the JSON content.
+    // We look for '"handle":"handle.name"' pattern in the post JSON.
+    final match = await (database.select(database.posts)
+          ..where((t) => t.post.like('%"handle":"$cleanHandle"%'))
+          ..limit(1))
+        .getSingleOrNull();
+
+    if (match != null) {
+      return match.authorDid;
+    }
+    return null;
+  }
+
   Future<List<Map<String, dynamic>>> searchPostsByDateRange(
       String keyword, DateTime start, DateTime end, int limit) async {
     final query = database.select(database.posts)

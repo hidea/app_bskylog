@@ -124,8 +124,24 @@ class McpService extends ChangeNotifier {
     });
 
     registerTool('get_user_activity', (args, dynamic extra) async {
-      final userId = args['userId'] ?? '';
+      String userId = args['userId'] ?? '';
       final limit = args['limit'] ?? 10;
+      
+      // If the userId is a handle (not starting with did:), try to resolve it to a DID
+      if (userId.isNotEmpty && !userId.startsWith('did:')) {
+        final resolvedDid = await mcpTools.resolveHandleToDid(userId);
+        if (resolvedDid != null) {
+          print('MCP: Resolved handle "$userId" to DID "$resolvedDid"');
+          userId = resolvedDid;
+        } else {
+          print('MCP: Could not resolve handle "$userId"');
+          return CallToolResult(
+            content: [TextContent(text: 'Handle "$userId" could not be found in local logs.')],
+            isError: true,
+          );
+        }
+      }
+
       final data = await mcpTools.getUserActivity(userId, limit is int ? limit : int.parse(limit.toString()));
       final contents = data.map((e) {
         final postJson = jsonDecode(e['post'] as String);
