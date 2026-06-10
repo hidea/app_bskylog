@@ -51,13 +51,35 @@ jobs:
         if: github.event.inputs.build_type == 'debug'
         run: flutter build windows --debug
 
+      - name: Prepare release package
+        if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.build_type == 'release'
+        shell: pwsh
+        run: |
+          $packageDir = "bskylog-${{ steps.version.outputs.VERSION }}-windows"
+          New-Item -ItemType Directory -Path $packageDir -Force
+          Copy-Item -Path build/windows/x64/runner/Release/* -Destination $packageDir -Recurse
+          Copy-Item -Path README.md -Destination $packageDir
+          New-Item -ItemType Directory -Path "$packageDir/assets/images" -Force
+          Copy-Item -Path assets/images/* -Destination "$packageDir/assets/images"
+
+      - name: Prepare debug package
+        if: github.event.inputs.build_type == 'debug'
+        shell: pwsh
+        run: |
+          $packageDir = "bskylog-${{ steps.version.outputs.VERSION }}-windows-debug"
+          New-Item -ItemType Directory -Path $packageDir -Force
+          Copy-Item -Path build/windows/x64/runner/Debug/* -Destination $packageDir -Recurse
+          Copy-Item -Path README.md -Destination $packageDir
+          New-Item -ItemType Directory -Path "$packageDir/assets/images" -Force
+          Copy-Item -Path assets/images/* -Destination "$packageDir/assets/images"
+
       - name: Create zip (Release)
         if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.build_type == 'release'
-        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath bskylog-${{ steps.version.outputs.VERSION }}-windows.zip
+        run: Compress-Archive -Path bskylog-${{ steps.version.outputs.VERSION }}-windows -DestinationPath bskylog-${{ steps.version.outputs.VERSION }}-windows.zip
 
       - name: Create zip (Debug)
         if: github.event.inputs.build_type == 'debug'
-        run: Compress-Archive -Path build/windows/x64/runner/Debug/* -DestinationPath bskylog-${{ steps.version.outputs.VERSION }}-windows-debug.zip
+        run: Compress-Archive -Path bskylog-${{ steps.version.outputs.VERSION }}-windows-debug -DestinationPath bskylog-${{ steps.version.outputs.VERSION }}-windows-debug.zip
 
       # 手動ビルド時はArtifactとしてアップロード
       - name: Upload artifact (Manual build)
