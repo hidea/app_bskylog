@@ -27,6 +27,7 @@ import 'model.dart';
 import 'search_field.dart';
 import 'signin_screen.dart';
 import 'utils.dart';
+import 'mcp_server_dialog.dart';
 
 class _Destination {
   final Widget icon;
@@ -45,14 +46,14 @@ final isDesktop = (Platform.isMacOS || Platform.isLinux || Platform.isWindows);
 final GlobalKey<ScaffoldMessengerState> scaffoldMsgKey =
     GlobalKey<ScaffoldMessengerState>();
 
-// グローバルなデータベース参照（終了時のクローズ用）
+// Global database reference (for closing on exit)
 late AppDatabase _appDatabase;
 
-/// アプリ終了時のウィンドウリスナー
+/// Window listener for app termination
 class _AppWindowListener extends WindowListener {
   @override
   Future<void> onWindowClose() async {
-    // データベースを明示的にクローズしてからアプリを終了
+    // Explicitly close the database before terminating the app
     await _appDatabase.close();
     await windowManager.destroy();
   }
@@ -78,7 +79,7 @@ void main() async {
       await windowManager.show();
       await windowManager.focus();
     });
-    // ウィンドウクローズイベントをハンドル
+    // Handle window close event
     windowManager.addListener(_AppWindowListener());
     await windowManager.setPreventClose(true);
   }
@@ -141,7 +142,7 @@ _menuExportToJson(BuildContext context) async {
   try {
     final outputFile = await FilePicker.saveFile(
       dialogTitle: 'Please select an feed.bsky.app.getAuthorFeed json file:',
-      fileName: 'auther-feed.json',
+      fileName: 'author-feed.json',
     );
     if (outputFile == null) {
       return null;
@@ -355,6 +356,14 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  TextStyle _getLabelStyle(BuildContext context, bool isActive) {
+    return (Theme.of(context).navigationRailTheme.selectedLabelTextStyle ??
+            const TextStyle())
+        .copyWith(
+      color: isActive ? Colors.green : Colors.grey,
+    );
+  }
+
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _feedController = ScrollController();
   final _autoScrollController = AutoScrollController();
@@ -530,8 +539,14 @@ class _HomeScreenState extends State<HomeScreen> {
         NavigationDrawerDestination(
           label: const Text('Sound'),
           icon: context.watch<Model>().volume == 0
-              ? const Icon(Icons.volume_off)
-              : const Icon(Icons.volume_up),
+              ? const Icon(Icons.volume_off, color: Colors.grey)
+              : const Icon(Icons.volume_up, color: Colors.green)
+        ),
+        NavigationDrawerDestination(
+          label: const Text('MCP'),
+          icon: context.watch<Model>().mcpServerState == McpServerState.running
+              ? const Icon(Icons.comment, color: Colors.green)
+              : const Icon(Icons.comments_disabled, color: Colors.grey),
         ),
         NavigationDrawerDestination(
           label: const Text('Info'),
@@ -587,13 +602,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   IconButton(
                     onPressed: () => context.read<Model>().toggleImage(),
                     icon: context.watch<Model>().visibleImage
-                        ? const Icon(Icons.image)
-                        : const Icon(Icons.image_not_supported),
+                        ? const Icon(Icons.image, color: Colors.green)
+                        : const Icon(Icons.image_not_supported, color: Colors.grey),
                   ),
-                  Text('Media',
-                      style: Theme.of(context)
-                          .navigationRailTheme
-                          .selectedLabelTextStyle),
+                  Text(
+                    'Media',
+                    style: _getLabelStyle(
+                      context,
+                      context.watch<Model>().visibleImage,
+                    ),
+                  ),
                 ],
               ),
               Column(
@@ -601,13 +619,42 @@ class _HomeScreenState extends State<HomeScreen> {
                   IconButton(
                     onPressed: () => context.read<Model>().toggleVolume(),
                     icon: context.watch<Model>().volume == 0
-                        ? const Icon(Icons.volume_off)
-                        : const Icon(Icons.volume_up),
+                        ? const Icon(Icons.volume_off, color: Colors.grey)
+                        : const Icon(Icons.volume_up, color: Colors.green),
                   ),
-                  Text('Sound',
-                      style: Theme.of(context)
-                          .navigationRailTheme
-                          .selectedLabelTextStyle),
+                  Text(
+                    'Sound',
+                    style: _getLabelStyle(
+                      context,
+                      context.watch<Model>().volume != 0,
+                    ),
+                  ),
+                ],
+              ),
+              Column(
+                children: [
+                  IconButton(
+                    icon: context.watch<Model>().mcpServerState ==
+                            McpServerState.running
+                        ? const Icon(Icons.comment, color: Colors.green)
+                        : const Icon(Icons.comments_disabled, color: Colors.grey),
+                    tooltip: context.watch<Model>().mcpServerState ==
+                            McpServerState.running
+                        ? 'Stop MCP Server'
+                        : 'Start MCP Server',
+                    onPressed: () async {
+                      final model = context.read<Model>();
+                      await showMcpServerDialog(context, model);
+                    },
+                  ),
+                  Text(
+                    'MCP',
+                    style: _getLabelStyle(
+                      context,
+                      context.watch<Model>().mcpServerState ==
+                          McpServerState.running,
+                    ),
+                  ),
                 ],
               ),
               Column(
@@ -678,11 +725,11 @@ class _HomeScreenState extends State<HomeScreen> {
         showConfirmDialog(
           context: context,
           ok: const Text('Delete'),
-          content: const Text('Are you sure trancate all log ?'),
+          content: const Text('Are you sure truncate all log ?'),
           onOk: () {
             context.read<Model>().clearFeed().then((_) {
               scaffoldMsgKey.currentState!.showSnackBar(SnackBar(
-                  content: Text("Trancate all log"),
+                  content: Text("Truncate all log"),
                   behavior: SnackBarBehavior.floating));
             });
           },
@@ -697,10 +744,16 @@ class _HomeScreenState extends State<HomeScreen> {
               content: Text("Sign out"), behavior: SnackBarBehavior.floating));
         });
         break;
-      case 4: // Sount
+      case 4: // Media
+        context.read<Model>().toggleImage();
+        break;
+      case 5: // Sound
         context.read<Model>().toggleVolume();
         break;
-      case 5: // Info
+      case 6: // MCP
+        showMcpServerDialog(context, context.read<Model>());
+        break;
+      case 7: // Info
         context.push('/about');
         break;
     }

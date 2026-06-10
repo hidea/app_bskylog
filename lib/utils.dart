@@ -90,7 +90,7 @@ void showConfirmDialog({
               child: cancel,
               onPressed: () => Navigator.of(context).pop(),
             ),
-            TextButton(
+            FilledButton(
               child: ok,
               onPressed: () {
                 Navigator.of(context).pop();
