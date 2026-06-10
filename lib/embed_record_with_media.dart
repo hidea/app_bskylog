@@ -1,5 +1,6 @@
 import 'package:bskylog/database.dart';
 import 'package:bskylog/embed_external.dart';
+import 'package:bskylog/embed_gallery.dart';
 import 'package:bskylog/embed_images.dart';
 import 'package:bskylog/embed_record.dart';
 import 'package:bskylog/embed_unsupported.dart';
@@ -36,11 +37,20 @@ class _EmbedRecordWithMediaWidgetState
               width: widget.width, height: widget.height),
           embedVideoView: (video) => EmbedVideoWidget(widget.feed, video,
               width: widget.width, height: widget.height),
-          unknown: (data) => EmbedUnsupportedWidget(
-            width: widget.width,
-            data: data,
-            title: 'Unsupported media embed',
-          ),
+          unknown: (data) {
+            final gallery = embedImagesViewFromGallery(data);
+            return gallery == null
+                ? EmbedUnsupportedWidget(
+                    width: widget.width,
+                    data: data,
+                    title: 'Unsupported media embed',
+                  )
+                : EmbedImagesWidget(
+                    widget.feed,
+                    gallery,
+                    width: widget.width,
+                  );
+          },
         ),
         const SizedBox(height: 10),
         EmbedRecordWidget(widget.feed, widget.embed.record,

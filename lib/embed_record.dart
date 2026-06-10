@@ -16,6 +16,7 @@ import 'avatar_icon.dart';
 import 'database.dart';
 import 'define.dart';
 import 'embed_external.dart';
+import 'embed_gallery.dart';
 import 'embed_images.dart';
 import 'embed_record_with_media.dart';
 import 'embed_unsupported.dart';
@@ -128,10 +129,19 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
                             width: embedWidth,
                             height: embedWidth * 9 / 16,
                           ),
-                          unknown: (data) => EmbedUnsupportedWidget(
-                            width: embedWidth,
-                            data: data,
-                          ),
+                          unknown: (data) {
+                            final gallery = embedImagesViewFromGallery(data);
+                            return gallery == null
+                                ? EmbedUnsupportedWidget(
+                                    width: embedWidth,
+                                    data: data,
+                                  )
+                                : EmbedImagesWidget(
+                                    widget.feed,
+                                    gallery,
+                                    width: embedWidth,
+                                  );
+                          },
                         ),
                     _buildFooter(record),
                   ],

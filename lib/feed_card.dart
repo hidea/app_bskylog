@@ -15,6 +15,7 @@ import 'package:provider/provider.dart';
 import 'avatar_icon.dart';
 import 'database.dart';
 import 'define.dart';
+import 'embed_gallery.dart';
 import 'embed_record.dart';
 import 'embed_images.dart';
 import 'embed_record_with_media.dart';
@@ -218,10 +219,19 @@ class _FeedCardState extends State<FeedCard> {
                               width: embedWidth,
                               height: embedWidth * 9 / 16,
                             ),
-                        unknown: (data) => EmbedUnsupportedWidget(
-                              width: embedWidth,
-                              data: data,
-                            )),
+                        unknown: (data) {
+                          final gallery = embedImagesViewFromGallery(data);
+                          return gallery == null
+                              ? EmbedUnsupportedWidget(
+                                  width: embedWidth,
+                                  data: data,
+                                )
+                              : EmbedImagesWidget(
+                                  widget.feed,
+                                  gallery,
+                                  width: embedWidth,
+                                );
+                        }),
                   _buildFooter(post),
                 ],
               ),

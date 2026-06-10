@@ -20,6 +20,7 @@ import 'package:http/http.dart' as http;
 
 import 'database.dart';
 import 'define.dart';
+import 'embed_gallery.dart';
 
 class ActorModel {
   final String service;
@@ -72,6 +73,18 @@ class ActorModel {
     final now = DateTime.now().toUtc();
     return !now.isAfter(accessExp);
   }
+}
+
+bool _hasImagesEmbed(bsky_feed.UPostViewEmbed? embed) {
+  return embed?.when(
+        embedImagesView: (_) => true,
+        embedExternalView: (_) => false,
+        embedRecordView: (_) => false,
+        embedRecordWithMediaView: (_) => false,
+        embedVideoView: (_) => false,
+        unknown: isGalleryEmbed,
+      ) ??
+      false;
 }
 
 class Model extends ChangeNotifier {
@@ -1008,8 +1021,7 @@ class Model extends ChangeNotifier {
                   authorDid: feedAuthorDid,
                   indexed: post.indexedAt,
                   replyDid: getFeedReplyDid(feedView), // who's reply
-                  havEmbedImages:
-                      post.embed is bsky_feed.UPostViewEmbedEmbedImagesView,
+                  havEmbedImages: _hasImagesEmbed(post.embed),
                   havEmbedExternal:
                       post.embed is bsky_feed.UPostViewEmbedEmbedExternalView,
                   havEmbedRecord:
@@ -1034,8 +1046,7 @@ class Model extends ChangeNotifier {
                 authorDid: post.author.did,
                 indexed: getFeedIndexed(feedView), // repost or
                 replyDid: getFeedReplyDid(feedView), // who's reply
-                havEmbedImages:
-                    post.embed is bsky_feed.UPostViewEmbedEmbedImagesView,
+                havEmbedImages: _hasImagesEmbed(post.embed),
                 havEmbedExternal:
                     post.embed is bsky_feed.UPostViewEmbedEmbedExternalView,
                 havEmbedRecord:
