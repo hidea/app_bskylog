@@ -47,7 +47,7 @@ dependencies:
   atproto: ^1.2.4
   dart_jsonwebtoken: ^3.1.1
   xrpc: ^1.0.3
-  sqlite3: ^2.4.5
+  sqlite3: ^3.3.2
   path_provider: ^2.1.4
   path: ^1.9.0
   package_info_plus: ^9.0.0
@@ -57,7 +57,7 @@ dependencies:
   table_calendar: ^3.1.2
   flutter_launcher_icons: ^0.14.1
   cached_network_image: ^3.4.0
-  file_picker: ^10.1.9
+  file_picker: ^11.0.2
   atproto_core: ^1.0.7
   material_symbols_icons: ^4.2799.0
   easy_image_viewer: ^1.5.1
