@@ -2,6 +2,7 @@ import 'package:bskylog/database.dart';
 import 'package:bskylog/embed_external.dart';
 import 'package:bskylog/embed_images.dart';
 import 'package:bskylog/embed_record.dart';
+import 'package:bskylog/embed_unsupported.dart';
 import 'package:bskylog/embed_video.dart';
 import 'package:flutter/material.dart';
 import 'package:bluesky/app_bsky_embed_recordwithmedia.dart';
@@ -35,7 +36,11 @@ class _EmbedRecordWithMediaWidgetState
               width: widget.width, height: widget.height),
           embedVideoView: (video) => EmbedVideoWidget(widget.feed, video,
               width: widget.width, height: widget.height),
-          unknown: (_) => const Text('unsupport embed record media'),
+          unknown: (data) => EmbedUnsupportedWidget(
+            width: widget.width,
+            data: data,
+            title: 'Unsupported media embed',
+          ),
         ),
         const SizedBox(height: 10),
         EmbedRecordWidget(widget.feed, widget.embed.record,

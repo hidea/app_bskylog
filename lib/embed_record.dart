@@ -18,6 +18,7 @@ import 'define.dart';
 import 'embed_external.dart';
 import 'embed_images.dart';
 import 'embed_record_with_media.dart';
+import 'embed_unsupported.dart';
 import 'embed_video.dart';
 import 'model.dart';
 
@@ -127,8 +128,10 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
                             width: embedWidth,
                             height: embedWidth * 9 / 16,
                           ),
-                          unknown: (Map<String, dynamic> _) =>
-                              const Text('unsupported embed'),
+                          unknown: (data) => EmbedUnsupportedWidget(
+                            width: embedWidth,
+                            data: data,
+                          ),
                         ),
                     _buildFooter(record),
                   ],

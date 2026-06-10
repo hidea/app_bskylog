@@ -18,6 +18,7 @@ import 'define.dart';
 import 'embed_record.dart';
 import 'embed_images.dart';
 import 'embed_record_with_media.dart';
+import 'embed_unsupported.dart';
 import 'embed_video.dart';
 import 'model.dart';
 import 'post_record.dart';
@@ -217,7 +218,10 @@ class _FeedCardState extends State<FeedCard> {
                               width: embedWidth,
                               height: embedWidth * 9 / 16,
                             ),
-                        unknown: (_) => const Text('unsupported embed')),
+                        unknown: (data) => EmbedUnsupportedWidget(
+                              width: embedWidth,
+                              data: data,
+                            )),
                   _buildFooter(post),
                 ],
               ),
