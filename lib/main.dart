@@ -139,7 +139,7 @@ _menuExportToJson(BuildContext context) async {
   );
 
   try {
-    final outputFile = await FilePicker.platform.saveFile(
+    final outputFile = await FilePicker.saveFile(
       dialogTitle: 'Please select an feed.bsky.app.getAuthorFeed json file:',
       fileName: 'auther-feed.json',
     );

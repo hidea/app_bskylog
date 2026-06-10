@@ -341,7 +341,7 @@ class _ImageViewPageState extends State<_ImageViewPage> {
       final uri = widget.images[_currentIndex].fullsize;
       final file = await DefaultCacheManager().getSingleFile(uri);
 
-      final outputFile = await FilePicker.platform.saveFile(
+      final outputFile = await FilePicker.saveFile(
         type: FileType.image,
         dialogTitle: 'Please select image to save:',
         fileName: file.basename,
