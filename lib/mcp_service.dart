@@ -82,7 +82,9 @@ class McpService extends ChangeNotifier {
           final text = record['text'] as String? ?? '';
           final indexed = e['indexed'];
           final uri = e['uri'];
-          return TextContent(text: 'Author: @$author\nTime: $indexed\nURI: $uri\nContent: $text');
+          final image = _firstImageUrl(postJson);
+          final imageLine = image == null ? '' : '\nImage: $image';
+          return TextContent(text: 'Author: @$author\nTime: $indexed\nURI: $uri$imageLine\nContent: $text');
         }).toList();
         print('MCP Tool Call: get_recent_posts success');
         return CallToolResult(content: contents);
@@ -120,7 +122,9 @@ class McpService extends ChangeNotifier {
         final text = record['text'] as String? ?? '';
         final indexed = e['indexed'];
         final uri = e['uri'];
-        return TextContent(text: 'Author: @$author\nTime: $indexed\nURI: $uri\nContent: $text');
+        final image = _firstImageUrl(postJson);
+        final imageLine = image == null ? '' : '\nImage: $image';
+        return TextContent(text: 'Author: @$author\nTime: $indexed\nURI: $uri$imageLine\nContent: $text');
       }).toList();
       return CallToolResult(content: contents);
     });
@@ -153,7 +157,9 @@ class McpService extends ChangeNotifier {
         final text = record['text'] as String? ?? '';
         final indexed = e['indexed'];
         final uri = e['uri'];
-        return TextContent(text: 'Author: @$author\nTime: $indexed\nURI: $uri\nContent: $text');
+        final image = _firstImageUrl(postJson);
+        final imageLine = image == null ? '' : '\nImage: $image';
+        return TextContent(text: 'Author: @$author\nTime: $indexed\nURI: $uri$imageLine\nContent: $text');
       }).toList();
       return CallToolResult(content: contents);
     });
@@ -164,6 +170,41 @@ class McpService extends ChangeNotifier {
       final data = await mcpTools.getMonthlyActivitySummary(year is int ? year : int.parse(year.toString()));
       return CallToolResult(content: [TextContent(text: jsonEncode(data))]);
     });
+  }
+
+  String? _firstImageUrl(Map<String, dynamic> feedViewPostJson) {
+    final post = feedViewPostJson['post'];
+    if (post is! Map<String, dynamic>) {
+      return null;
+    }
+
+    final embed = post['embed'];
+    if (embed is! Map<String, dynamic> ||
+        embed['\$type'] != 'app.bsky.embed.images#view') {
+      return null;
+    }
+
+    final images = embed['images'];
+    if (images is! List || images.isEmpty) {
+      return null;
+    }
+
+    final firstImage = images.first;
+    if (firstImage is! Map<String, dynamic>) {
+      return null;
+    }
+
+    final fullsize = firstImage['fullsize'];
+    if (fullsize is String && fullsize.isNotEmpty) {
+      return fullsize;
+    }
+
+    final thumb = firstImage['thumb'];
+    if (thumb is String && thumb.isNotEmpty) {
+      return thumb;
+    }
+
+    return null;
   }
 
   void _handleRequests() async {
