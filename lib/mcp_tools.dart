@@ -13,8 +13,11 @@ class McpTools {
           ..limit(limit))
         .get();
     return posts
-        .map((row) =>
-            {'post': row.post, 'indexed': row.indexed.toIso8601String()})
+        .map((row) => {
+              'post': row.post,
+              'indexed': row.indexed.toIso8601String(),
+              'uri': row.uri,
+            })
         .toList();
   }
 
@@ -28,8 +31,11 @@ class McpTools {
           ..limit(limit))
         .get();
     return posts
-        .map((row) =>
-            {'post': row.post, 'indexed': row.indexed.toIso8601String()})
+        .map((row) => {
+              'post': row.post,
+              'indexed': row.indexed.toIso8601String(),
+              'uri': row.uri,
+            })
         .toList();
   }
 
@@ -43,8 +49,11 @@ class McpTools {
           ..limit(limit))
         .get();
     return posts
-        .map((row) =>
-            {'post': row.post, 'indexed': row.indexed.toIso8601String()})
+        .map((row) => {
+              'post': row.post,
+              'indexed': row.indexed.toIso8601String(),
+              'uri': row.uri,
+            })
         .toList();
   }
 
@@ -79,8 +88,11 @@ class McpTools {
 
     final results = await query.get();
     return results
-        .map((row) =>
-            {'post': row.post, 'indexed': row.indexed.toIso8601String()})
+        .map((row) => {
+              'post': row.post,
+              'indexed': row.indexed.toIso8601String(),
+              'uri': row.uri,
+            })
         .toList();
   }
 
@@ -95,8 +107,11 @@ class McpTools {
 
     final results = await query.get();
     return results
-        .map((row) =>
-            {'post': row.post, 'indexed': row.indexed.toIso8601String()})
+        .map((row) => {
+              'post': row.post,
+              'indexed': row.indexed.toIso8601String(),
+              'uri': row.uri,
+            })
         .toList();
   }
 

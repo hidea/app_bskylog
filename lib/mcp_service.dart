@@ -81,7 +81,8 @@ class McpService extends ChangeNotifier {
           final record = feedView.post.record as Map<String, dynamic>;
           final text = record['text'] as String? ?? '';
           final indexed = e['indexed'];
-          return TextContent(text: 'Author: @$author\nTime: $indexed\nContent: $text');
+          final uri = e['uri'];
+          return TextContent(text: 'Author: @$author\nTime: $indexed\nURI: $uri\nContent: $text');
         }).toList();
         print('MCP Tool Call: get_recent_posts success');
         return CallToolResult(content: contents);
@@ -118,7 +119,8 @@ class McpService extends ChangeNotifier {
         final record = feedView.post.record as Map<String, dynamic>;
         final text = record['text'] as String? ?? '';
         final indexed = e['indexed'];
-        return TextContent(text: 'Author: @$author\nTime: $indexed\nContent: $text');
+        final uri = e['uri'];
+        return TextContent(text: 'Author: @$author\nTime: $indexed\nURI: $uri\nContent: $text');
       }).toList();
       return CallToolResult(content: contents);
     });
@@ -150,7 +152,8 @@ class McpService extends ChangeNotifier {
         final record = feedView.post.record as Map<String, dynamic>;
         final text = record['text'] as String? ?? '';
         final indexed = e['indexed'];
-        return TextContent(text: 'Author: @$author\nTime: $indexed\nContent: $text');
+        final uri = e['uri'];
+        return TextContent(text: 'Author: @$author\nTime: $indexed\nURI: $uri\nContent: $text');
       }).toList();
       return CallToolResult(content: contents);
     });
