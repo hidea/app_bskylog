@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:animated_tree_view/animated_tree_view.dart';
 import 'package:bluesky/app_bsky_feed_defs.dart' as bsky_feed;
@@ -12,6 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -24,6 +24,7 @@ import 'database.dart';
 import 'define.dart';
 import 'feed_card.dart';
 import 'model.dart';
+import 'platform.dart';
 import 'search_field.dart';
 import 'signin_screen.dart';
 import 'utils.dart';
@@ -40,8 +41,6 @@ class _Destination {
     required this.disabled,
   });
 }
-
-final isDesktop = (Platform.isMacOS || Platform.isLinux || Platform.isWindows);
 
 final GlobalKey<ScaffoldMessengerState> scaffoldMsgKey =
     GlobalKey<ScaffoldMessengerState>();
@@ -123,12 +122,14 @@ void main() async {
   );
 }
 
-_menuRevealInFolder(BuildContext context) async {
+Future<void> _menuRevealInFolder(BuildContext context) async {
   final docFolder = await getApplicationDocumentsDirectory();
   launchUrlString('file://${docFolder.path}');
 }
 
-_menuExportToJson(BuildContext context) async {
+Future<void> _menuExportToJson(BuildContext context) async {
+  final model = context.read<Model>();
+  final navigator = Navigator.of(context);
   showDialog(
     context: context,
     barrierDismissible: false,
@@ -140,23 +141,30 @@ _menuExportToJson(BuildContext context) async {
   );
 
   try {
+    final json = kIsWeb ? await model.exportFeedJson() : null;
     final outputFile = await FilePicker.saveFile(
       dialogTitle: 'Please select an feed.bsky.app.getAuthorFeed json file:',
       fileName: 'author-feed.json',
+      bytes: kIsWeb ? Uint8List.fromList(utf8.encode(json!)) : null,
     );
     if (outputFile == null) {
-      return null;
+      return;
     }
-    final file = File(outputFile);
-    await context.read<Model>().exportFeed(file);
+    if (!kIsWeb) {
+      await model.exportFeedToPath(outputFile);
+    }
 
     scaffoldMsgKey.currentState!.showSnackBar(SnackBar(
         content: Text("Export done."),
         behavior: SnackBarBehavior.floating,
-        action: SnackBarAction(
-          label: 'open folder',
-          onPressed: () => launchUrlString('file://${file.parent.path}'),
-        ),
+        action: kIsWeb
+            ? null
+            : SnackBarAction(
+                label: 'open folder',
+                onPressed: () {
+                  launchUrlString('file://${p.dirname(outputFile)}');
+                },
+              ),
         showCloseIcon: true,
         duration: const Duration(days: 365)));
   } catch (e) {
@@ -165,7 +173,9 @@ _menuExportToJson(BuildContext context) async {
         showCloseIcon: true,
         duration: const Duration(days: 365)));
   } finally {
-    Navigator.of(context).pop();
+    if (navigator.canPop()) {
+      navigator.pop();
+    }
   }
 }
 
@@ -337,7 +347,7 @@ class MyApp extends StatelessWidget {
       routerConfig: _router,
     );
 
-    if (Platform.isMacOS) {
+    if (isMacOS) {
       return PlatformMenuBar(
         menus: _menu(context),
         child: router,
@@ -537,17 +547,18 @@ class _HomeScreenState extends State<HomeScreen> {
               : const Icon(Icons.image_not_supported),
         ),
         NavigationDrawerDestination(
-          label: const Text('Sound'),
-          icon: context.watch<Model>().volume == 0
-              ? const Icon(Icons.volume_off, color: Colors.grey)
-              : const Icon(Icons.volume_up, color: Colors.green)
-        ),
-        NavigationDrawerDestination(
-          label: const Text('MCP'),
-          icon: context.watch<Model>().mcpServerState == McpServerState.running
-              ? const Icon(Icons.comment, color: Colors.green)
-              : const Icon(Icons.comments_disabled, color: Colors.grey),
-        ),
+            label: const Text('Sound'),
+            icon: context.watch<Model>().volume == 0
+                ? const Icon(Icons.volume_off, color: Colors.grey)
+                : const Icon(Icons.volume_up, color: Colors.green)),
+        if (!kIsWeb)
+          NavigationDrawerDestination(
+            label: const Text('MCP'),
+            icon:
+                context.watch<Model>().mcpServerState == McpServerState.running
+                    ? const Icon(Icons.comment, color: Colors.green)
+                    : const Icon(Icons.comments_disabled, color: Colors.grey),
+          ),
         NavigationDrawerDestination(
           label: const Text('Info'),
           icon: const Icon(Icons.info),
@@ -603,7 +614,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     onPressed: () => context.read<Model>().toggleImage(),
                     icon: context.watch<Model>().visibleImage
                         ? const Icon(Icons.image, color: Colors.green)
-                        : const Icon(Icons.image_not_supported, color: Colors.grey),
+                        : const Icon(Icons.image_not_supported,
+                            color: Colors.grey),
                   ),
                   Text(
                     'Media',
@@ -631,32 +643,34 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-              Column(
-                children: [
-                  IconButton(
-                    icon: context.watch<Model>().mcpServerState ==
-                            McpServerState.running
-                        ? const Icon(Icons.comment, color: Colors.green)
-                        : const Icon(Icons.comments_disabled, color: Colors.grey),
-                    tooltip: context.watch<Model>().mcpServerState ==
-                            McpServerState.running
-                        ? 'Stop MCP Server'
-                        : 'Start MCP Server',
-                    onPressed: () async {
-                      final model = context.read<Model>();
-                      await showMcpServerDialog(context, model);
-                    },
-                  ),
-                  Text(
-                    'MCP',
-                    style: _getLabelStyle(
-                      context,
-                      context.watch<Model>().mcpServerState ==
-                          McpServerState.running,
+              if (!kIsWeb)
+                Column(
+                  children: [
+                    IconButton(
+                      icon: context.watch<Model>().mcpServerState ==
+                              McpServerState.running
+                          ? const Icon(Icons.comment, color: Colors.green)
+                          : const Icon(Icons.comments_disabled,
+                              color: Colors.grey),
+                      tooltip: context.watch<Model>().mcpServerState ==
+                              McpServerState.running
+                          ? 'Stop MCP Server'
+                          : 'Start MCP Server',
+                      onPressed: () async {
+                        final model = context.read<Model>();
+                        await showMcpServerDialog(context, model);
+                      },
                     ),
-                  ),
-                ],
-              ),
+                    Text(
+                      'MCP',
+                      style: _getLabelStyle(
+                        context,
+                        context.watch<Model>().mcpServerState ==
+                            McpServerState.running,
+                      ),
+                    ),
+                  ],
+                ),
               Column(
                 children: [
                   PopupMenuButton<int>(
@@ -751,7 +765,11 @@ class _HomeScreenState extends State<HomeScreen> {
         context.read<Model>().toggleVolume();
         break;
       case 6: // MCP
-        showMcpServerDialog(context, context.read<Model>());
+        if (kIsWeb) {
+          context.push('/about');
+        } else {
+          showMcpServerDialog(context, context.read<Model>());
+        }
         break;
       case 7: // Info
         context.push('/about');

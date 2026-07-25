@@ -1,5 +1,6 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+
+import 'app_network_image.dart';
 
 class AvatarIcon extends StatelessWidget {
   const AvatarIcon({super.key, this.avatar, this.size = 16});
@@ -9,11 +10,21 @@ class AvatarIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final image = avatar != null && avatar != null
-        ? CachedNetworkImageProvider(avatar!)
-        : null;
     return avatar != null
-        ? CircleAvatar(radius: size, backgroundImage: image)
+        ? CircleAvatar(
+            radius: size,
+            backgroundColor: Colors.grey.shade200,
+            child: ClipOval(
+              child: AppNetworkImage(
+                imageUrl: avatar!,
+                width: size * 2,
+                height: size * 2,
+                fit: BoxFit.cover,
+                errorWidget: (context, url, error) =>
+                    Icon(Icons.account_circle, size: size * 2),
+              ),
+            ),
+          )
         : Icon(Icons.account_circle, size: size * 2);
   }
 }

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:animated_tree_view/tree_view/tree_node.dart';
 import 'package:bluesky/app_bsky_actor_defs.dart' as bsky_actor;
@@ -22,10 +21,10 @@ import 'package:http/http.dart' as http;
 import 'database.dart';
 import 'define.dart';
 import 'embed_gallery.dart';
-import 'package:mcp_dart/mcp_dart.dart';
+import 'feed_exporter.dart';
 import 'mcp_tools.dart';
-import 'mcp_service.dart';
-export 'mcp_service.dart';
+import 'mcp_service_stub.dart' if (dart.library.io) 'mcp_service.dart';
+export 'mcp_service_stub.dart' if (dart.library.io) 'mcp_service.dart';
 
 class ActorModel {
   final String service;
@@ -1157,8 +1156,7 @@ class Model extends ChangeNotifier {
     return '';
   }
 
-  // { "feed": [ feed.posts ] }
-  Future exportFeed(File file) async {
+  Future<String> exportFeedJson() async {
     try {
       final posts = await (database.select(database.posts)
             ..orderBy([
@@ -1167,14 +1165,19 @@ class Model extends ChangeNotifier {
             ]))
           .get();
       final data = posts.map((row) => jsonDecode(row.post)).toList();
-      final json = jsonEncode({'feed': data});
-      await file.writeAsString(json);
+      return jsonEncode({'feed': data});
     } catch (e) {
       if (kDebugMode) {
         print(e.toString());
       }
       rethrow;
     }
+  }
+
+  // { "feed": [ feed.posts ] }
+  Future exportFeedToPath(String path) async {
+    final json = await exportFeedJson();
+    await writeFeedJson(path, json);
   }
 
   final _postsCache = Queue<bsky_feed.PostView>();

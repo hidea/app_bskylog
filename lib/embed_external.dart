@@ -1,10 +1,10 @@
 import 'package:bskylog/database.dart';
 import 'package:bskylog/utils.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:bluesky/app_bsky_embed_external.dart';
 
+import 'app_network_image.dart';
 import 'model.dart';
 
 class EmbedExternalWidget extends StatefulWidget {
@@ -39,7 +39,7 @@ class _EmbedExternalWidgetState extends State<EmbedExternalWidget> {
                   SizedBox(
                     width: double.infinity,
                     height: widget.height,
-                    child: CachedNetworkImage(
+                    child: AppNetworkImage(
                       imageUrl: widget.embed.external.thumb!,
                       fit: BoxFit.cover,
                     ),

@@ -3,8 +3,8 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-import 'main.dart';
 import 'model.dart';
+import 'platform.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});

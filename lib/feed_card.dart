@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:bluesky/app_bsky_feed_defs.dart' as bsky_feed;
@@ -22,10 +21,9 @@ import 'embed_record_with_media.dart';
 import 'embed_unsupported.dart';
 import 'embed_video.dart';
 import 'model.dart';
+import 'platform.dart';
 import 'post_record.dart';
 import 'utils.dart';
-
-final isDesktop = (Platform.isMacOS || Platform.isLinux || Platform.isWindows);
 
 const elapseHalf = 0.5;
 const elapseMin = 30;

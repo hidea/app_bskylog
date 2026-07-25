@@ -3,7 +3,6 @@ import 'dart:ui' show PointerDeviceKind;
 
 import 'package:bluesky/app_bsky_embed_images.dart';
 import 'package:bskylog/database.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_image_viewer/easy_image_viewer.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
@@ -14,8 +13,10 @@ import 'package:provider/provider.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+import 'app_network_image.dart';
 import 'main.dart';
 import 'model.dart';
+import 'platform.dart';
 
 class EmbedImagesWidget extends StatefulWidget {
   const EmbedImagesWidget(this.feed, this.embed,
@@ -123,7 +124,7 @@ class _EmbedImagesWidgetState extends State<EmbedImagesWidget> {
           SizedBox(
             width: width,
             height: height,
-            child: CachedNetworkImage(
+            child: AppNetworkImage(
               imageUrl: image.thumb,
               fit: BoxFit.cover,
             ),
@@ -166,7 +167,7 @@ class _EmbedImagesWidgetState extends State<EmbedImagesWidget> {
     final multiImageProvider = MultiImageProvider(
       [
         for (final i in widget.embed.images)
-          CachedNetworkImageProvider(i.fullsize),
+          appNetworkImageProvider(i.fullsize),
       ],
       initialIndex: widget.embed.images.indexOf(image),
     );
@@ -403,7 +404,7 @@ class _EmbedImagesCarouselWidgetState
   Widget _image(EmbedImagesViewImage image) {
     return Container(
       color: Colors.grey[100],
-      child: CachedNetworkImage(
+      child: AppNetworkImage(
         imageUrl: image.thumb,
         width: double.infinity,
         height: double.infinity,
@@ -429,7 +430,7 @@ class _ImageViewPage extends StatefulWidget {
 
 class _ImageViewPageState extends State<_ImageViewPage> {
   late final _multiImageProvider = MultiImageProvider([
-    for (final i in widget.images) CachedNetworkImageProvider(i.fullsize),
+    for (final i in widget.images) appNetworkImageProvider(i.fullsize),
   ], initialIndex: widget.initialIndex);
   late int _currentIndex = widget.initialIndex;
   late final _pageController = PageController(initialPage: widget.initialIndex);

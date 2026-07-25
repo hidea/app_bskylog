@@ -1,13 +1,9 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:bluesky/app_bsky_feed_defs.dart' as bsky_feed;
 import 'package:drift/drift.dart';
-import 'package:drift/native.dart';
-import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
 
+import 'database_connection.dart';
 import 'database.steps.dart';
 import 'model.dart';
 
@@ -34,10 +30,10 @@ class Posts extends Table {
 
 @DriftDatabase(tables: [Posts])
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection());
+  AppDatabase() : super(openConnection());
 
   Model? _model;
-  setModel(Model model) {
+  void setModel(Model model) {
     _model = model;
   }
 
@@ -111,16 +107,4 @@ class AppDatabase extends _$AppDatabase {
           },
         ),
       );
-
-  static LazyDatabase _openConnection() {
-    return LazyDatabase(() async {
-      final docFolder = await getApplicationDocumentsDirectory();
-      final file = File(path.join(docFolder.path, 'bskylog.sqlite'));
-      if (kDebugMode) {
-        print(file.path);
-      }
-
-      return NativeDatabase.createInBackground(file);
-    });
-  }
 }

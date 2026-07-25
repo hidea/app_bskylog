@@ -1,13 +1,10 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import 'model.dart';
-
-final isDesktop = (Platform.isMacOS || Platform.isLinux || Platform.isWindows);
+import 'platform.dart';
 
 Future launchUrlPlus(String? url) async {
   if (url == null) {

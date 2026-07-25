@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import 'define.dart';
 import 'model.dart';
+import 'platform.dart';
 
 class SearchField extends StatefulWidget {
   const SearchField(

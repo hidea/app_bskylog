@@ -3,7 +3,6 @@ import 'package:bluesky/app_bsky_feed_post.dart';
 import 'package:bluesky/app_bsky_graph_starterpack.dart';
 import 'package:bluesky/app_bsky_richtext_facet.dart';
 import 'package:bskylog/post_record.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart' hide ListView;
 import 'package:bluesky/app_bsky_embed_video.dart';
 import 'package:bluesky/app_bsky_embed_record.dart';
@@ -12,6 +11,7 @@ import 'package:bluesky/core.dart';
 import 'package:bskylog/utils.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'app_network_image.dart';
 import 'avatar_icon.dart';
 import 'database.dart';
 import 'define.dart';
@@ -230,7 +230,7 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
             },
             child: Column(
               children: [
-                CachedNetworkImage(
+                AppNetworkImage(
                   imageUrl:
                       'https://ogcard.cdn.bsky.app/start/${view.creator.handle}/${view.uri.rkey}',
                   fit: BoxFit.contain,
