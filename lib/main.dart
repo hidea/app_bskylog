@@ -334,12 +334,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final router = MaterialApp.router(
       theme: ThemeData(
-        textTheme: GoogleFonts.robotoTextTheme().apply(
-          fontFamilyFallback: [
-            //GoogleFonts.notoColorEmoji().fontFamily!, // NotoColorEmoji_regular
-            GoogleFonts.notoSansJp().fontFamily!, // NotoSansJP_regular
-          ],
-        ),
+        fontFamily: GoogleFonts.roboto().fontFamily,
+        fontFamilyFallback: [
+          //GoogleFonts.notoColorEmoji().fontFamily!, // NotoColorEmoji_regular
+          GoogleFonts.notoSansJp().fontFamily!, // NotoSansJP_regular
+        ],
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlue),
         useMaterial3: true,
       ),
