@@ -109,6 +109,11 @@ class _EmbedRecordWidgetState extends State<EmbedRecordWidget> {
                             images,
                             width: embedWidth,
                           ),
+                          embedGalleryView: (gallery) => EmbedImagesWidget(
+                            widget.feed,
+                            embedImagesViewFromGallery(gallery.toJson())!,
+                            width: embedWidth,
+                          ),
                           embedExternalView: (external) => EmbedExternalWidget(
                             widget.feed,
                             external,

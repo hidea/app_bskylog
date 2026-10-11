@@ -56,7 +56,7 @@ void main() {
       newVersion: 2,
       createOld: v1.DatabaseAtV1.new,
       createNew: v2.DatabaseAtV2.new,
-      openTestedDatabase: AppDatabase.new,
+      openTestedDatabase: AppDatabase.connect,
       createItems: (batch, oldDb) {
         batch.insertAll(oldDb.posts, oldPostsData);
       },

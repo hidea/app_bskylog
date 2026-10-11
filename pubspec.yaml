@@ -34,12 +34,12 @@ dependencies:
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
+  cupertino_icons: ^2.0.0
   bluesky: ^2.2.2
-  drift: ^2.19.1+1
+  drift: ^2.34.3
   shared_preferences: ^2.3.2
   provider: ^6.1.2
-  go_router: ^17.0.0
+  go_router: ^18.0.0
   bluesky_text: ^1.1.1
   video_player: ^2.9.2
   image: ^4.3.0
@@ -56,7 +56,7 @@ dependencies:
   animated_tree_view: ^2.3.0
   table_calendar: ^3.1.2
   flutter_launcher_icons: ^0.14.1
-  cached_network_image: ^3.4.0
+  cached_network_image: ^4.0.4
   file_picker: ^11.0.2
   atproto_core: ^2.2.0
   material_symbols_icons: ^4.2799.0
@@ -68,7 +68,7 @@ dependencies:
   video_player_media_kit: ^2.0.0
   media_kit_libs_windows_video: ^1.0.10
   http: ^1.2.2
-  google_fonts: ^8.0.0
+  google_fonts: ^9.0.0
   collection: ^1.19.0
   diff_match_patch: ^0.4.1
   mcp_dart: ^2.2.0
@@ -89,7 +89,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
 
-  drift_dev: ^2.19.1
+  drift_dev: ^2.34.5
   build_runner: ^2.4.13
   test: ^1.25.7
 

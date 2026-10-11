@@ -198,6 +198,11 @@ class _FeedCardState extends State<FeedCard> {
                               images,
                               width: embedWidth,
                             ),
+                        embedGalleryView: (gallery) => EmbedImagesWidget(
+                              widget.feed,
+                              embedImagesViewFromGallery(gallery.toJson())!,
+                              width: embedWidth,
+                            ),
                         embedExternalView: (external) => EmbedExternalWidget(
                               widget.feed,
                               external,

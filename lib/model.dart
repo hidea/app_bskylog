@@ -82,6 +82,7 @@ class ActorModel {
 bool _hasImagesEmbed(bsky_feed.UPostViewEmbed? embed) {
   return embed?.when(
         embedImagesView: (_) => true,
+        embedGalleryView: (_) => true,
         embedExternalView: (_) => false,
         embedRecordView: (_) => false,
         embedRecordWithMediaView: (_) => false,

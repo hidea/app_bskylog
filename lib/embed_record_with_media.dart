@@ -32,6 +32,11 @@ class _EmbedRecordWithMediaWidgetState
         widget.embed.media.when(
           embedImagesView: (images) =>
               EmbedImagesWidget(widget.feed, images, width: widget.width),
+          embedGalleryView: (gallery) => EmbedImagesWidget(
+            widget.feed,
+            embedImagesViewFromGallery(gallery.toJson())!,
+            width: widget.width,
+          ),
           embedExternalView: (external) => EmbedExternalWidget(
               widget.feed, external,
               width: widget.width, height: widget.height),

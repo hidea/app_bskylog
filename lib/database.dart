@@ -31,6 +31,7 @@ class Posts extends Table {
 @DriftDatabase(tables: [Posts])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(openConnection());
+  AppDatabase.connect(super.executor);
 
   Model? _model;
   void setModel(Model model) {
