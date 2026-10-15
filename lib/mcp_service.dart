@@ -25,7 +25,8 @@ class DummyAbortSignal implements AbortSignal {
 class McpService extends ChangeNotifier {
   final McpTools mcpTools;
 
-  McpServer? _mcpServer;
+  // One McpServer per SSE session (Protocol supports a single transport)
+  final Map<String, McpServer> _sessionServers = {};
   HttpServer? _httpServer;
   int mcpServerPort = 8080;
 
@@ -41,17 +42,7 @@ class McpService extends ChangeNotifier {
     if (_mcpServerState == McpServerState.running) return;
     print('MCP server starting...');
     try {
-      _mcpServer = McpServer(
-        Implementation(name: Define.title, version: Define.mcpVersion),
-        options: McpServerOptions(),
-      );
-
-      void registerTool(String name, ToolFunction callback) {
-        _mcpServer!.registerTool(name, callback: callback);
-        _mcpToolMap[name] = callback;
-      }
-
-      _registerDefaultTools(registerTool);
+      _registerDefaultTools((name, callback) => _mcpToolMap[name] = callback);
 
       _httpServer =
           await HttpServer.bind(InternetAddress.anyIPv4, mcpServerPort);
@@ -65,6 +56,17 @@ class McpService extends ChangeNotifier {
       print('MCP server start error: $e');
       print('Stack trace: $s');
     }
+  }
+
+  McpServer _createMcpServer() {
+    final server = McpServer(
+      Implementation(name: Define.title, version: Define.mcpVersion),
+      options: McpServerOptions(),
+    );
+    _mcpToolMap.forEach((name, callback) {
+      server.registerTool(name, callback: callback);
+    });
+    return server;
   }
 
   void _registerDefaultTools(void Function(String, ToolFunction) registerTool) {
@@ -295,16 +297,24 @@ class McpService extends ChangeNotifier {
 
     final sid = transport.sessionId;
     sseClients[sid] = transport;
+    final server = _createMcpServer();
+    _sessionServers[sid] = server;
 
-    _mcpServer!.connect(transport).then((_) {
+    // response.done completes on detachSocket(), so track disconnects via
+    // transport.onclose, which Protocol.connect overwrites.
+    server.connect(transport).then((_) {
       print('MCP Server connected to transport for session: $sid');
+      final protocolOnClose = transport.onclose;
+      transport.onclose = () {
+        protocolOnClose?.call();
+        sseClients.remove(sid);
+        _sessionServers.remove(sid);
+        print('MCP SSE client disconnected: $sid');
+      };
     }).catchError((e) {
       print('MCP Server connection error: $e');
-    });
-
-    request.response.done.then((_) {
       sseClients.remove(sid);
-      print('MCP SSE client disconnected: $sid');
+      _sessionServers.remove(sid);
     });
   }
 
@@ -527,9 +537,10 @@ class McpService extends ChangeNotifier {
       }
       _httpServer = null;
     }
-    if (_mcpServer != null) {
-      await _mcpServer!.close();
-      _mcpServer = null;
+    final servers = _sessionServers.values.toList();
+    _sessionServers.clear();
+    for (final server in servers) {
+      await server.close();
     }
   }
 
