@@ -24,14 +24,13 @@ class DummyAbortSignal implements AbortSignal {
 
 class McpService extends ChangeNotifier {
   final McpTools mcpTools;
-  
+
   McpServer? _mcpServer;
   HttpServer? _httpServer;
   int mcpServerPort = 8080;
-  
+
   McpServerState _mcpServerState = McpServerState.stopped;
   McpServerState get mcpServerState => _mcpServerState;
-  
 
   // Holds a map of MCP tool names to callbacks (ToolFunction type)
   final Map<String, ToolFunction> _mcpToolMap = {};
@@ -54,7 +53,8 @@ class McpService extends ChangeNotifier {
 
       _registerDefaultTools(registerTool);
 
-      _httpServer = await HttpServer.bind(InternetAddress.anyIPv4, mcpServerPort);
+      _httpServer =
+          await HttpServer.bind(InternetAddress.anyIPv4, mcpServerPort);
       print('MCP HTTP server listening on port $mcpServerPort');
       _mcpServerState = McpServerState.running;
       notifyListeners();
@@ -72,7 +72,8 @@ class McpService extends ChangeNotifier {
       print('MCP Tool Call: get_recent_posts with args: $args');
       try {
         final limit = args['limit'] ?? 3;
-        final data = await mcpTools.getRecentPosts(limit is int ? limit : int.parse(limit.toString()));
+        final data = await mcpTools
+            .getRecentPosts(limit is int ? limit : int.parse(limit.toString()));
         print('MCP Tool Call: get_recent_posts fetched ${data.length} posts');
         final contents = data.map((e) {
           final postJson = jsonDecode(e['post'] as String);
@@ -84,7 +85,9 @@ class McpService extends ChangeNotifier {
           final uri = e['uri'];
           final image = _firstImageUrl(postJson);
           final imageLine = image == null ? '' : '\nImage: $image';
-          return TextContent(text: 'Author: @$author\nTime: $indexed\nURI: $uri$imageLine\nContent: $text');
+          return TextContent(
+              text:
+                  'Author: @$author\nTime: $indexed\nURI: $uri$imageLine\nContent: $text');
         }).toList();
         print('MCP Tool Call: get_recent_posts success');
         return CallToolResult(content: contents);
@@ -95,60 +98,56 @@ class McpService extends ChangeNotifier {
     });
 
     registerTool('search_posts', (args, dynamic extra) async {
-      final keyword = args['keyword'] ?? '';
+      final keyword = args['keyword']?.toString();
       final limit = args['limit'] ?? 10;
       final parsedLimit = limit is int ? limit : int.parse(limit.toString());
-      
-      final startDateStr = args['startDate'];
-      final endDateStr = args['endDate'];
-      final pattern = args['pattern'];
 
-      dynamic data;
-      if (startDateStr != null && endDateStr != null) {
-        final start = DateTime.parse(startDateStr);
-        final end = DateTime.parse(endDateStr);
-        data = await mcpTools.searchPostsByDateRange(keyword, start, end, parsedLimit);
-      } else if (pattern != null) {
-        data = await mcpTools.searchPostsByPattern(pattern, parsedLimit);
-      } else {
-        data = await mcpTools.searchPosts(keyword, parsedLimit);
+      DateTime? parseDate(String name) {
+        final value = args[name];
+        if (value == null) return null;
+        return DateTime.tryParse(value.toString());
       }
 
-      final contents = (data as List).map((e) {
-        final postJson = jsonDecode(e['post'] as String);
-        final feedView = bsky_feed.FeedViewPost.fromJson(postJson);
-        final author = feedView.post.author.handle;
-        final record = feedView.post.record as Map<String, dynamic>;
-        final text = record['text'] as String? ?? '';
-        final indexed = e['indexed'];
-        final uri = e['uri'];
-        final image = _firstImageUrl(postJson);
-        final imageLine = image == null ? '' : '\nImage: $image';
-        return TextContent(text: 'Author: @$author\nTime: $indexed\nURI: $uri$imageLine\nContent: $text');
-      }).toList();
-      return CallToolResult(content: contents);
-    });
-
-    registerTool('get_user_activity', (args, dynamic extra) async {
-      String userId = args['userId'] ?? '';
-      final limit = args['limit'] ?? 10;
-      
-      // If the userId is a handle (not starting with did:), try to resolve it to a DID
-      if (userId.isNotEmpty && !userId.startsWith('did:')) {
-        final resolvedDid = await mcpTools.resolveHandleToDid(userId);
-        if (resolvedDid != null) {
-          print('MCP: Resolved handle "$userId" to DID "$resolvedDid"');
-          userId = resolvedDid;
-        } else {
-          print('MCP: Could not resolve handle "$userId"');
+      final start = parseDate('startDate');
+      final end = parseDate('endDate');
+      if ((args['startDate'] != null && start == null) ||
+          (args['endDate'] != null && end == null)) {
+        return CallToolResult(
+          content: [
+            TextContent(
+                text: 'startDate and endDate must be valid ISO 8601 dates.')
+          ],
+          isError: true,
+        );
+      }
+      if (start != null && end != null && start.isAfter(end)) {
+        return CallToolResult(
+          content: [TextContent(text: 'startDate must not be after endDate.')],
+          isError: true,
+        );
+      }
+      final pattern = args['pattern']?.toString();
+      if (pattern != null && pattern.isNotEmpty) {
+        try {
+          RegExp(pattern, unicode: true);
+        } on FormatException {
           return CallToolResult(
-            content: [TextContent(text: 'Handle "$userId" could not be found in local logs.')],
+            content: [
+              TextContent(text: 'pattern must be a valid regular expression.')
+            ],
             isError: true,
           );
         }
       }
 
-      final data = await mcpTools.getUserActivity(userId, limit is int ? limit : int.parse(limit.toString()));
+      final data = await mcpTools.searchPostsFiltered(
+        keyword: keyword,
+        pattern: pattern,
+        start: start,
+        end: end,
+        limit: parsedLimit,
+      );
+
       final contents = data.map((e) {
         final postJson = jsonDecode(e['post'] as String);
         final feedView = bsky_feed.FeedViewPost.fromJson(postJson);
@@ -159,15 +158,58 @@ class McpService extends ChangeNotifier {
         final uri = e['uri'];
         final image = _firstImageUrl(postJson);
         final imageLine = image == null ? '' : '\nImage: $image';
-        return TextContent(text: 'Author: @$author\nTime: $indexed\nURI: $uri$imageLine\nContent: $text');
+        return TextContent(
+            text:
+                'Author: @$author\nTime: $indexed\nURI: $uri$imageLine\nContent: $text');
       }).toList();
       return CallToolResult(content: contents);
     });
 
+    registerTool('get_user_activity', (args, dynamic extra) async {
+      String userId = args['userId'] ?? '';
+      final limit = args['limit'] ?? 10;
+
+      // If the userId is a handle (not starting with did:), try to resolve it to a DID
+      if (userId.isNotEmpty && !userId.startsWith('did:')) {
+        final resolvedDid = await mcpTools.resolveHandleToDid(userId);
+        if (resolvedDid != null) {
+          print('MCP: Resolved handle "$userId" to DID "$resolvedDid"');
+          userId = resolvedDid;
+        } else {
+          print('MCP: Could not resolve handle "$userId"');
+          return CallToolResult(
+            content: [
+              TextContent(
+                  text: 'Handle "$userId" could not be found in local logs.')
+            ],
+            isError: true,
+          );
+        }
+      }
+
+      final data = await mcpTools.getUserActivity(
+          userId, limit is int ? limit : int.parse(limit.toString()));
+      final contents = data.map((e) {
+        final postJson = jsonDecode(e['post'] as String);
+        final feedView = bsky_feed.FeedViewPost.fromJson(postJson);
+        final author = feedView.post.author.handle;
+        final record = feedView.post.record as Map<String, dynamic>;
+        final text = record['text'] as String? ?? '';
+        final indexed = e['indexed'];
+        final uri = e['uri'];
+        final image = _firstImageUrl(postJson);
+        final imageLine = image == null ? '' : '\nImage: $image';
+        return TextContent(
+            text:
+                'Author: @$author\nTime: $indexed\nURI: $uri$imageLine\nContent: $text');
+      }).toList();
+      return CallToolResult(content: contents);
+    });
 
     registerTool('get_monthly_activity_summary', (args, dynamic extra) async {
       final year = args['year'] ?? DateTime.now().year;
-      final data = await mcpTools.getMonthlyActivitySummary(year is int ? year : int.parse(year.toString()));
+      final data = await mcpTools.getMonthlyActivitySummary(
+          year is int ? year : int.parse(year.toString()));
       return CallToolResult(content: [TextContent(text: jsonEncode(data))]);
     });
   }
@@ -211,8 +253,9 @@ class McpService extends ChangeNotifier {
     final sseClients = <String, SseServerTransport>{};
     await for (HttpRequest request in _httpServer!) {
       final uri = request.uri;
-      print('MCP Incoming Request: ${request.method} ${uri.path}${uri.query != "" ? "?${uri.query}" : ""}');
-      
+      print(
+          'MCP Incoming Request: ${request.method} ${uri.path}${uri.query != "" ? "?${uri.query}" : ""}');
+
       if (uri.path == '/') {
         request.response
           ..statusCode = 200
@@ -224,7 +267,8 @@ class McpService extends ChangeNotifier {
 
       if (uri.path == '/sse' && request.method == 'GET') {
         _handleSseGet(request, sseClients);
-      } else if ((uri.path == '/messages' || uri.path == '/sse') && request.method == 'POST') {
+      } else if ((uri.path == '/messages' || uri.path == '/sse') &&
+          request.method == 'POST') {
         _handlePost(request, sseClients);
       } else if (request.method == 'OPTIONS') {
         _setCorsHeaders(request.response);
@@ -239,7 +283,8 @@ class McpService extends ChangeNotifier {
     }
   }
 
-  void _handleSseGet(HttpRequest request, Map<String, SseServerTransport> sseClients) {
+  void _handleSseGet(
+      HttpRequest request, Map<String, SseServerTransport> sseClients) {
     print('MCP [SSE] GET (initial connection) received');
     _setCorsHeaders(request.response);
 
@@ -263,11 +308,12 @@ class McpService extends ChangeNotifier {
     });
   }
 
-  Future<void> _handlePost(HttpRequest request, Map<String, SseServerTransport> sseClients) async {
+  Future<void> _handlePost(
+      HttpRequest request, Map<String, SseServerTransport> sseClients) async {
     final uri = request.uri;
     final sessionId = uri.queryParameters['sessionId'];
     final transport = sseClients[sessionId];
-    
+
     _setCorsHeaders(request.response);
 
     if (transport == null) {
@@ -302,7 +348,7 @@ class McpService extends ChangeNotifier {
   Future<void> _handleProbePost(HttpRequest request) async {
     final probeBody = await utf8.decoder.bind(request).join();
     print('MCP [POST] Probe Body: $probeBody');
-    
+
     String responseBody = '{}';
     try {
       final json = jsonDecode(probeBody);
@@ -336,21 +382,42 @@ class McpService extends ChangeNotifier {
                 'inputSchema': {
                   'type': 'object',
                   'properties': {
-                    'limit': {'type': 'integer', 'description': 'Number of posts to fetch', 'default': 3},
+                    'limit': {
+                      'type': 'integer',
+                      'description': 'Number of posts to fetch',
+                      'default': 3
+                    },
                   },
                 },
               },
               {
                 'name': 'search_posts',
-                'description': 'Search Bluesky posts by keyword, date range, or regex pattern',
+                'description':
+                    'Search Bluesky posts by keyword, date range, or regex pattern',
                 'inputSchema': {
                   'type': 'object',
                   'properties': {
-                    'keyword': {'type': 'string', 'description': 'Search keyword'},
-                    'startDate': {'type': 'string', 'description': 'Start date (ISO8601, optional)'},
-                    'endDate': {'type': 'string', 'description': 'End date (ISO8601, optional)'},
-                    'pattern': {'type': 'string', 'description': 'Regular expression pattern (optional)'},
-                    'limit': {'type': 'integer', 'description': 'Maximum number of results', 'default': 10},
+                    'keyword': {
+                      'type': 'string',
+                      'description': 'Search keyword'
+                    },
+                    'startDate': {
+                      'type': 'string',
+                      'description': 'Start date (ISO8601, optional)'
+                    },
+                    'endDate': {
+                      'type': 'string',
+                      'description': 'End date (ISO8601, optional)'
+                    },
+                    'pattern': {
+                      'type': 'string',
+                      'description': 'Regular expression pattern (optional)'
+                    },
+                    'limit': {
+                      'type': 'integer',
+                      'description': 'Maximum number of results',
+                      'default': 10
+                    },
                   },
                 },
               },
@@ -360,19 +427,30 @@ class McpService extends ChangeNotifier {
                 'inputSchema': {
                   'type': 'object',
                   'properties': {
-                    'userId': {'type': 'string', 'description': 'User ID or handle'},
-                    'limit': {'type': 'integer', 'description': 'Number of items to fetch', 'default': 10},
+                    'userId': {
+                      'type': 'string',
+                      'description': 'User ID or handle'
+                    },
+                    'limit': {
+                      'type': 'integer',
+                      'description': 'Number of items to fetch',
+                      'default': 10
+                    },
                   },
                   'required': ['userId'],
                 },
               },
               {
                 'name': 'get_monthly_activity_summary',
-                'description': 'Get a monthly activity summary (post counts, top hashtags) for a specific year',
+                'description':
+                    'Get a monthly activity summary (post counts, top hashtags) for a specific year',
                 'inputSchema': {
                   'type': 'object',
                   'properties': {
-                    'year': {'type': 'integer', 'description': 'Target year (e.g. 2025)'},
+                    'year': {
+                      'type': 'integer',
+                      'description': 'Target year (e.g. 2025)'
+                    },
                   },
                   'required': ['year'],
                 },
@@ -381,9 +459,17 @@ class McpService extends ChangeNotifier {
           },
         });
       } else if (method == 'prompts/list' && id != null) {
-        responseBody = jsonEncode({'jsonrpc': '2.0', 'id': id, 'result': {'prompts': []}});
+        responseBody = jsonEncode({
+          'jsonrpc': '2.0',
+          'id': id,
+          'result': {'prompts': []}
+        });
       } else if (method == 'resources/list' && id != null) {
-        responseBody = jsonEncode({'jsonrpc': '2.0', 'id': id, 'result': {'resources': []}});
+        responseBody = jsonEncode({
+          'jsonrpc': '2.0',
+          'id': id,
+          'result': {'resources': []}
+        });
       } else if (method == 'tools/call' && id != null) {
         final params = json['params'] ?? {};
         final toolName = params['name'];
@@ -393,7 +479,8 @@ class McpService extends ChangeNotifier {
           try {
             print('MCP [POST] Executing tool: $toolName');
             final result = await (callback as dynamic)(toolArgs, null);
-            responseBody = jsonEncode({'jsonrpc': '2.0', 'id': id, 'result': result.toJson()});
+            responseBody = jsonEncode(
+                {'jsonrpc': '2.0', 'id': id, 'result': result.toJson()});
           } catch (e, s) {
             print('MCP [POST] Tool execution error: $e\n$s');
             responseBody = jsonEncode({
@@ -412,7 +499,7 @@ class McpService extends ChangeNotifier {
       } else if (method == 'ping' && id != null) {
         responseBody = jsonEncode({'jsonrpc': '2.0', 'id': id, 'result': {}});
       } else if (method == 'notifications/initialized') {
-        responseBody = ''; 
+        responseBody = '';
       }
     } catch (e) {
       print('MCP [POST] Probe JSON parse error: $e');

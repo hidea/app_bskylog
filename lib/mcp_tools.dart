@@ -78,32 +78,43 @@ class McpTools {
 
   Future<List<Map<String, dynamic>>> searchPostsByDateRange(
       String keyword, DateTime start, DateTime end, int limit) async {
-    final query = database.select(database.posts)
-      ..where((t) => t.post.like('%$keyword%'))
-      ..where((t) => t.indexed.isBetweenValues(start, end))
-      ..orderBy([
-        (t) => OrderingTerm(expression: t.indexed, mode: OrderingMode.desc)
-      ])
-      ..limit(limit);
-
-    final results = await query.get();
-    return results
-        .map((row) => {
-              'post': row.post,
-              'indexed': row.indexed.toIso8601String(),
-              'uri': row.uri,
-            })
-        .toList();
+    return searchPostsFiltered(
+      keyword: keyword,
+      start: start,
+      end: end,
+      limit: limit,
+    );
   }
 
   Future<List<Map<String, dynamic>>> searchPostsByPattern(
       String pattern, int limit) async {
+    return searchPostsFiltered(pattern: pattern, limit: limit);
+  }
+
+  Future<List<Map<String, dynamic>>> searchPostsFiltered({
+    String? keyword,
+    String? pattern,
+    DateTime? start,
+    DateTime? end,
+    required int limit,
+  }) async {
     final query = database.select(database.posts)
-      ..where((t) => t.post.regexp(pattern, unicode: true))
-      ..orderBy([
-        (t) => OrderingTerm(expression: t.indexed, mode: OrderingMode.desc)
-      ])
+      ..orderBy(
+          [(t) => OrderingTerm(expression: t.indexed, mode: OrderingMode.desc)])
       ..limit(limit);
+
+    if (keyword != null && keyword.isNotEmpty) {
+      query.where((t) => t.post.like('%$keyword%'));
+    }
+    if (pattern != null && pattern.isNotEmpty) {
+      query.where((t) => t.post.regexp(pattern, unicode: true));
+    }
+    if (start != null) {
+      query.where((t) => t.indexed.isBiggerOrEqualValue(start));
+    }
+    if (end != null) {
+      query.where((t) => t.indexed.isSmallerOrEqualValue(end));
+    }
 
     final results = await query.get();
     return results
